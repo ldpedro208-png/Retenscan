@@ -1,0 +1,27 @@
+🔐 BIENVENIDO A RETENSCAN
+
+Hola {{ usuario.get_full_name|default:usuario.username }},
+
+Has sido registrado en el sistema {{ site_name }} como {{ rol_display }}.
+
+========================================
+TUS CREDENCIALES DE ACCESO
+========================================
+👤 Usuario: {{ usuario.username }}
+🔑 Contraseña temporal: {{ password_temporal }}
+🎯 Rol: {{ rol_display }}
+========================================
+
+⚠️ IMPORTANTE:
+- Esta es una contraseña temporal.
+- Debes cambiar tu contraseña en tu primer inicio de sesión.
+- No compartas tus credenciales con nadie.
+
+🔓 INICIAR SESIÓN:
+{{ url_login }}
+
+¿Olvidaste tu contraseña? Cámbiala aquí:
+{{ url_cambiar_password }}
+
+Saludos,
+{{ site_name }}

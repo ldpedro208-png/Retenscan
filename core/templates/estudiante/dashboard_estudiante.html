@@ -1,0 +1,1029 @@
+<!-- templates/layout/estudiantes/dashboard_estudiante.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Mi Dashboard - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --dashboard-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --shadow-hover: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stat-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-card .stat-icon {
+            opacity: 0.2;
+            font-size: 3.5rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.35;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stat-card.bg-primary { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
+        .stat-card.bg-success { background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); }
+        .stat-card.bg-danger { background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%); }
+        .stat-card.bg-warning { background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); }
+
+        /* ============================================
+           TARJETA DE RIESGO PERSONAL
+           ============================================ */
+        .risk-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            overflow: hidden;
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .risk-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .risk-card .card-header {
+            border: none;
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+
+        .risk-card .risk-badge {
+            font-size: 1.5rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+        }
+
+        .risk-card .progress {
+            height: 2rem;
+            border-radius: 0.5rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+
+        .risk-card .progress .progress-bar {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: width 1s ease;
+        }
+
+        /* ============================================
+           TARJETAS DE GRÁFICOS
+           ============================================ */
+        .chart-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .chart-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .chart-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* ============================================
+           TABLA DE INFORMACIÓN PERSONAL
+           ============================================ */
+        .info-table {
+            margin-bottom: 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .info-table th {
+            font-weight: 600;
+            color: #4a5568;
+            width: 35%;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .info-table td {
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #2d3748;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.20s; }
+        .chart-card:nth-child(1) { animation-delay: 0.10s; }
+        .chart-card:nth-child(2) { animation-delay: 0.15s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .stat-card:focus-visible,
+        .risk-card:focus-visible,
+        .chart-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2.5rem;
+            }
+
+            .risk-card .risk-badge {
+                font-size: 1.2rem;
+                padding: 0.3rem 1rem;
+            }
+
+            .info-table th {
+                width: 40%;
+                font-size: 0.85rem;
+            }
+
+            .info-table td {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+
+            .risk-card .risk-badge {
+                font-size: 1rem;
+            }
+
+            .chart-card .card-body {
+                padding: 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .chart-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .chart-card .card-header {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .info-table tr {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .info-table th {
+                color: #c8d6e5;
+            }
+
+            .info-table td {
+                color: #ecf0f1;
+            }
+
+            .risk-card .progress {
+                background-color: #2d2d44;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> Mi Dashboard
+            <small class="text-muted fs-6 ms-2">Estudiante</small>
+        </h1>
+        <span class="badge bg-secondary badge-status" role="status">
+            <i class="bi bi-person" aria-hidden="true"></i> Estudiante
+        </span>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- ALERTA DE PERFIL FALTANTE                    -->
+    <!-- ============================================ -->
+    {% if sin_perfil %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            <strong>¡Atención!</strong> No tienes un perfil de estudiante asociado. 
+            Contacta al administrador para resolver este problema.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                    aria-label="Cerrar"></button>
+        </div>
+    {% else %}
+
+    <!-- ============================================ -->
+    <!-- IA: MI RIESGO PERSONAL                      -->
+    <!-- ============================================ -->
+    {% if ia_disponible and riesgo_personal %}
+        <section aria-label="Mi riesgo personal" class="mb-4">
+            <article class="card risk-card border-{% if riesgo_personal.nivel_riesgo == 'Crítico' %}danger{% elif riesgo_personal.nivel_riesgo == 'Alto' %}warning{% else %}success{% endif %}">
+                <header class="card-header bg-{% if riesgo_personal.nivel_riesgo == 'Crítico' %}danger{% elif riesgo_personal.nivel_riesgo == 'Alto' %}warning{% else %}success{% endif %} text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-robot" aria-hidden="true"></i> 
+                        Mi Riesgo Predictivo (IA)
+                        <span class="badge bg-light text-dark ms-2">Inteligencia Artificial</span>
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Probabilidad -->
+                        <div class="col-md-4 text-center">
+                            <h2 class="display-4 fw-bold" aria-label="{{ riesgo_personal.probabilidad }}% probabilidad de deserción">
+                                {{ riesgo_personal.probabilidad }}%
+                            </h2>
+                            <small class="text-muted">
+                                <i class="bi bi-graph-up" aria-hidden="true"></i> 
+                                Probabilidad de deserción
+                            </small>
+                        </div>
+
+                        <!-- Nivel de riesgo -->
+                        <div class="col-md-4 text-center">
+                            <span class="badge 
+                                {% if riesgo_personal.nivel_riesgo == 'Crítico' %}bg-danger
+                                {% elif riesgo_personal.nivel_riesgo == 'Alto' %}bg-warning text-dark
+                                {% elif riesgo_personal.nivel_riesgo == 'Medio' %}bg-info
+                                {% else %}bg-success{% endif %} risk-badge">
+                                <i class="bi 
+                                    {% if riesgo_personal.nivel_riesgo == 'Crítico' %}bi-exclamation-triangle
+                                    {% elif riesgo_personal.nivel_riesgo == 'Alto' %}bi-exclamation-circle
+                                    {% elif riesgo_personal.nivel_riesgo == 'Medio' %}bi-info-circle
+                                    {% else %}bi-check-circle{% endif %}" 
+                                    aria-hidden="true"></i>
+                                {{ riesgo_personal.nivel_riesgo }}
+                            </span>
+                            <br>
+                            <small class="text-muted">Nivel de riesgo</small>
+                        </div>
+
+                        <!-- Barra de progreso -->
+                        <div class="col-md-4 text-center">
+                            <div class="progress" role="progressbar" 
+                                 aria-label="Nivel de riesgo actual" 
+                                 aria-valuenow="{{ riesgo_personal.probabilidad }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <div class="progress-bar 
+                                    {% if riesgo_personal.probabilidad > 70 %}bg-danger
+                                    {% elif riesgo_personal.probabilidad > 50 %}bg-warning text-dark
+                                    {% elif riesgo_personal.probabilidad > 30 %}bg-info
+                                    {% else %}bg-success{% endif %}" 
+                                    style="width: {{ riesgo_personal.probabilidad }}%;">
+                                    {{ riesgo_personal.probabilidad }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">Nivel de riesgo actual</small>
+                        </div>
+                    </div>
+
+                    <!-- Factores importantes -->
+                    {% if riesgo_personal.factores_importantes %}
+                        <hr>
+                        <h6>
+                            <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                            Factores que influyen en mi riesgo:
+                        </h6>
+                        <div class="row g-2">
+                            {% for factor, importancia in riesgo_personal.factores_importantes %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">{{ factor|title }}</span>
+                                        <span class="badge bg-primary">{{ importancia|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                             style="width: {{ importancia|floatformat:2|add:0|multiply:100 }}%;"
+                                             aria-valuenow="{{ importancia|floatformat:2|add:0|multiply:100 }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </section>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- TARJETAS DE ESTADÍSTICAS                    -->
+    <!-- ============================================ -->
+    <section aria-label="Resumen académico" class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> Aprobadas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ aprobadas }} materias aprobadas">
+                        {{ aprobadas|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Reprobadas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ reprobadas }} materias reprobadas">
+                        {{ reprobadas|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-clock" aria-hidden="true"></i> Cursando
+                    </h6>
+                    <p class="stat-value" aria-label="{{ cursando }} materias cursando">
+                        {{ cursando|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-clock"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i> Asistencia
+                    </h6>
+                    <p class="stat-value" aria-label="{{ porcentaje_asistencia }}% de asistencia">
+                        {{ porcentaje_asistencia|default:0 }}%
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- MENSAJES RECIENTES                          -->
+    <!-- ============================================ -->
+    <section aria-label="Mensajes recientes" class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope" aria-hidden="true"></i> 
+                        Mis Mensajes
+                        {% if mensajes_no_leidos > 0 %}
+                            <span class="badge bg-danger ms-2">{{ mensajes_no_leidos }} no leídos</span>
+                        {% endif %}
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'mensaje_create' %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-envelope-plus"></i> Nuevo
+                        </a>
+                        <a href="{% url 'mensaje_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-envelope"></i> Ver todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if mensajes_recientes %}
+                        <div class="list-group list-group-flush">
+                            {% for mensaje in mensajes_recientes|slice:":5" %}
+                                <a href="{% url 'mensaje_detail' mensaje.id %}" 
+                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% if mensaje.remitente == user %}
+                                            <span class="badge bg-secondary">Enviado</span>
+                                        {% elif not mensaje.leido %}
+                                            <span class="badge bg-danger" title="No leído">●</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Leído</span>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ mensaje.asunto|truncatechars:40 }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                {% if mensaje.remitente == user %}
+                                                    Para: {{ mensaje.destinatario.get_full_name|default:mensaje.destinatario.username }}
+                                                {% else %}
+                                                    De: {{ mensaje.remitente.get_full_name|default:mensaje.remitente.username }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ mensaje.fecha_envio|date:"d/m/Y H:i" }}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-inbox" style="font-size: 2rem; color: #ccc;"></i>
+                            <p class="text-muted mt-2">No tienes mensajes recientes</p>
+                            <a href="{% url 'mensaje_create' %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-envelope-plus"></i> Enviar mensaje
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICOS                                    -->
+    <!-- ============================================ -->
+    <section aria-label="Gráficos de rendimiento" class="row g-3">
+        <!-- Gráfico 1: Rendimiento por Materia -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-trophy" aria-hidden="true"></i> 
+                        Mi Rendimiento por Materia
+                    </h5>
+                    <span class="badge bg-info">{{ materias_labels|length }} materias</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="materiasChart" 
+                                aria-label="Gráfico de rendimiento por materia" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Gráfico 2: Estado de Materias -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-pie-chart" aria-hidden="true"></i> 
+                        Estado de Mis Materias
+                    </h5>
+                    <span class="badge bg-success">Resumen</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="estadoChart" 
+                                aria-label="Gráfico de estado de materias" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICO 3: ASISTENCIAS MENSUALES            -->
+    <!-- ============================================ -->
+    <section aria-label="Asistencias mensuales" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i> 
+                        Mis Asistencias (Últimos 6 meses)
+                    </h5>
+                    <span class="badge bg-primary">{{ meses_labels|length }} meses</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 150px;">
+                        <canvas id="asistenciasChart" 
+                                aria-label="Gráfico de asistencias mensuales" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INFORMACIÓN PERSONAL Y RIESGOS              -->
+    <!-- ============================================ -->
+    <div class="row g-3 mt-2">
+        <!-- Información Personal -->
+        <div class="col-md-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-person-badge" aria-hidden="true"></i> 
+                        Mis Datos
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <table class="table info-table" aria-label="Información personal del estudiante">
+                        <tbody>
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-card-text" aria-hidden="true"></i> Carnet:
+                                </th>
+                                <td><strong>{{ estudiante.carnet }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-person" aria-hidden="true"></i> Nombre:
+                                </th>
+                                <td>{{ estudiante.nombre }} {{ estudiante.apellido_paterno }} {{ estudiante.apellido_materno|default:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-mortarboard" aria-hidden="true"></i> Carrera:
+                                </th>
+                                <td>{{ estudiante.idCarrera.nombre|default:"Sin asignar" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-arrow-up" aria-hidden="true"></i> Semestre:
+                                </th>
+                                <td>{{ estudiante.semestre_actual|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-flag" aria-hidden="true"></i> Estado:
+                                </th>
+                                <td>
+                                    <span class="badge 
+                                        {% if estudiante.estado_academico == 'Activo' %}bg-success
+                                        {% elif estudiante.estado_academico == 'Inactivo' %}bg-warning text-dark
+                                        {% elif estudiante.estado_academico == 'Abandonado' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ estudiante.estado_academico|default:"Sin estado" }}
+                                    </span>
+                                </td>
+                            </tr>
+
+                            {# ============================================ #}
+                            {# ✅ CAMBIO: usar BecaAsignacion con campos   #}
+                            {# nuevos: idBeca, porcentaje_efectivo         #}
+                            {# ============================================ #}
+                            {% if beca_activa %}
+                            <tr>
+                                <th scope="row">
+                                    <i class="bi bi-award" aria-hidden="true"></i> Beca:
+                                </th>
+                                <td>
+                                    <span class="badge bg-success">
+                                        {{ beca_activa.idBeca.nombre }}
+                                        ({{ beca_activa.porcentaje_efectivo|default:"0" }}%)
+                                    </span>
+                                    {% if beca_activa.idBeca.tipo %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-tag" aria-hidden="true"></i>
+                                            {{ beca_activa.idBeca.tipo.nombre }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+
+                    <div class="mt-2">
+                        <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" 
+                           class="btn btn-primary btn-sm btn-action"
+                           aria-label="Ver mi perfil completo">
+                            <i class="bi bi-person" aria-hidden="true"></i> Ver mi perfil completo
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Riesgos Activos -->
+        <div class="col-md-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Mis Riesgos Activos
+                    </h5>
+                    <span class="badge bg-danger">{{ riesgos|length }}</span>
+                </header>
+                <div class="card-body">
+                    {% if tiene_riesgo %}
+                        <div class="list-group list-group-flush" role="list">
+                            {% for riesgo in riesgos %}
+                                <div class="list-group-item px-0" role="listitem">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge 
+                                                {% if riesgo.nivel == 'Crítico' %}bg-danger
+                                                {% elif riesgo.nivel == 'Alto' %}bg-warning text-dark
+                                                {% elif riesgo.nivel == 'Medio' %}bg-info
+                                                {% else %}bg-success{% endif %}">
+                                                {{ riesgo.nivel }}
+                                            </span>
+                                            {{ riesgo.idFactor.nombre }}
+                                        </div>
+                                        <small class="text-muted">{{ riesgo.fecha_deteccion|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        {{ riesgo.observaciones|default:"Sin observaciones" }}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4" role="status">
+                            <i class="bi bi-check-circle" style="font-size: 2rem; color: #28a745;" aria-hidden="true"></i>
+                            <p class="mt-2 text-muted">¡No tienes riesgos activos! Sigue así.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HISTORIAL ACADÉMICO                         -->
+    <!-- ============================================ -->
+    <section aria-label="Historial académico" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-book" aria-hidden="true"></i> 
+                        Mi Historial Académico
+                    </h5>
+                    <span class="badge bg-secondary">{{ mi_historial|length }} registros</span>
+                </header>
+                <div class="card-body">
+                    {% if mi_historial %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" 
+                                   aria-label="Historial académico del estudiante">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-book" aria-hidden="true"></i> Materia
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-calendar" aria-hidden="true"></i> Semestre
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-star" aria-hidden="true"></i> Nota
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-flag" aria-hidden="true"></i> Estado
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for h in mi_historial|slice:":5" %}
+                                        <tr>
+                                            <td>{{ h.idMateria.nombre }}</td>
+                                            <td>{{ h.semestre|default:"-" }}</td>
+                                            <td>
+                                                {% if h.nota_final %}
+                                                    <strong>{{ h.nota_final }}</strong>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if h.estado_materia == 'Aprobada' %}bg-success
+                                                    {% elif h.estado_materia == 'Reprobada' %}bg-danger
+                                                    {% elif h.estado_materia == 'Cursando' %}bg-primary
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ h.estado_materia|default:"-" }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if mi_historial|length > 5 %}
+                            <div class="text-center mt-2">
+                                <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" 
+                                   class="btn btn-sm btn-secondary btn-action"
+                                   aria-label="Ver historial completo">
+                                    <i class="bi bi-eye" aria-hidden="true"></i> 
+                                    Ver historial completo ({{ mi_historial|length }} registros)
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3" role="status">
+                            <i class="bi bi-book" style="font-size: 2rem; color: #6c757d;" aria-hidden="true"></i>
+                            <p class="mt-2 text-muted">No tienes historial académico registrado.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // CONFIGURACIÓN GLOBAL DE CHART.JS
+            // ============================================
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.font.family = "'Segoe UI', system-ui, -apple-system, sans-serif";
+                Chart.defaults.color = '#495057';
+            }
+
+            // ============================================
+            // 1. GRÁFICO: Rendimiento por Materia (Barra)
+            // ============================================
+            const ctx1 = document.getElementById('materiasChart');
+            if (ctx1) {
+                const materiasLabels = {{ materias_labels|safe|default:"[]" }};
+                const materiasValues = {{ materias_values|safe|default:"[]" }};
+                const coloresMaterias = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6f42c1', '#fd7e14', '#20c997'];
+
+                if (materiasLabels.length > 0 && materiasValues.length > 0) {
+                    new Chart(ctx1.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: materiasLabels,
+                            datasets: [{
+                                label: 'Mi Nota',
+                                data: materiasValues,
+                                backgroundColor: coloresMaterias.slice(0, materiasLabels.length),
+                                borderRadius: 5,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 20,
+                                    ticks: {
+                                        stepSize: 2,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 2. GRÁFICO: Estado de Materias (Doughnut)
+            // ============================================
+            const ctx2 = document.getElementById('estadoChart');
+            if (ctx2) {
+                const aprobadas = {{ aprobadas|default:0 }};
+                const reprobadas = {{ reprobadas|default:0 }};
+                const cursando = {{ cursando|default:0 }};
+                const estadoValues = [aprobadas, reprobadas, cursando];
+                const coloresEstado = ['#1cc88a', '#e74a3b', '#f6c23e'];
+                const estadoLabels = ['Aprobadas', 'Reprobadas', 'Cursando'];
+
+                if (estadoValues.some(v => v > 0)) {
+                    new Chart(ctx2.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: estadoLabels,
+                            datasets: [{
+                                data: estadoValues,
+                                backgroundColor: coloresEstado,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 10,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            let percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 3. GRÁFICO: Asistencias Mensuales (Línea)
+            // ============================================
+            const ctx3 = document.getElementById('asistenciasChart');
+            if (ctx3) {
+                const mesesLabels = {{ meses_labels|safe|default:"[]" }};
+                const mesesValues = {{ meses_values|safe|default:"[]" }};
+
+                if (mesesLabels.length > 0 && mesesValues.length > 0) {
+                    new Chart(ctx3.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: mesesLabels,
+                            datasets: [{
+                                label: 'Asistencias',
+                                data: mesesValues,
+                                borderColor: '#4e73df',
+                                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#4e73df',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return 'Asistencias: ' + context.parsed.y;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 4. ANIMACIÓN DE BARRAS DE PROGRESO
+            // ============================================
+            document.querySelectorAll('.risk-card .progress-bar').forEach(function(bar) {
+                const targetWidth = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(function() {
+                    bar.style.width = targetWidth;
+                }, 500);
+            });
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Dashboard de estudiante cargado');
+        });
+    </script>
+{% endblock %}

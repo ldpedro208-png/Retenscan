@@ -1,0 +1,726 @@
+<!-- templates/layout/Inteligencia Art/actualizar_riesgos.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Actualizar Riesgos con IA - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --ia-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+
+        /* ============================================
+           TARJETA PRINCIPAL
+           ============================================ */
+        .ia-card {
+            border: none;
+            border-radius: var(--ia-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .ia-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .ia-card .card-header {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .ia-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .ia-card .card-header h5 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ia-card .card-header .header-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .ia-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           ALERTAS
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stats-card-ia {
+            border: none;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .stats-card-ia:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+        }
+
+        .stats-card-ia .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+            animation: countUp 0.6s ease forwards;
+        }
+
+        .stats-card-ia .stats-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        .stats-card-ia .stats-icon {
+            font-size: 2rem;
+            opacity: 0.15;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stats-card-ia:hover .stats-icon {
+            opacity: 0.25;
+        }
+
+        .stats-card-ia.primary .stats-number { color: #0d6efd; }
+        .stats-card-ia.warning .stats-number { color: #ffc107; }
+        .stats-card-ia.success .stats-number { color: #198754; }
+        .stats-card-ia.danger .stats-number { color: #dc3545; }
+
+        .stats-card-ia.primary { background: #e7f3ff; }
+        .stats-card-ia.warning { background: #fff9e6; }
+        .stats-card-ia.success { background: #e6f7ee; }
+        .stats-card-ia.danger { background: #fde8e8; }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .ia-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .ia-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .ia-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .ia-card .card-header h5 {
+                font-size: 1.1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .stats-card-ia .stats-number {
+                font-size: 2rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .ia-card .card-body {
+                padding: 1rem;
+            }
+
+            .ia-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .ia-card .card-header h5 {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+
+            .stats-card-ia {
+                padding: 0.75rem;
+            }
+
+            .stats-card-ia .stats-number {
+                font-size: 1.5rem;
+            }
+
+            .stats-card-ia .stats-label {
+                font-size: 0.7rem;
+            }
+
+            .stats-card-ia .stats-icon {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .ia-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .ia-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .stats-card-ia {
+                background: #252540;
+            }
+
+            .stats-card-ia .stats-label {
+                color: #8a8a9a;
+            }
+
+            .stats-card-ia.primary { background: #1a2a3a; }
+            .stats-card-ia.warning { background: #2d241a; }
+            .stats-card-ia.success { background: #1a2a2a; }
+            .stats-card-ia.danger { background: #2d1a1a; }
+
+            .stats-card-ia.primary .stats-number { color: #4dabf7; }
+            .stats-card-ia.warning .stats-number { color: #ffd970; }
+            .stats-card-ia.success .stats-number { color: #20c997; }
+            .stats-card-ia.danger .stats-number { color: #f87171; }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+
+            .alert-custom.alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+            }
+
+            .alert-custom.alert-warning {
+                background: #2d241a;
+                color: #ffd970;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_riesgo' %}" class="text-decoration-none">
+                    <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-sync-alt" aria-hidden="true"></i> Actualizar Riesgos
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card ia-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-robot header-icon" aria-hidden="true"></i>
+                        <div>
+                            <h5 class="mb-0">Actualizar Riesgos con IA</h5>
+                            <small class="opacity-75">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Ejecuta el modelo de inteligencia artificial para analizar estudiantes
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Información -->
+                    <div class="alert alert-custom alert-info" role="alert">
+                        <i class="bi bi-info-circle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">¿Qué hace esta acción?</div>
+                            <p class="mb-0">
+                                El modelo de IA analizará a todos los estudiantes activos utilizando datos académicos,
+                                de asistencia y comportamiento para predecir y actualizar automáticamente sus niveles
+                                de riesgo de deserción.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <section aria-label="Estadísticas de estudiantes">
+                        <div class="stats-grid">
+                            <div class="stats-card-ia primary">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ total_estudiantes|default:0 }} estudiantes a analizar">
+                                    {{ total_estudiantes|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+                                </div>
+                            </div>
+                            <div class="stats-card-ia warning">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ estudiantes_con_riesgo|default:0 }} estudiantes con riesgo">
+                                    {{ estudiantes_con_riesgo|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Con Riesgo
+                                </div>
+                            </div>
+                            <div class="stats-card-ia success">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ estudiantes_sin_riesgo|default:0 }} estudiantes sin riesgo">
+                                    {{ estudiantes_sin_riesgo|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Sin Riesgo
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Advertencia -->
+                    <div class="alert alert-custom alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">⚠️ Advertencia</div>
+                            <p class="mb-0">
+                                Esta operación puede tomar varios segundos dependiendo del número de estudiantes.
+                                No cierres ni recargues la página durante el proceso.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="actualizarForm">
+                        {% csrf_token %}
+
+                        <!-- Barra de progreso (oculta inicialmente) -->
+                        <div id="progressContainer" style="display: none;" class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small">
+                                    <i class="bi bi-robot" aria-hidden="true"></i>
+                                    Procesando estudiantes...
+                                </span>
+                                <span class="text-muted small" id="progressText">0%</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="Progreso de actualización" 
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="progressBar" style="width: 0%;">
+                                </div>
+                            </div>
+                            <div class="text-muted small mt-1" id="progressStatus">
+                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                Iniciando...
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+                            <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                <i class="bi bi-play-fill" aria-hidden="true"></i> 
+                                Ejecutar Actualización
+                            </button>
+                            <a href="{% url 'dashboard_riesgo' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Volver al dashboard de IA">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> 
+                                Volver al Dashboard
+                            </a>
+                        </footer>
+                    </form>
+
+                    <!-- Información adicional -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check" aria-hidden="true"></i>
+                            Los datos son procesados de forma segura y confidencial.
+                        </small>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                        Confirmar Actualización
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-robot" style="font-size: 3rem; color: #0d6efd;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás seguro de ejecutar la actualización?</h5>
+                        <p class="text-muted">
+                            Se analizarán <strong>{{ total_estudiantes|default:0 }}</strong> estudiantes 
+                            con el modelo de IA. El proceso puede tomar varios segundos.
+                        </p>
+                        <div class="alert alert-info text-start">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <strong>¿Qué se actualizará?</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>Nivel de riesgo de cada estudiante</li>
+                                <li>Probabilidad de deserción</li>
+                                <li>Factores de riesgo identificados</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmSubmit">
+                        <i class="bi bi-play-fill" aria-hidden="true"></i> 
+                        Confirmar y Ejecutar
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('actualizarForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmSubmit = document.getElementById('confirmSubmit');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressStatus = document.getElementById('progressStatus');
+
+            // ============================================
+            // 1. CONFIRMAR ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 2. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmSubmit.addEventListener('click', function() {
+                // Mostrar progreso
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+                progressStatus.innerHTML = '<i class="bi bi-robot" aria-hidden="true"></i> Iniciando análisis...';
+
+                // Deshabilitar botones
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Procesando...';
+
+                // Simular progreso (en producción, esto vendría del servidor)
+                let progress = 0;
+                const interval = setInterval(function() {
+                    progress += Math.random() * 10;
+                    if (progress > 95) {
+                        progress = 95;
+                        clearInterval(interval);
+                    }
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+
+                    if (progress < 30) {
+                        progressStatus.innerHTML = '<i class="bi bi-search" aria-hidden="true"></i> Analizando datos académicos...';
+                    } else if (progress < 60) {
+                        progressStatus.innerHTML = '<i class="bi bi-bar-chart" aria-hidden="true"></i> Procesando patrones de comportamiento...';
+                    } else if (progress < 80) {
+                        progressStatus.innerHTML = '<i class="bi bi-brain" aria-hidden="true"></i> Aplicando modelo de IA...';
+                    } else {
+                        progressStatus.innerHTML = '<i class="bi bi-check-circle" aria-hidden="true"></i> Finalizando análisis...';
+                    }
+                }, 300);
+
+                // Enviar el formulario después de un breve retraso
+                setTimeout(function() {
+                    // Completar la barra de progreso
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    progressStatus.innerHTML = '<i class="bi bi-check-circle" aria-hidden="true"></i> ¡Procesamiento completado!';
+
+                    // Enviar el formulario
+                    form.submit();
+                }, 2500);
+
+                // Cerrar modal
+                confirmModal.hide();
+            });
+
+            // ============================================
+            // 3. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 4. ANIMACIÓN DE CONTADORES
+            // ============================================
+            function animateStats() {
+                const statNumbers = document.querySelectorAll('.stats-card-ia .stats-number');
+                statNumbers.forEach(function(element) {
+                    const text = element.textContent;
+                    const num = parseInt(text.replace(/,/g, ''));
+                    if (!isNaN(num) && num > 0) {
+                        const observer = new IntersectionObserver(function(entries) {
+                            entries.forEach(function(entry) {
+                                if (entry.isIntersecting) {
+                                    let current = 0;
+                                    const increment = Math.ceil(num / 30);
+                                    const interval = setInterval(function() {
+                                        current += increment;
+                                        if (current >= num) {
+                                            current = num;
+                                            clearInterval(interval);
+                                        }
+                                        element.textContent = current;
+                                    }, 30);
+                                    observer.unobserve(element);
+                                }
+                            });
+                        });
+                        observer.observe(element);
+                    }
+                });
+            }
+
+            setTimeout(animateStats, 300);
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de actualización de riesgos IA cargada');
+        });
+    </script>
+{% endblock %}

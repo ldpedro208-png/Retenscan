@@ -1,0 +1,874 @@
+<!-- templates/layout/mensajes/mensaje_enviar.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Enviar Mensaje - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h5 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-floating-custom {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-floating-custom .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-floating-custom .form-label .required {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-floating-custom .form-control,
+        .form-floating-custom .form-select {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .form-floating-custom .form-control:focus,
+        .form-floating-custom .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .form-floating-custom .form-control.is-invalid,
+        .form-floating-custom .form-select.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-floating-custom .form-control.is-invalid:focus,
+        .form-floating-custom .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+
+        .form-floating-custom .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .form-floating-custom .form-text .icon {
+            margin-right: 0.25rem;
+        }
+
+        /* ============================================
+           CONTADOR DE CARACTERES
+           ============================================ */
+        .char-counter {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .char-counter .count {
+            font-weight: 600;
+        }
+
+        .char-counter .count.warning {
+            color: #ffc107;
+        }
+
+        .char-counter .count.danger {
+            color: #dc3545;
+        }
+
+        /* ============================================
+           ALERTA DE RESPUESTA
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        .alert-custom.alert-info {
+            background: #e7f3ff;
+            color: #0d6efd;
+            border-left: 4px solid #0d6efd;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-outline-primary {
+            border: 1px solid #0d6efd;
+            color: #0d6efd;
+            background: transparent;
+        }
+
+        .btn-action.btn-outline-primary:hover {
+            background: #0d6efd;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .form-card .card-header h5 {
+                font-size: 1.1rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-action.btn-outline-primary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h5 {
+                font-size: 1rem;
+            }
+
+            .form-floating-custom .form-label {
+                font-size: 0.85rem;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .char-counter {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .form-floating-custom .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-floating-custom .form-control:focus,
+            .form-floating-custom .form-select:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-floating-custom .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-text {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-select option {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .char-counter {
+                color: #8a8a9a;
+            }
+
+            .alert-custom.alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+
+            .btn-action.btn-outline-primary {
+                border-color: #4dabf7;
+                color: #4dabf7;
+            }
+
+            .btn-action.btn-outline-primary:hover {
+                background: #4dabf7;
+                color: #1a1a2e;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'mensaje_list' %}" class="text-decoration-none">
+                    <i class="bi bi-envelope" aria-hidden="true"></i> Mensajes
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-envelope-plus" aria-hidden="true"></i> Nuevo Mensaje
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-envelope-plus fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h5 class="mb-0">Enviar Nuevo Mensaje</h5>
+                            <small>
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Completa los campos para enviar un mensaje
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <form method="post" id="mensajeForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ============================================ -->
+                        <!-- DESTINATARIO                                -->
+                        <!-- ============================================ -->
+                        <div class="form-floating-custom">
+                            <label for="destinatario_id" class="form-label">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                Destinatario
+                                <span class="required">*</span>
+                            </label>
+                            <select name="destinatario_id" id="destinatario_id" class="form-select" required
+                                    aria-describedby="destinatarioHelp">
+                                <option value="">Seleccionar destinatario...</option>
+                                {% for usuario in usuarios_disponibles %}
+                                    <option value="{{ usuario.id }}" 
+                                            {% if destinatario_seleccionado == usuario.id %}selected{% endif %}>
+                                        {{ usuario.get_full_name|default:usuario.username }}
+                                        <span class="text-muted">({{ usuario.username }})</span>
+                                        <span class="badge bg-secondary ms-1">{{ usuario.get_rol_display }}</span>
+                                        {% if usuario.idUniversidad %}
+                                            <span class="text-muted">- {{ usuario.idUniversidad.nombre }}</span>
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div id="destinatarioHelp" class="form-text">
+                                <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                Selecciona el usuario al que deseas enviar el mensaje
+                            </div>
+                            {% if form.destinatario_id.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    {{ form.destinatario_id.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ============================================ -->
+                        <!-- ASUNTO                                      -->
+                        <!-- ============================================ -->
+                        <div class="form-floating-custom">
+                            <label for="asunto" class="form-label">
+                                <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                                Asunto
+                                <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="asunto" 
+                                   id="asunto" 
+                                   class="form-control" 
+                                   value="{{ asunto_inicial|default:'' }}"
+                                   placeholder="Ej: Consulta sobre tu situación académica" 
+                                   required
+                                   maxlength="200"
+                                   aria-describedby="asuntoHelp">
+                            <div id="asuntoHelp" class="form-text">
+                                <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                Un asunto breve y descriptivo (máx. 200 caracteres)
+                            </div>
+                            <div class="char-counter">
+                                <span class="count" id="asuntoCount">0</span>/200
+                            </div>
+                            {% if form.asunto.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    {{ form.asunto.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ============================================ -->
+                        <!-- CONTENIDO                                   -->
+                        <!-- ============================================ -->
+                        <div class="form-floating-custom">
+                            <label for="contenido" class="form-label">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                Mensaje
+                                <span class="required">*</span>
+                            </label>
+                            <textarea name="contenido" 
+                                      id="contenido" 
+                                      class="form-control" 
+                                      rows="6" 
+                                      placeholder="Escribe tu mensaje aquí..."
+                                      required
+                                      maxlength="5000"
+                                      aria-describedby="contenidoHelp">{{ contenido_inicial|default:'' }}</textarea>
+                            <div id="contenidoHelp" class="form-text">
+                                <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                Escribe tu mensaje de forma clara y concisa (máx. 5000 caracteres)
+                            </div>
+                            <div class="char-counter">
+                                <span class="count" id="contenidoCount">0</span>/5000
+                            </div>
+                            {% if form.contenido.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    {{ form.contenido.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ============================================ -->
+                        <!-- RESPUESTA A MENSAJE                        -->
+                        <!-- ============================================ -->
+                        {% if mensaje_padre %}
+                            <input type="hidden" name="mensaje_padre_id" value="{{ mensaje_padre.pk }}">
+                            <div class="alert-custom alert-info" role="alert">
+                                <i class="bi bi-reply alert-icon" aria-hidden="true"></i>
+                                <div class="alert-content">
+                                    <div class="alert-title">Respondiendo a:</div>
+                                    <p class="mb-0">
+                                        <strong>{{ mensaje_padre.asunto }}</strong>
+                                        <br>
+                                        <span class="text-muted">
+                                            De: {{ mensaje_padre.remitente.get_full_name|default:mensaje_padre.remitente.username }}
+                                            <span class="mx-1">•</span>
+                                            {{ mensaje_padre.fecha_envio|date:"d/m/Y H:i" }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- ============================================ -->
+                        <!-- ERRORES DEL FORMULARIO                      -->
+                        <!-- ============================================ -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- ============================================ -->
+                        <!-- BOTONES DE ACCIÓN                           -->
+                        <!-- ============================================ -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'mensaje_list' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al listado de mensajes">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="submit" 
+                                        name="submit_action" 
+                                        value="enviar_otro" 
+                                        class="btn btn-outline-primary btn-action"
+                                        aria-label="Enviar mensaje y crear otro">
+                                    <i class="bi bi-send" aria-hidden="true"></i> Enviar y Crear Otro
+                                </button>
+                                <button type="submit" 
+                                        name="submit_action" 
+                                        value="enviar_ver" 
+                                        class="btn btn-primary btn-action"
+                                        aria-label="Enviar mensaje y ver detalles">
+                                    <i class="bi bi-send-check" aria-hidden="true"></i> Enviar Mensaje
+                                </button>
+                            </div>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de envío -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                        Confirmar Envío
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-send" style="font-size: 3rem; color: #0d6efd;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás seguro de enviar este mensaje?</h5>
+                        <p class="text-muted" id="confirmInfo"></p>
+                        <div class="alert alert-info text-start">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <strong>Destinatario:</strong> <span id="confirmDestinatario"></span>
+                            <br>
+                            <strong>Asunto:</strong> <span id="confirmAsunto"></span>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Revisar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmSend">
+                        <i class="bi bi-send" aria-hidden="true"></i> Confirmar Envío
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('mensajeForm');
+            const destinatarioSelect = document.getElementById('destinatario_id');
+            const asuntoInput = document.getElementById('asunto');
+            const contenidoInput = document.getElementById('contenido');
+            const asuntoCount = document.getElementById('asuntoCount');
+            const contenidoCount = document.getElementById('contenidoCount');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmSend = document.getElementById('confirmSend');
+
+            // ============================================
+            // 1. CONTADOR DE CARACTERES
+            // ============================================
+            function updateCharCount(input, counter, max) {
+                const length = input.value.length;
+                counter.textContent = length;
+                
+                if (length > max * 0.9) {
+                    counter.classList.add('warning');
+                } else {
+                    counter.classList.remove('warning');
+                }
+                
+                if (length > max) {
+                    counter.classList.add('danger');
+                } else {
+                    counter.classList.remove('danger');
+                }
+            }
+
+            if (asuntoInput && asuntoCount) {
+                asuntoInput.addEventListener('input', function() {
+                    updateCharCount(this, asuntoCount, 200);
+                });
+                // Inicializar contador
+                updateCharCount(asuntoInput, asuntoCount, 200);
+            }
+
+            if (contenidoInput && contenidoCount) {
+                contenidoInput.addEventListener('input', function() {
+                    updateCharCount(this, contenidoCount, 5000);
+                });
+                // Inicializar contador
+                updateCharCount(contenidoInput, contenidoCount, 5000);
+            }
+
+            // ============================================
+            // 2. VALIDACIÓN ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                // Validar que se haya seleccionado un destinatario
+                if (!destinatarioSelect.value) {
+                    e.preventDefault();
+                    destinatarioSelect.classList.add('is-invalid');
+                    destinatarioSelect.focus();
+                    showToast('Por favor selecciona un destinatario.', 'warning');
+                    return false;
+                }
+
+                // Validar asunto
+                if (!asuntoInput.value.trim()) {
+                    e.preventDefault();
+                    asuntoInput.classList.add('is-invalid');
+                    asuntoInput.focus();
+                    showToast('Por favor escribe un asunto.', 'warning');
+                    return false;
+                }
+
+                // Validar contenido
+                if (!contenidoInput.value.trim()) {
+                    e.preventDefault();
+                    contenidoInput.classList.add('is-invalid');
+                    contenidoInput.focus();
+                    showToast('Por favor escribe el mensaje.', 'warning');
+                    return false;
+                }
+
+                // Mostrar modal de confirmación
+                const destinatarioText = destinatarioSelect.options[destinatarioSelect.selectedIndex]?.text || '';
+                document.getElementById('confirmDestinatario').textContent = destinatarioText;
+                document.getElementById('confirmAsunto').textContent = asuntoInput.value;
+                
+                // Detener el envío normal para mostrar modal
+                e.preventDefault();
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 3. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmSend.addEventListener('click', function() {
+                // Deshabilitar botón para evitar doble envío
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Enviando...';
+                
+                // Obtener el valor del botón que disparó el submit original
+                const submitAction = document.querySelector('button[name="submit_action"]:focus')?.value || 'enviar_ver';
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'submit_action';
+                actionInput.value = submitAction;
+                form.appendChild(actionInput);
+                
+                // Enviar el formulario
+                form.submit();
+                confirmModal.hide();
+            });
+
+            // ============================================
+            // 4. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. ENFOQUE AUTOMÁTICO
+            // ============================================
+            setTimeout(function() {
+                if (destinatarioSelect) {
+                    destinatarioSelect.focus();
+                }
+            }, 300);
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de enviar mensaje cargada');
+            {% if mensaje_padre %}
+                console.log('ℹ️ Respondiendo al mensaje: {{ mensaje_padre.asunto|escapejs }}');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

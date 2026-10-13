@@ -1,0 +1,657 @@
+<!-- templates/layout/reunion/reunion_detail.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ reunion.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --detail-card-radius: 1rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETA PRINCIPAL
+           ============================================ */
+        .detail-card {
+            border: none;
+            border-radius: var(--detail-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .detail-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .detail-card .card-header {
+            border: none;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-card .card-header h5 {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .detail-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           INFORMACIÓN DE LA REUNIÓN
+           ============================================ */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            border: 1px solid #e9ecef;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .info-item:hover {
+            background: #f0f4ff;
+            border-color: #0d6efd;
+        }
+
+        .info-item .info-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #6c757d;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .info-item .info-value {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #2d3748;
+            margin-top: 0.25rem;
+        }
+
+        .info-item .info-value .sub {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 400;
+        }
+
+        /* ============================================
+           DESCRIPCIÓN Y NOTAS
+           ============================================ */
+        .content-box {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-left: 4px solid #0d6efd;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-box .content-label {
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-box .content-text {
+            color: #2d3748;
+            margin-top: 0.25rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           BADGES DE ESTADO
+           ============================================ */
+        .badge-status {
+            font-size: 0.85rem;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge-status i {
+            font-size: 1rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-success:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(25, 135, 84, 0.4);
+        }
+
+        .btn-action.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .detail-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .detail-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .detail-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .detail-card .card-header h5 {
+                font-size: 1.1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.75rem;
+            }
+
+            .info-item {
+                padding: 0.75rem 1rem;
+            }
+
+            .info-item .info-value {
+                font-size: 0.95rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .detail-card .card-body {
+                padding: 1rem;
+            }
+
+            .detail-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .detail-card .card-header h5 {
+                font-size: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .info-item .info-value {
+                font-size: 0.9rem;
+            }
+
+            .badge-status {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.8rem;
+            }
+
+            .content-box {
+                padding: 0.75rem 1rem;
+            }
+
+            .content-box .content-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .detail-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .detail-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .detail-card .card-header {
+                background: #252540;
+                border-bottom-color: #2d2d44;
+            }
+
+            .detail-card .card-header h5 {
+                color: #ecf0f1;
+            }
+
+            .info-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .info-item:hover {
+                background: #2d2d44;
+                border-color: #4d4d6a;
+            }
+
+            .info-item .info-label {
+                color: #8a8a9a;
+            }
+
+            .info-item .info-value {
+                color: #ecf0f1;
+            }
+
+            .info-item .info-value .sub {
+                color: #8a8a9a;
+            }
+
+            .content-box {
+                background: #252540;
+                border-left-color: #4dabf7;
+            }
+
+            .content-box .content-label {
+                color: #c8d6e5;
+            }
+
+            .content-box .content-text {
+                color: #ecf0f1;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reunion_list' %}" class="text-decoration-none">
+                    <i class="bi bi-calendar-event" aria-hidden="true"></i> Reuniones
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-eye" aria-hidden="true"></i> {{ reunion.titulo|truncatechars:30 }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card detail-card">
+                <!-- Header -->
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                        {{ reunion.titulo }}
+                    </h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge-status 
+                            {% if reunion.estado == 'programada' %}bg-primary text-white
+                            {% elif reunion.estado == 'completada' %}bg-success text-white
+                            {% else %}bg-danger text-white{% endif %}">
+                            <i class="bi 
+                                {% if reunion.estado == 'programada' %}bi-clock
+                                {% elif reunion.estado == 'completada' %}bi-check-circle
+                                {% else %}bi-x-circle{% endif %}" 
+                                aria-hidden="true"></i>
+                            {{ reunion.get_estado_display }}
+                        </span>
+                        <a href="{% url 'reunion_list' %}" 
+                           class="btn btn-sm btn-secondary btn-action"
+                           aria-label="Volver al listado de reuniones">
+                            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+                        </a>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Información de la reunión -->
+                    <section aria-label="Información de la reunión" class="info-grid">
+                        <!-- Estudiante -->
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                Estudiante
+                            </div>
+                            <div class="info-value">
+                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                <br>
+                                <span class="sub">
+                                    <i class="bi bi-card-text" aria-hidden="true"></i>
+                                    {{ reunion.estudiante.carnet }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-flag" aria-hidden="true"></i>
+                                Estado
+                            </div>
+                            <div class="info-value">
+                                <span class="badge-status 
+                                    {% if reunion.estado == 'programada' %}bg-primary text-white
+                                    {% elif reunion.estado == 'completada' %}bg-success text-white
+                                    {% else %}bg-danger text-white{% endif %}">
+                                    <i class="bi 
+                                        {% if reunion.estado == 'programada' %}bi-clock
+                                        {% elif reunion.estado == 'completada' %}bi-check-circle
+                                        {% else %}bi-x-circle{% endif %}" 
+                                        aria-hidden="true"></i>
+                                    {{ reunion.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Fecha y Hora -->
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-calendar" aria-hidden="true"></i>
+                                Fecha y Hora
+                            </div>
+                            <div class="info-value">
+                                <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                {{ reunion.fecha_programada|date:"d/m/Y" }}
+                                <br>
+                                <span class="sub">
+                                    <i class="bi bi-clock" aria-hidden="true"></i>
+                                    {{ reunion.fecha_programada|date:"H:i" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Duración -->
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                Duración
+                            </div>
+                            <div class="info-value">
+                                <i class="bi bi-hourglass" aria-hidden="true"></i>
+                                {{ reunion.duracion }} minutos
+                                <br>
+                                <span class="sub">
+                                    <i class="bi bi-clock" aria-hidden="true"></i>
+                                    {% if reunion.duracion <= 30 %}
+                                        Reunión corta
+                                    {% elif reunion.duracion <= 60 %}
+                                        Reunión estándar
+                                    {% else %}
+                                        Reunión extensa
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Ubicación -->
+                    {% if reunion.ubicacion %}
+                        <div class="content-box">
+                            <div class="content-label">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                Ubicación
+                            </div>
+                            <div class="content-text">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                {{ reunion.ubicacion }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Descripción -->
+                    {% if reunion.descripcion %}
+                        <div class="content-box">
+                            <div class="content-label">
+                                <i class="bi bi-card-text" aria-hidden="true"></i>
+                                Descripción
+                            </div>
+                            <div class="content-text">
+                                {{ reunion.descripcion|linebreaks }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Notas -->
+                    {% if reunion.notas %}
+                        <div class="content-box" style="border-left-color: #ffc107;">
+                            <div class="content-label">
+                                <i class="bi bi-sticky" aria-hidden="true"></i>
+                                Notas de la Reunión
+                            </div>
+                            <div class="content-text">
+                                {{ reunion.notas|linebreaks }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Información adicional -->
+                    <div class="text-muted small mt-3">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <strong>ID:</strong> #{{ reunion.idReunion }}
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                        <strong>Creada:</strong> {{ reunion.created_at|date:"d/m/Y H:i" }}
+                        {% if reunion.updated_at != reunion.created_at %}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                            <strong>Actualizada:</strong> {{ reunion.updated_at|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Acciones -->
+                    <footer class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{% url 'reunion_list' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Volver al listado de reuniones">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+                            </a>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if reunion.estado == 'programada' %}
+                                <a href="{% url 'reunion_completar' reunion.idReunion %}" 
+                                   class="btn btn-success btn-action"
+                                   aria-label="Marcar reunión como completada"
+                                   onclick="return confirm('¿Marcar esta reunión como completada?');">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> 
+                                    Marcar como Completada
+                                </a>
+                                <a href="{% url 'reunion_cancelar' reunion.idReunion %}" 
+                                   class="btn btn-danger btn-action"
+                                   aria-label="Cancelar reunión"
+                                   onclick="return confirm('¿Estás seguro de cancelar esta reunión? Esta acción no se puede deshacer.');">
+                                    <i class="bi bi-x-circle" aria-hidden="true"></i> 
+                                    Cancelar Reunión
+                                </a>
+                            {% endif %}
+                            {% if reunion.estado == 'completada' %}
+                                <a href="#" 
+                                   class="btn btn-outline-secondary btn-action"
+                                   aria-label="Descargar reporte de la reunión">
+                                    <i class="bi bi-download" aria-hidden="true"></i> 
+                                    Descargar Reporte
+                                </a>
+                            {% endif %}
+                        </div>
+                    </footer>
+                </div>
+            </article>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. CONFIRMAR CANCELACIÓN
+            // ============================================
+            const cancelBtn = document.querySelector('a[href*="reunion_cancelar"]');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function(e) {
+                    const confirmar = confirm(
+                        '⚠️ ¿Estás seguro de cancelar esta reunión?\n\n' +
+                        'Título: {{ reunion.titulo|escapejs }}\n' +
+                        'Estudiante: {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}\n\n' +
+                        'Esta acción no se puede deshacer.'
+                    );
+                    if (!confirmar) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // ============================================
+            // 2. CONFIRMAR COMPLETAR
+            // ============================================
+            const completeBtn = document.querySelector('a[href*="reunion_completar"]');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', function(e) {
+                    const confirmar = confirm(
+                        '✅ ¿Marcar esta reunión como completada?\n\n' +
+                        'Título: {{ reunion.titulo|escapejs }}\n' +
+                        'Estudiante: {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}'
+                    );
+                    if (!confirmar) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // ============================================
+            // 3. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 4. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de detalle de reunión cargada');
+            console.log('ℹ️ Estado: {{ reunion.estado }}');
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,120 @@
+<!-- chat/templates/chat/widget.html -->
+<div id="chat-widget" data-username="{{ user.username }}">
+    <!-- Botón burbuja -->
+    <button id="chat-toggle" class="chat-bubble" aria-label="Abrir chat">
+        <span class="chat-icon">💬</span>
+        <span class="notification-badge" id="unread-count" style="display:none;">0</span>
+    </button>
+    
+    <!-- Ventana de chat -->
+    <div id="chat-window" style="display:none;">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <h3>💬 Chat</h3>
+                <div class="chat-header-status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span class="status-text" id="status-text">Conectando...</span>
+                </div>
+            </div>
+            
+            <!-- ✅ Botón de materias con contador -->
+            <button id="subjects-toggle" class="subjects-toggle" title="Ver canales por materia">
+                <span class="subjects-icon">📚</span>
+                <span class="subjects-count" id="subjects-count">0</span>
+            </button>
+            
+            <button id="chat-close" class="chat-close" aria-label="Cerrar chat">✕</button>
+        </div>
+        
+        <!-- ============================================ -->
+        <!-- ✅ PANEL DE MATERIAS (oculto por defecto) -->
+        <!-- ============================================ -->
+        <div id="subjects-panel" class="subjects-panel" style="display:none;">
+            <div class="subjects-panel-header">
+                <button id="subjects-back" class="back-button">← Volver</button>
+                <span class="subjects-title">📚 Canales por Materia</span>
+                <span class="subjects-total" id="subjects-total">0</span>
+            </div>
+            
+            <div class="subjects-search">
+                <input 
+                    type="text" 
+                    id="subjects-search-input" 
+                    placeholder="🔍 Buscar materia..." 
+                    autocomplete="off"
+                >
+            </div>
+            
+            <div class="subjects-list" id="subjects-list-widget">
+                <div class="subjects-empty">
+                    <div class="subjects-empty-icon">📚</div>
+                    <p>Cargando materias...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================ -->
+        <!-- LISTA DE CONVERSACIONES -->
+        <!-- ============================================ -->
+        <div id="chat-conversations">
+            <div class="conversation-search">
+                <input type="text" id="search-users" placeholder="Buscar usuarios..." />
+            </div>
+            <div id="conversation-list">
+                <div class="loading-conversations">Cargando conversaciones...</div>
+            </div>
+        </div>
+        
+        <!-- ============================================ -->
+        <!-- ÁREA DE MENSAJES -->
+        <!-- ============================================ -->
+        <div id="chat-messages-container" style="display:none;">
+            <div class="chat-messages-header">
+                <button id="back-to-conversations" class="back-button">← Volver</button>
+                <span id="chat-with-user" class="chat-with-user">Chat con: </span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="no-messages">No hay mensajes aún</div>
+            </div>
+            
+            <!-- Indicador de escritura -->
+            <div class="typing-indicator" id="typing-indicator" style="display:none;">
+                <span id="typing-text">Escribiendo</span>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <!-- Input -->
+            <div class="chat-input">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    placeholder="Escribe un mensaje..." 
+                    autocomplete="off"
+                    maxlength="1000"
+                >
+                <button id="chat-send">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pasar datos del usuario al JS -->
+<script>
+    window.USER_DATA = {
+        username: "{{ user.username }}",
+        id: {{ user.id }},
+        rol: "{{ user.rol }}",
+        isAdmin: {% if user.is_superuser or user.is_staff or user.es_admin_universidad %}true{% else %}false{% endif %}
+    };
+</script>
+
+<!-- Cargar CSS y JS del chat -->
+{% load static %}
+<link rel="stylesheet" href="{% static 'chat/css/chat-widget.css' %}">
+<script src="{% static 'chat/js/chat-widget.js' %}"></script>

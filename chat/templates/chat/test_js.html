@@ -1,0 +1,22 @@
+<!-- chat/templates/chat/test_js.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JS</title>
+</head>
+<body>
+    <h1>Test de carga de JS</h1>
+    <div id="test-output"></div>
+    
+    {% load static %}
+    <script src="{% static 'chat/js/chat-widget.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ JavaScript cargado');
+            console.log('🔍 Buscando CONFIG:', typeof CONFIG);
+            console.log('🔍 Buscando API_URLS:', typeof API_URLS);
+            document.getElementById('test-output').textContent = 'JavaScript cargado correctamente';
+        });
+    </script>
+</body>
+</html>

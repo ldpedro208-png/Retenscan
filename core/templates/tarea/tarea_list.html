@@ -1,0 +1,899 @@
+<!-- templates/layout/tarea/tarea_list.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Tareas" }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --list-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TABS
+           ============================================ */
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            transition: all var(--transition-speed) ease;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0d6efd;
+            background: #f8f9fa;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            background: #ffffff;
+            border-bottom: 3px solid #0d6efd;
+        }
+
+        .nav-tabs .nav-link .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            margin-left: 0.3rem;
+        }
+
+        .nav-tabs .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        /* ============================================
+           TARJETA DE TAREA
+           ============================================ */
+        .tarea-card {
+            border: none;
+            border-radius: var(--list-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tarea-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .tarea-card .card-header {
+            border: none;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tarea-card .card-header .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .tarea-card .card-body {
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .tarea-card .card-body .card-text {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .tarea-card .card-body .meta-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tarea-card .card-footer {
+            background: transparent;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1rem;
+        }
+
+        /* ============================================
+           BADGES DE ESTADO
+           ============================================ */
+        .badge-status {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action-sm {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.375rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-action-sm i {
+            font-size: 0.85rem;
+        }
+
+        .btn-action-sm:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action-sm:active {
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tarea-card:nth-child(1) { animation-delay: 0.02s; }
+        .tarea-card:nth-child(2) { animation-delay: 0.04s; }
+        .tarea-card:nth-child(3) { animation-delay: 0.06s; }
+        .tarea-card:nth-child(4) { animation-delay: 0.08s; }
+        .tarea-card:nth-child(5) { animation-delay: 0.10s; }
+        .tarea-card:nth-child(6) { animation-delay: 0.12s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .tarea-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action-sm:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .nav-tabs .nav-link:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .tarea-card .card-header .card-title {
+                font-size: 0.95rem;
+            }
+
+            .tarea-card .card-body .card-text {
+                font-size: 0.85rem;
+            }
+
+            .btn-action-sm {
+                padding: 0.15rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .btn-action-sm i {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-tabs .nav-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .tarea-card .card-header {
+                flex-wrap: wrap;
+            }
+
+            .tarea-card .card-footer .d-flex {
+                gap: 0.3rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .tarea-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .tarea-card .card-body .card-text {
+                color: #c8d6e5;
+            }
+
+            .tarea-card .card-body .meta-info {
+                color: #8a8a9a;
+            }
+
+            .tarea-card .card-footer {
+                border-top-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-tabs .nav-link {
+                color: #8a8a9a;
+            }
+
+            .nav-tabs .nav-link:hover {
+                color: #4dabf7;
+                background: #252540;
+            }
+
+            .nav-tabs .nav-link.active {
+                color: #4dabf7;
+                background: #2d2d2d;
+                border-bottom-color: #4dabf7;
+            }
+
+            .btn-action-sm.btn-outline-secondary {
+                color: #c8d6e5;
+                border-color: #4d4d5d;
+            }
+
+            .btn-action-sm.btn-outline-secondary:hover {
+                background: #3d3d4d;
+                border-color: #5d5d6d;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           BADGE DE TOTAL
+           ============================================ */
+        .total-badge {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.8rem;
+            background: #f8f9fa;
+            border-radius: 50px;
+            color: #495057;
+        }
+
+        .total-badge strong {
+            color: #0d6efd;
+        }
+
+        .total-badge .badge {
+            font-size: 0.7rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-list-task" aria-hidden="true"></i> {{ titulo|default:"Tareas" }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-list-task" aria-hidden="true"></i> 
+            {{ titulo|default:"Tareas" }}
+            <span class="badge bg-secondary ms-2" id="totalBadge">
+                {{ tareas_activas|length|add:tareas_archivadas|length }}
+            </span>
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                <a href="{% url 'tarea_create' %}" 
+                   class="btn btn-primary btn-action"
+                   aria-label="Crear nueva tarea">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> Nueva Tarea
+                </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- ESTADÍSTICAS RÁPIDAS                        -->
+    <!-- ============================================ -->
+    <div class="row g-2 mb-3">
+        <div class="col-auto">
+            <span class="total-badge">
+                <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                Total: <strong>{{ tareas_activas|length|add:tareas_archivadas|length }}</strong>
+            </span>
+        </div>
+        <div class="col-auto">
+            <span class="total-badge">
+                <i class="bi bi-check-circle text-success" aria-hidden="true"></i> 
+                Activas: <span class="badge bg-primary">{{ tareas_activas|length }}</span>
+            </span>
+        </div>
+        <div class="col-auto">
+            <span class="total-badge">
+                <i class="bi bi-archive text-secondary" aria-hidden="true"></i> 
+                Archivadas: <span class="badge bg-secondary">{{ tareas_archivadas|length }}</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TABS                                        -->
+    <!-- ============================================ -->
+    <ul class="nav nav-tabs mb-4" id="tareaTabs" role="tablist" aria-label="Filtro de tareas">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" 
+                    id="activas-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#activas" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="activas" 
+                    aria-selected="true">
+                <i class="bi bi-list-task" aria-hidden="true"></i> 
+                Activas
+                <span class="badge bg-primary">{{ tareas_activas|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="archivadas-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#archivadas" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="archivadas" 
+                    aria-selected="false">
+                <i class="bi bi-archive" aria-hidden="true"></i> 
+                Archivadas
+                <span class="badge bg-secondary">{{ tareas_archivadas|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO DE TABS                           -->
+    <!-- ============================================ -->
+    <div class="tab-content" id="tareaTabsContent">
+        <!-- ============================================ -->
+        <!-- TAB: TAREAS ACTIVAS                         -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade show active" 
+             id="activas" 
+             role="tabpanel" 
+             aria-labelledby="activas-tab">
+            
+            {% if tareas_activas %}
+                <section aria-label="Tareas activas">
+                    <div class="row g-4" id="tareasGrid">
+                        {% for tarea in tareas_activas %}
+                            <div class="col-md-6 col-lg-4">
+                                <article class="card tarea-card" tabindex="0">
+                                    <!-- Header -->
+                                    <header class="card-header 
+                                        {% if tarea.estado == 'publicada' %}bg-success text-white
+                                        {% elif tarea.estado == 'borrador' %}bg-warning text-dark
+                                        {% else %}bg-secondary text-white{% endif %}">
+                                        <h5 class="card-title">{{ tarea.titulo|truncatechars:30 }}</h5>
+                                        <span class="badge-status 
+                                            {% if tarea.estado == 'publicada' %}bg-light text-success
+                                            {% elif tarea.estado == 'borrador' %}bg-dark text-warning
+                                            {% else %}bg-light text-secondary{% endif %}">
+                                            {{ tarea.get_estado_display }}
+                                        </span>
+                                    </header>
+
+                                    <!-- Body -->
+                                    <div class="card-body">
+                                        <p class="card-text">
+                                            {{ tarea.descripcion|truncatechars:100|default:"Sin descripción" }}
+                                        </p>
+
+                                        <div class="meta-info">
+                                            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                            Publicación: {{ tarea.fecha_publicacion|date:"d/m/Y" }}
+                                        </div>
+                                        <div class="meta-info">
+                                            <i class="bi bi-clock" aria-hidden="true"></i>
+                                            Límite: {{ tarea.fecha_limite|date:"d/m/Y H:i" }}
+                                        </div>
+
+                                        <!-- Admin/Profesor: Información detallada -->
+                                        {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                                            <div class="meta-info mt-1">
+                                                <i class="bi bi-people" aria-hidden="true"></i>
+                                                Progreso: {{ tarea.get_progreso|default:0 }}%
+                                            </div>
+                                            <div class="meta-info">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                                Creador: {{ tarea.creador.get_full_name|default:tarea.creador.username }}
+                                            </div>
+                                            <div class="meta-info">
+                                                <i class="bi bi-star" aria-hidden="true"></i>
+                                                Puntaje: {{ tarea.puntaje_maximo|default:"-" }} pts
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Estudiante: Estado de la tarea -->
+                                        {% if user_rol == 'estudiante' %}
+                                            {% with asignacion=tarea.tareaasignacion_set.all|first %}
+                                                {% if asignacion %}
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">Tu estado:</small>
+                                                        <br>
+                                                        {% if asignacion.entregada %}
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-check-circle" aria-hidden="true"></i> Entregada
+                                                            </span>
+                                                            {% if asignacion.calificada %}
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    Nota: <strong>{{ asignacion.puntaje_obtenido|default:"0" }}</strong> / {{ tarea.puntaje_maximo }}
+                                                                </small>
+                                                            {% endif %}
+                                                        {% elif tarea.esta_activa %}
+                                                            <span class="badge bg-warning text-dark">
+                                                                <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">
+                                                                <i class="bi bi-lock" aria-hidden="true"></i> Cerrada
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Footer con botones -->
+                                    <footer class="card-footer">
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <!-- Ver - Siempre visible -->
+                                            <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+                                               class="btn btn-sm btn-info btn-action-sm"
+                                               aria-label="Ver detalles de {{ tarea.titulo }}">
+                                                <i class="bi bi-eye" aria-hidden="true"></i> Ver
+                                            </a>
+
+                                            <!-- Estudiante: Entregar -->
+                                            {% if user_rol == 'estudiante' %}
+                                                {% with asignacion=tarea.tareaasignacion_set.all|first %}
+                                                    {% if asignacion %}
+                                                        {% if not asignacion.entregada and tarea.esta_activa %}
+                                                            <a href="{% url 'tarea_entregar' tarea.idTarea %}" 
+                                                               class="btn btn-sm btn-success btn-action-sm"
+                                                               aria-label="Entregar tarea {{ tarea.titulo }}">
+                                                                <i class="bi bi-pencil-square" aria-hidden="true"></i> Entregar
+                                                            </a>
+                                                        {% endif %}
+                                                        {% if asignacion.calificada %}
+                                                            <a href="{% url 'tarea_resultados' tarea.idTarea %}" 
+                                                               class="btn btn-sm btn-secondary btn-action-sm"
+                                                               aria-label="Ver resultados de {{ tarea.titulo }}">
+                                                                <i class="bi bi-bar-chart" aria-hidden="true"></i> Ver Nota
+                                                            </a>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+
+                                            <!-- Admin/Profesor creador - Tareas activas -->
+                                            {% if tarea.estado != 'archivada' %}
+                                                {% if user_rol == 'admin' or user_rol == 'profesor' and tarea.creador == request.user %}
+                                                    <a href="{% url 'tarea_edit' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-warning btn-action-sm"
+                                                       aria-label="Editar tarea {{ tarea.titulo }}">
+                                                        <i class="bi bi-pencil" aria-hidden="true"></i> Editar
+                                                    </a>
+                                                    <a href="{% url 'tarea_asignar' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-primary btn-action-sm"
+                                                       aria-label="Asignar tarea {{ tarea.titulo }}">
+                                                        <i class="bi bi-person-plus" aria-hidden="true"></i> Asignar
+                                                    </a>
+                                                    <a href="{% url 'tarea_calificar' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-success btn-action-sm"
+                                                       aria-label="Calificar tarea {{ tarea.titulo }}">
+                                                        <i class="bi bi-check2-square" aria-hidden="true"></i> Calificar
+                                                    </a>
+                                                    <a href="{% url 'tarea_archivar' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-secondary btn-action-sm"
+                                                       aria-label="Archivar tarea {{ tarea.titulo }}"
+                                                       onclick="return confirm('¿Archivar la tarea &quot;{{ tarea.titulo }}&quot;? Los datos se conservarán.');">
+                                                        <i class="bi bi-archive" aria-hidden="true"></i> Archivar
+                                                    </a>
+                                                    <a href="{% url 'tarea_delete' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-danger btn-action-sm"
+                                                       aria-label="Eliminar tarea {{ tarea.titulo }}"
+                                                       onclick="return confirm('¿ELIMINAR DEFINITIVAMENTE la tarea &quot;{{ tarea.titulo }}&quot;? Esta acción NO se puede deshacer.');">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </footer>
+                                </article>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Paginación -->
+                {% if tareas_activas.has_other_pages %}
+                    <nav aria-label="Navegación de páginas" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if tareas_activas.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tareas_activas.previous_page_number }}" aria-label="Página anterior">
+                                        <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">
+                                        <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                                    </span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in tareas_activas.paginator.page_range %}
+                                {% if tareas_activas.number == num %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > tareas_activas.number|add:'-3' and num < tareas_activas.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}" aria-label="Página {{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tareas_activas.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tareas_activas.next_page_number }}" aria-label="Página siguiente">
+                                        Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">
+                                        Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+            {% else %}
+                <!-- Estado vacío -->
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <h5 class="empty-title">No hay tareas activas</h5>
+                    <p class="empty-description">
+                        {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                            Crea tu primera tarea para comenzar.
+                        {% else %}
+                            No hay tareas activas disponibles.
+                        {% endif %}
+                    </p>
+                    {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                        <a href="{% url 'tarea_create' %}" class="btn btn-primary btn-action mt-2">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Crear Tarea
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB: TAREAS ARCHIVADAS                      -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade" 
+             id="archivadas" 
+             role="tabpanel" 
+             aria-labelledby="archivadas-tab">
+            
+            {% if tareas_archivadas %}
+                <section aria-label="Tareas archivadas">
+                    <div class="row g-4">
+                        {% for tarea in tareas_archivadas %}
+                            <div class="col-md-6 col-lg-4">
+                                <article class="card tarea-card border-secondary" tabindex="0">
+                                    <!-- Header -->
+                                    <header class="card-header bg-secondary text-white">
+                                        <h5 class="card-title">{{ tarea.titulo|truncatechars:30 }}</h5>
+                                        <span class="badge-status bg-light text-secondary">
+                                            <i class="bi bi-archive" aria-hidden="true"></i> Archivada
+                                        </span>
+                                    </header>
+
+                                    <!-- Body -->
+                                    <div class="card-body">
+                                        <p class="card-text">
+                                            {{ tarea.descripcion|truncatechars:100|default:"Sin descripción" }}
+                                        </p>
+
+                                        <div class="meta-info">
+                                            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                            Publicación: {{ tarea.fecha_publicacion|date:"d/m/Y" }}
+                                        </div>
+                                        <div class="meta-info">
+                                            <i class="bi bi-clock" aria-hidden="true"></i>
+                                            Límite: {{ tarea.fecha_limite|date:"d/m/Y H:i" }}
+                                        </div>
+
+                                        <!-- Admin/Profesor: Estadísticas -->
+                                        {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                                            <div class="meta-info mt-1">
+                                                <i class="bi bi-people" aria-hidden="true"></i>
+                                                Entregas: {{ tarea.total_entregas|default:0 }}
+                                            </div>
+                                            <div class="meta-info">
+                                                <i class="bi bi-star" aria-hidden="true"></i>
+                                                Calificadas: {{ tarea.total_calificadas|default:0 }}
+                                            </div>
+                                            <div class="meta-info">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                                Creador: {{ tarea.creador.get_full_name|default:tarea.creador.username }}
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Estudiante: Nota -->
+                                        {% if user_rol == 'estudiante' %}
+                                            {% with asignacion=tarea.tareaasignacion_set.all|first %}
+                                                {% if asignacion and asignacion.calificada %}
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">Tu nota:</small>
+                                                        <br>
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-star" aria-hidden="true"></i> 
+                                                            {{ asignacion.puntaje_obtenido|default:"0" }} / {{ tarea.puntaje_maximo }}
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Footer con botones -->
+                                    <footer class="card-footer">
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <!-- Ver -->
+                                            <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+                                               class="btn btn-sm btn-info btn-action-sm"
+                                               aria-label="Ver detalles de {{ tarea.titulo }}">
+                                                <i class="bi bi-eye" aria-hidden="true"></i> Ver
+                                            </a>
+
+                                            <!-- Restaurar - Admin/Profesor creador -->
+                                            {% if user_rol == 'admin' or user_rol == 'profesor' and tarea.creador == request.user %}
+                                                <a href="{% url 'tarea_restaurar' tarea.idTarea %}" 
+                                                   class="btn btn-sm btn-success btn-action-sm"
+                                                   aria-label="Restaurar tarea {{ tarea.titulo }}"
+                                                   onclick="return confirm('¿Restaurar la tarea &quot;{{ tarea.titulo }}&quot;?');">
+                                                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Restaurar
+                                                </a>
+                                                <a href="{% url 'tarea_delete' tarea.idTarea %}" 
+                                                   class="btn btn-sm btn-danger btn-action-sm"
+                                                   aria-label="Eliminar tarea {{ tarea.titulo }}"
+                                                   onclick="return confirm('¿ELIMINAR DEFINITIVAMENTE la tarea &quot;{{ tarea.titulo }}&quot;? Esta acción NO se puede deshacer.');">
+                                                    <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                                                </a>
+                                            {% endif %}
+
+                                            <!-- Estudiante: Ver nota -->
+                                            {% if user_rol == 'estudiante' %}
+                                                {% with asignacion=tarea.tareaasignacion_set.all|first %}
+                                                    {% if asignacion and asignacion.calificada %}
+                                                        <a href="{% url 'tarea_resultados' tarea.idTarea %}" 
+                                                           class="btn btn-sm btn-secondary btn-action-sm"
+                                                           aria-label="Ver resultados de {{ tarea.titulo }}">
+                                                            <i class="bi bi-bar-chart" aria-hidden="true"></i> Ver Nota
+                                                        </a>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                        </div>
+                                    </footer>
+                                </article>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Paginación -->
+                {% if tareas_archivadas.has_other_pages %}
+                    <nav aria-label="Navegación de páginas" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if tareas_archivadas.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tareas_archivadas.previous_page_number }}" aria-label="Página anterior">
+                                        <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">
+                                        <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                                    </span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in tareas_archivadas.paginator.page_range %}
+                                {% if tareas_archivadas.number == num %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > tareas_archivadas.number|add:'-3' and num < tareas_archivadas.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}" aria-label="Página {{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tareas_archivadas.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tareas_archivadas.next_page_number }}" aria-label="Página siguiente">
+                                        Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">
+                                        Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                    <h5 class="empty-title">No hay tareas archivadas</h5>
+                    <p class="empty-description">
+                        Las tareas que archivas aparecerán aquí.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.tarea-card').forEach(function(card) {
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const verBtn = this.querySelector('a[href*="tarea_detail"]');
+                        if (verBtn) {
+                            verBtn.click();
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-action-sm, .nav-link').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 2. CONFIRMACIONES MEJORADAS
+            // ============================================
+            document.querySelectorAll('a[href*="tarea_archivar"]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const titulo = this.closest('.tarea-card').querySelector('.card-title')?.textContent || '';
+                    if (confirm(
+                        '📦 ¿Archivar la tarea "' + titulo.trim() + '"?\n\n' +
+                        'Los datos se conservarán y podrás restaurarla en cualquier momento.'
+                    )) {
+                        window.location.href = this.href;
+                    }
+                });
+            });
+
+            document.querySelectorAll('a[href*="tarea_delete"]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const titulo = this.closest('.tarea-card').querySelector('.card-title')?.textContent || '';
+                    if (confirm(
+                        '⚠️ ¿ELIMINAR DEFINITIVAMENTE la tarea "' + titulo.trim() + '"?\n\n' +
+                        'Esta acción NO se puede deshacer.\n' +
+                        'Todas las entregas y calificaciones se perderán permanentemente.'
+                    )) {
+                        window.location.href = this.href;
+                    }
+                });
+            });
+
+            // ============================================
+            // 3. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Listado de tareas cargado');
+            console.log('ℹ️ Activas: {{ tareas_activas|length }}, Archivadas: {{ tareas_archivadas|length }}');
+        });
+    </script>
+{% endblock %}

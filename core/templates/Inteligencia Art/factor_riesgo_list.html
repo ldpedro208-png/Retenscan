@@ -1,0 +1,779 @@
+<!-- templates/layout/Inteligencia Art/factor_riesgo_list.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Factores de Riesgo - Catálogo - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --list-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETA PRINCIPAL
+           ============================================ */
+        .list-card {
+            border: none;
+            border-radius: var(--list-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .list-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .list-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           TABLA DE FACTORES
+           ============================================ */
+        .table-factores {
+            margin-bottom: 0;
+        }
+
+        .table-factores thead th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.75rem 0.75rem;
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-factores tbody td {
+            padding: 0.75rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-factores tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-factores tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-factores tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           BADGES DE ESTADO
+           ============================================ */
+        .badge-status {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-status i {
+            margin-right: 0.25rem;
+        }
+
+        /* ============================================
+           TOGGLE SWITCH MEJORADO
+           ============================================ */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: var(--transition-speed) ease;
+            border-radius: 24px;
+        }
+
+        .toggle-switch .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: var(--transition-speed) ease;
+            border-radius: 50%;
+        }
+
+        .toggle-switch .toggle-input:checked + .toggle-slider {
+            background-color: #198754;
+        }
+
+        .toggle-switch .toggle-input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+        }
+
+        .toggle-switch .toggle-input:disabled + .toggle-slider {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-switch .toggle-input:focus-visible + .toggle-slider {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action-sm {
+            padding: 0.25rem 0.6rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-action-sm i {
+            font-size: 0.9rem;
+        }
+
+        .btn-action-sm:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action-sm:active {
+            transform: translateY(0);
+        }
+
+        .btn-action-sm.btn-outline-warning:hover {
+            box-shadow: 0 0.25rem 0.5rem rgba(255, 193, 7, 0.25);
+        }
+
+        .btn-action-sm.btn-outline-danger:hover {
+            box-shadow: 0 0.25rem 0.5rem rgba(220, 53, 69, 0.25);
+        }
+
+        /* ============================================
+           CARD DE CONSEJOS
+           ============================================ */
+        .tips-card {
+            border: none;
+            border-radius: var(--list-card-radius);
+            background: #f8f9fa;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .tips-card:hover {
+            background: #f0f4ff;
+        }
+
+        .tips-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .tips-card .card-header h6 {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .tips-card .card-body {
+            padding: 1.25rem;
+        }
+
+        .tips-card .card-body ul {
+            padding-left: 1.25rem;
+            margin-bottom: 0;
+        }
+
+        .tips-card .card-body ul li {
+            padding: 0.2rem 0;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .tips-card .card-body ul li strong {
+            color: #2d3748;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .list-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action-sm:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .table-factores thead th {
+                font-size: 0.7rem;
+                padding: 0.5rem 0.4rem;
+            }
+
+            .table-factores tbody td {
+                padding: 0.5rem 0.4rem;
+                font-size: 0.85rem;
+            }
+
+            .btn-action-sm {
+                padding: 0.15rem 0.4rem;
+                font-size: 0.75rem;
+            }
+
+            .btn-action-sm i {
+                font-size: 0.75rem;
+            }
+
+            .toggle-switch {
+                width: 36px;
+                height: 20px;
+            }
+
+            .toggle-switch .toggle-slider::before {
+                height: 14px;
+                width: 14px;
+                left: 3px;
+                bottom: 3px;
+            }
+
+            .toggle-switch .toggle-input:checked + .toggle-slider::before {
+                transform: translateX(16px);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-factores {
+                font-size: 0.8rem;
+            }
+
+            .table-factores thead th {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.3rem;
+            }
+
+            .table-factores tbody td {
+                padding: 0.3rem 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            .badge-status {
+                font-size: 0.6rem;
+                padding: 0.15rem 0.4rem;
+            }
+
+            .btn-action-sm {
+                padding: 0.1rem 0.3rem;
+                font-size: 0.7rem;
+            }
+
+            .btn-action-sm i {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .list-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .list-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .table-factores thead th {
+                background: #252540;
+                color: #c8d6e5;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-factores tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-factores tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .tips-card {
+                background: #252540;
+            }
+
+            .tips-card:hover {
+                background: #2d2d44;
+            }
+
+            .tips-card .card-header h6 {
+                color: #ecf0f1;
+            }
+
+            .tips-card .card-body ul li {
+                color: #c8d6e5;
+            }
+
+            .tips-card .card-body ul li strong {
+                color: #ecf0f1;
+            }
+
+            .btn-outline-secondary {
+                color: #c8d6e5;
+                border-color: #4d4d5d;
+            }
+
+            .btn-outline-secondary:hover {
+                background: #3d3d4d;
+                border-color: #5d5d6d;
+                color: #ecf0f1;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_riesgo' %}" class="text-decoration-none">
+                    <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-list-ul" aria-hidden="true"></i> Factores de Riesgo
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-list-ul" aria-hidden="true"></i> 
+            Factores de Riesgo
+            <span class="badge bg-secondary ms-2">{{ factores|length }}</span>
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'factor_riesgo_create' %}" 
+               class="btn btn-primary btn-action"
+               aria-label="Crear nuevo factor de riesgo">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> Nuevo Factor
+            </a>
+            <a href="{% url 'dashboard_riesgo' %}" 
+               class="btn btn-secondary btn-action"
+               aria-label="Volver al dashboard de IA">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- INFORMACIÓN                                  -->
+    <!-- ============================================ -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-info-circle fs-4 me-3 mt-1" aria-hidden="true"></i>
+            <div>
+                <strong>¿Qué son los factores de riesgo?</strong>
+                <p class="mb-0">
+                    Los factores de riesgo son las categorías que la IA utiliza para evaluar a los estudiantes.
+                    Cada factor tiene un <strong>peso</strong> que influye en el cálculo del nivel de riesgo.
+                </p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                aria-label="Cerrar"></button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LISTA DE FACTORES                           -->
+    <!-- ============================================ -->
+    <section aria-label="Lista de factores de riesgo">
+        <article class="card list-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-factores" 
+                           aria-label="Tabla de factores de riesgo">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Peso</th>
+                                <th scope="col">Descripción</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for factor in factores %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ factor.nombre }}</strong>
+                                        {% if factor.activo %}
+                                            <span class="badge-status bg-success text-white ms-1">
+                                                <i class="bi bi-check-circle" aria-hidden="true"></i> Activo
+                                            </span>
+                                        {% else %}
+                                            <span class="badge-status bg-secondary text-white ms-1">
+                                                <i class="bi bi-dash-circle" aria-hidden="true"></i> Inactivo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ factor.peso }}</span>
+                                    </td>
+                                    <td>{{ factor.descripcion|default:"-"|truncatechars:50 }}</td>
+                                    <td>
+                                        <div class="toggle-switch" role="switch" 
+                                             aria-label="Activar o desactivar factor {{ factor.nombre }}">
+                                            <input class="toggle-input toggle-factor" 
+                                                   type="checkbox" 
+                                                   id="toggle-{{ factor.idFactor }}"
+                                                   data-url="{% url 'factor_riesgo_toggle' factor.idFactor %}"
+                                                   {% if factor.activo %}checked{% endif %}>
+                                            <label class="toggle-slider" for="toggle-{{ factor.idFactor }}"></label>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a href="{% url 'factor_riesgo_edit' factor.idFactor %}" 
+                                               class="btn btn-sm btn-outline-warning btn-action-sm"
+                                               aria-label="Editar factor {{ factor.nombre }}"
+                                               title="Editar">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            </a>
+                                            <a href="{% url 'factor_riesgo_delete' factor.idFactor %}" 
+                                               class="btn btn-sm btn-outline-danger btn-action-sm"
+                                               aria-label="Eliminar factor {{ factor.nombre }}"
+                                               title="Eliminar">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">
+                                            <div class="empty-icon" aria-hidden="true">
+                                                <i class="bi bi-archive"></i>
+                                            </div>
+                                            <h5 class="empty-title">No hay factores de riesgo registrados</h5>
+                                            <p class="empty-description">
+                                                Agrega factores de riesgo para que la IA pueda evaluar a los estudiantes.
+                                            </p>
+                                            <a href="{% url 'factor_riesgo_create' %}" 
+                                               class="btn btn-primary mt-3"
+                                               aria-label="Crear el primer factor de riesgo">
+                                                <i class="bi bi-plus-circle" aria-hidden="true"></i> 
+                                                Crear primer factor
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer con estadísticas -->
+            {% if factores %}
+                <footer class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                            Activos: {{ factores|length|add:0 }}
+                        </span>
+                        <span class="badge bg-secondary ms-2">
+                            <i class="bi bi-dash-circle" aria-hidden="true"></i>
+                            Inactivos: {{ factores|length|add:0 }}
+                        </span>
+                    </div>
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        Total: {{ factores|length }} factores
+                    </small>
+                </footer>
+            {% endif %}
+        </article>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- CONSEJOS                                     -->
+    <!-- ============================================ -->
+    <section aria-label="Consejos sobre factores de riesgo">
+        <article class="card tips-card mt-4">
+            <header class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb text-warning" aria-hidden="true"></i>
+                    Consejos para gestionar factores de riesgo
+                </h6>
+            </header>
+            <div class="card-body">
+                <ul>
+                    <li>
+                        <strong>Peso:</strong> Define la importancia del factor (mayor peso = mayor influencia en el riesgo).
+                        Recomendado: 0.1 - 10
+                    </li>
+                    <li>
+                        <strong>Activo/Inactivo:</strong> Los factores inactivos no se utilizan en el cálculo de riesgo.
+                        Puedes desactivar factores temporalmente sin eliminarlos.
+                    </li>
+                    <li>
+                        <strong>Eliminación:</strong> Los factores <strong>no se pueden eliminar</strong> si ya tienen riesgos asociados.
+                        Primero debes eliminar o reasignar los riesgos.
+                    </li>
+                    <li>
+                        <strong>Descripción:</strong> Una buena descripción ayuda a entender el impacto del factor en los estudiantes.
+                    </li>
+                </ul>
+            </div>
+        </article>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const toggleSwitches = document.querySelectorAll('.toggle-factor');
+
+            // ============================================
+            // 1. TOGGLE PARA ACTIVAR/DESACTIVAR FACTOR
+            // ============================================
+            toggleSwitches.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const url = this.dataset.url;
+                    const checked = this.checked;
+                    const factorId = this.id.replace('toggle-', '');
+                    
+                    // Mostrar loading
+                    this.disabled = true;
+                    
+                    // Obtener token CSRF
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            activo: checked
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar badge de estado
+                            const row = this.closest('tr');
+                            const statusBadge = row.querySelector('.badge-status');
+                            
+                            if (checked) {
+                                statusBadge.className = 'badge-status bg-success text-white ms-1';
+                                statusBadge.innerHTML = '<i class="bi bi-check-circle" aria-hidden="true"></i> Activo';
+                            } else {
+                                statusBadge.className = 'badge-status bg-secondary text-white ms-1';
+                                statusBadge.innerHTML = '<i class="bi bi-dash-circle" aria-hidden="true"></i> Inactivo';
+                            }
+                            
+                            // Mostrar mensaje de éxito
+                            showToast(
+                                `Factor ${checked ? 'activado' : 'desactivado'} exitosamente.`,
+                                'success'
+                            );
+                        } else {
+                            this.checked = !checked;
+                            showToast(data.message || 'Error al cambiar el estado del factor.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        this.checked = !checked;
+                        showToast('Error de conexión. Intenta nuevamente.', 'danger');
+                        console.error('Error:', error);
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                    });
+                });
+            });
+
+            // ============================================
+            // 2. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 3. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action-sm').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 4. CONFIRMAR ELIMINACIÓN
+            // ============================================
+            document.querySelectorAll('a[href*="factor_riesgo_delete"]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    const factorNombre = this.closest('tr').querySelector('td:nth-child(2) strong').textContent;
+                    if (!confirm(
+                        '⚠️ ¿Estás seguro de eliminar el factor "' + factorNombre + '"?\n\n' +
+                        'Esta acción no se puede deshacer.\n' +
+                        'Los factores con riesgos asociados no se pueden eliminar.'
+                    )) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Listado de factores de riesgo cargado');
+        });
+    </script>
+{% endblock %}

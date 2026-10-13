@@ -1,0 +1,855 @@
+<!-- templates/layout/encuesta/encuesta_responder.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Responder Encuesta - {{ encuesta.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --question-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        /* Tarjeta de pregunta */
+        .question-card {
+            border: none;
+            border-radius: var(--question-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.4s ease forwards;
+            border-left: 4px solid #0d6efd;
+            overflow: hidden;
+        }
+        
+        .question-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .question-card .card-header {
+            background: #f8f9fa;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .question-card .card-header .question-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            color: #2d3748;
+        }
+        
+        .question-card .card-header .question-type {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        .question-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .question-card .card-body .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Opciones de respuesta */
+        .option-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+            margin-bottom: 0.25rem;
+        }
+        
+        .option-item:hover {
+            background: #f0f4ff;
+        }
+        
+        .option-item .form-check-input {
+            cursor: pointer;
+            width: 1.1rem;
+            height: 1.1rem;
+            margin-top: 0.15rem;
+        }
+        
+        .option-item .form-check-label {
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #4a5568;
+        }
+
+        /* Escala de 1-5 */
+        .scale-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .scale-container .scale-option {
+            text-align: center;
+        }
+        
+        .scale-container .scale-option .form-check-input {
+            width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            border: 2px solid #dee2e6;
+        }
+        
+        .scale-container .scale-option .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            transform: scale(1.1);
+        }
+        
+        .scale-container .scale-option .form-check-input:hover {
+            border-color: #0d6efd;
+        }
+        
+        .scale-container .scale-option .form-check-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 0.2rem;
+        }
+
+        /* Barra de progreso */
+        .progress-section {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        
+        .progress-section .progress-info {
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .progress-section .progress-info strong {
+            color: #0d6efd;
+        }
+        
+        .progress-section .progress {
+            flex: 1;
+            height: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+            min-width: 100px;
+        }
+        
+        .progress-section .progress .progress-bar {
+            height: 100%;
+            border-radius: 0.25rem;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #0d6efd, #198754);
+        }
+
+        /* Botón de enviar */
+        .btn-submit {
+            padding: 0.75rem 2.5rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-submit i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(25, 135, 84, 0.3);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Validación */
+        .is-invalid {
+            border-color: var(--danger-color) !important;
+        }
+        
+        .is-invalid ~ .invalid-feedback {
+            display: block;
+        }
+        
+        .invalid-feedback {
+            display: none;
+            font-size: 0.85rem;
+            color: var(--danger-color);
+            margin-top: 0.25rem;
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .question-card:nth-child(1) { animation-delay: 0.05s; }
+        .question-card:nth-child(2) { animation-delay: 0.10s; }
+        .question-card:nth-child(3) { animation-delay: 0.15s; }
+        .question-card:nth-child(4) { animation-delay: 0.20s; }
+        .question-card:nth-child(5) { animation-delay: 0.25s; }
+        .question-card:nth-child(6) { animation-delay: 0.30s; }
+        .question-card:nth-child(7) { animation-delay: 0.35s; }
+        .question-card:nth-child(8) { animation-delay: 0.40s; }
+        .question-card:nth-child(9) { animation-delay: 0.45s; }
+        .question-card:nth-child(10) { animation-delay: 0.50s; }
+
+        /* Accesibilidad */
+        .question-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .btn-submit:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .form-check-input:focus-visible {
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .question-card .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .question-card .card-header .question-title {
+                font-size: 0.95rem;
+            }
+            
+            .scale-container .scale-option .form-check-input {
+                width: 1.8rem;
+                height: 1.8rem;
+            }
+            
+            .btn-submit {
+                padding: 0.6rem 1.5rem;
+                font-size: 1rem;
+                width: 100%;
+            }
+            
+            .progress-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .question-card .card-body {
+                padding: 0.75rem;
+            }
+            
+            .option-item .form-check-label {
+                font-size: 0.9rem;
+            }
+            
+            .scale-container {
+                gap: 0.25rem;
+            }
+            
+            .scale-container .scale-option .form-check-input {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .question-card {
+                background-color: #2d2d2d;
+            }
+            
+            .question-card .card-header {
+                background: #252540;
+            }
+            
+            .question-card .card-header .question-title {
+                color: #ecf0f1;
+            }
+            
+            .question-card .card-header .question-type {
+                color: #8a8a9a;
+            }
+            
+            .option-item:hover {
+                background: #252540;
+            }
+            
+            .option-item .form-check-label {
+                color: #c8d6e5;
+            }
+            
+            .scale-container .scale-option .form-check-input {
+                border-color: #4d4d5d;
+                background-color: #3d3d4d;
+            }
+            
+            .progress-section {
+                background: #252540;
+            }
+            
+            .progress-section .progress-info {
+                color: #c8d6e5;
+            }
+            
+            .progress-section .progress {
+                background-color: #2d2d44;
+            }
+        }
+
+        /* Estado de confianza para respuestas */
+        .question-card.required {
+            border-left-color: var(--danger-color);
+        }
+        
+        .question-card.answered {
+            border-left-color: var(--success-color);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" class="text-decoration-none">
+                    {{ encuesta.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Responder
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-pencil-square" aria-hidden="true"></i> 
+            Responder: <span class="text-primary">{{ encuesta.titulo }}</span>
+        </h1>
+        <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" 
+           class="btn btn-secondary btn-action"
+           aria-label="Volver al detalle de la encuesta">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <!-- Información de la encuesta -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        <strong>Responde todas las preguntas obligatorias</strong> 
+        (marcadas con <span class="badge bg-danger">Obligatoria</span>) 
+        y haz clic en <strong>"Enviar Respuestas"</strong> al final.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                aria-label="Cerrar"></button>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="progress-section" id="progressSection">
+        <span class="progress-info">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            Progreso: <strong id="progressText">0%</strong>
+            (<span id="answeredCount">0</span>/<span id="totalQuestions">{{ preguntas|length }}</span> respondidas)
+        </span>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar" 
+                 role="progressbar" 
+                 style="width: 0%;" 
+                 aria-valuenow="0" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100">
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" id="encuestaForm" novalidate>
+        {% csrf_token %}
+
+        <!-- Preguntas -->
+        <section aria-label="Preguntas de la encuesta">
+            {% for pregunta in preguntas %}
+                <div class="card question-card mb-4" 
+                     data-pregunta-id="{{ pregunta.idPreguntaEncuesta }}"
+                     data-obligatoria="{{ pregunta.es_obligatoria|yesno:'true,false' }}"
+                     tabindex="0">
+                    
+                    <!-- Header -->
+                    <header class="card-header">
+                        <span class="question-title">
+                            {{ forloop.counter }}. {{ pregunta.pregunta }}
+                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="question-type">
+                                <i class="bi bi-tag" aria-hidden="true"></i>
+                                {{ pregunta.get_tipo_display }}
+                            </span>
+                            {% if pregunta.es_obligatoria %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i> Obligatoria
+                                </span>
+                            {% endif %}
+                        </div>
+                    </header>
+
+                    <!-- Body -->
+                    <div class="card-body">
+                        {% if pregunta.tipo == 'opcion_unica' %}
+                            <div class="form-group">
+                                <div class="opciones-container">
+                                    {% for opcion in pregunta.opciones.all %}
+                                        <div class="option-item">
+                                            <div class="form-check">
+                                                <input class="form-check-input" 
+                                                       type="radio" 
+                                                       name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                                       id="opcion_{{ opcion.idOpcion }}" 
+                                                       value="{{ opcion.idOpcion }}"
+                                                       {% if pregunta.es_obligatoria %}required{% endif %}
+                                                       aria-describedby="obligatoria_help">
+                                                <label class="form-check-label" for="opcion_{{ opcion.idOpcion }}">
+                                                    {{ opcion.texto }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if pregunta.es_obligatoria %}
+                                    <div class="invalid-feedback">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                        Por favor selecciona una opción.
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        {% elif pregunta.tipo == 'opcion_multiple' %}
+                            <div class="form-group">
+                                <div class="opciones-container">
+                                    {% for opcion in pregunta.opciones.all %}
+                                        <div class="option-item">
+                                            <div class="form-check">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                                       id="opcion_{{ opcion.idOpcion }}" 
+                                                       value="{{ opcion.idOpcion }}">
+                                                <label class="form-check-label" for="opcion_{{ opcion.idOpcion }}">
+                                                    {{ opcion.texto }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="invalid-feedback">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    Selecciona al menos una opción.
+                                </div>
+                            </div>
+
+                        {% elif pregunta.tipo == 'escala' %}
+                            <div class="form-group">
+                                <div class="scale-container">
+                                    {% for i in "12345"|make_list %}
+                                        <div class="scale-option">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                                   id="escala_{{ pregunta.idPreguntaEncuesta }}_{{ i }}" 
+                                                   value="{{ i }}"
+                                                   {% if pregunta.es_obligatoria %}required{% endif %}>
+                                            <label class="form-check-label" for="escala_{{ pregunta.idPreguntaEncuesta }}_{{ i }}">
+                                                {{ i }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    1 = Muy malo / 2 = Malo / 3 = Regular / 4 = Bueno / 5 = Excelente
+                                </small>
+                                {% if pregunta.es_obligatoria %}
+                                    <div class="invalid-feedback">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                        Por favor selecciona un valor.
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        {% elif pregunta.tipo == 'si_no' %}
+                            <div class="form-group">
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="option-item">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                                   id="si_{{ pregunta.idPreguntaEncuesta }}" 
+                                                   value="True"
+                                                   {% if pregunta.es_obligatoria %}required{% endif %}>
+                                            <label class="form-check-label" for="si_{{ pregunta.idPreguntaEncuesta }}">
+                                                <i class="bi bi-check-circle text-success" aria-hidden="true"></i> Sí
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="option-item">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                                   id="no_{{ pregunta.idPreguntaEncuesta }}" 
+                                                   value="False"
+                                                   {% if pregunta.es_obligatoria %}required{% endif %}>
+                                            <label class="form-check-label" for="no_{{ pregunta.idPreguntaEncuesta }}">
+                                                <i class="bi bi-x-circle text-danger" aria-hidden="true"></i> No
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if pregunta.es_obligatoria %}
+                                    <div class="invalid-feedback">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                        Por favor selecciona Sí o No.
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        {% elif pregunta.tipo == 'texto' %}
+                            <div class="form-group">
+                                <textarea class="form-control" 
+                                          name="pregunta_{{ pregunta.idPreguntaEncuesta }}" 
+                                          rows="3"
+                                          placeholder="Escribe tu respuesta aquí..."
+                                          {% if pregunta.es_obligatoria %}required{% endif %}
+                                          aria-describedby="texto_help"></textarea>
+                                <div id="texto_help" class="form-text">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    {% if pregunta.es_obligatoria %}
+                                        Esta pregunta es obligatoria.
+                                    {% else %}
+                                        Esta pregunta es opcional.
+                                    {% endif %}
+                                </div>
+                                <div class="invalid-feedback">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    Por favor escribe tu respuesta.
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- Botones de acción -->
+        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+            <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" 
+               class="btn btn-secondary btn-action"
+               aria-label="Cancelar y volver al detalle de la encuesta">
+                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-success btn-submit" id="submitBtn">
+                <i class="bi bi-send" aria-hidden="true"></i> Enviar Respuestas
+            </button>
+        </footer>
+    </form>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                        Confirmar Envío
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-check-circle" style="font-size: 3rem; color: #198754;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás seguro de enviar tus respuestas?</h5>
+                        <p class="text-muted">
+                            Has respondido <strong id="modalAnswered">0</strong> de 
+                            <strong id="modalTotal">0</strong> preguntas.
+                        </p>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>Importante:</strong> Una vez enviadas, no podrás modificar tus respuestas.
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Revisar
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmSubmit">
+                        <i class="bi bi-send" aria-hidden="true"></i> 
+                        Confirmar Envío
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('encuestaForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const answeredCount = document.getElementById('answeredCount');
+            const totalQuestions = document.getElementById('totalQuestions');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmSubmit = document.getElementById('confirmSubmit');
+            const modalAnswered = document.getElementById('modalAnswered');
+            const modalTotal = document.getElementById('modalTotal');
+
+            // ============================================
+            // 1. CONTADOR DE PROGRESO
+            // ============================================
+            function updateProgress() {
+                const questions = document.querySelectorAll('.question-card');
+                let answered = 0;
+                const total = questions.length;
+
+                questions.forEach(function(q) {
+                    const isRequired = q.dataset.obligatoria === 'true';
+                    const inputs = q.querySelectorAll('input, textarea');
+                    let isAnswered = false;
+
+                    inputs.forEach(function(input) {
+                        if (input.type === 'radio') {
+                            if (input.checked) isAnswered = true;
+                        } else if (input.type === 'checkbox') {
+                            if (input.checked) isAnswered = true;
+                        } else if (input.type === 'text' || input.tagName === 'TEXTAREA') {
+                            if (input.value.trim() !== '') isAnswered = true;
+                        }
+                    });
+
+                    // Para preguntas obligatorias no respondidas
+                    if (isRequired && !isAnswered) {
+                        q.classList.add('required');
+                        q.classList.remove('answered');
+                    } else if (isAnswered) {
+                        q.classList.remove('required');
+                        q.classList.add('answered');
+                        answered++;
+                    } else {
+                        q.classList.remove('required', 'answered');
+                    }
+                });
+
+                // Actualizar contadores
+                const percent = total > 0 ? Math.round((answered / total) * 100) : 0;
+                progressBar.style.width = percent + '%';
+                progressBar.setAttribute('aria-valuenow', percent);
+                progressText.textContent = percent + '%';
+                answeredCount.textContent = answered;
+                totalQuestions.textContent = total;
+
+                // Actualizar modal
+                modalAnswered.textContent = answered;
+                modalTotal.textContent = total;
+            }
+
+            // ============================================
+            // 2. EVENTOS DE CAMBIO
+            // ============================================
+            document.addEventListener('change', function(e) {
+                if (e.target.closest('.question-card')) {
+                    updateProgress();
+                }
+            });
+
+            document.addEventListener('input', function(e) {
+                if (e.target.closest('.question-card')) {
+                    updateProgress();
+                }
+            });
+
+            // ============================================
+            // 3. VALIDACIÓN DEL FORMULARIO
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Validar preguntas obligatorias
+                let hasError = false;
+                const requiredQuestions = document.querySelectorAll('.question-card[data-obligatoria="true"]');
+
+                requiredQuestions.forEach(function(q) {
+                    const inputs = q.querySelectorAll('input, textarea');
+                    let isAnswered = false;
+
+                    inputs.forEach(function(input) {
+                        if (input.type === 'radio') {
+                            if (input.checked) isAnswered = true;
+                        } else if (input.type === 'checkbox') {
+                            if (input.checked) isAnswered = true;
+                        } else if (input.type === 'text' || input.tagName === 'TEXTAREA') {
+                            if (input.value.trim() !== '') isAnswered = true;
+                        }
+                    });
+
+                    if (!isAnswered) {
+                        hasError = true;
+                        q.classList.add('border-danger');
+                        q.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Mostrar feedback
+                        const feedback = q.querySelector('.invalid-feedback');
+                        if (feedback) feedback.style.display = 'block';
+                    } else {
+                        q.classList.remove('border-danger');
+                        const feedback = q.querySelector('.invalid-feedback');
+                        if (feedback) feedback.style.display = 'none';
+                    }
+                });
+
+                if (hasError) {
+                    showToast('Por favor responde todas las preguntas obligatorias.', 'danger');
+                    return;
+                }
+
+                // Mostrar modal de confirmación
+                updateProgress();
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 4. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmSubmit.addEventListener('click', function() {
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Enviando...';
+                
+                // Enviar el formulario
+                form.submit();
+            });
+
+            // ============================================
+            // 5. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+                
+                const toast = document.createElement('div');
+                toast.className = 'position-fixed bottom-0 end-0 p-3';
+                toast.style.zIndex = '9999';
+                toast.innerHTML = `
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header" style="background: ${colors[type]}; color: white;">
+                            <strong class="me-auto">
+                                <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'warning' ? 'bi-exclamation-triangle' : 'bi-info-circle'}" aria-hidden="true"></i>
+                                ${type.charAt(0).toUpperCase() + type.slice(1)}
+                            </strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="toast-body">${message}</div>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(function() {
+                    toast.remove();
+                }, 4000);
+            }
+
+            // ============================================
+            // 6. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.option-item').forEach(function(item) {
+                item.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const input = this.querySelector('input');
+                        if (input) {
+                            if (input.type === 'radio' || input.type === 'checkbox') {
+                                input.checked = !input.checked;
+                                input.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 7. INICIALIZAR
+            // ============================================
+            updateProgress();
+
+            // ============================================
+            // 8. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de responder encuesta cargada');
+        });
+    </script>
+{% endblock %}

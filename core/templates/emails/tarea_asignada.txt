@@ -1,0 +1,22 @@
+NUEVA TAREA ASIGNADA
+
+Hola {{ estudiante.nombre }},
+
+Se te ha asignado una nueva tarea:
+
+Título: {{ tarea.titulo }}
+Descripción: {{ tarea.descripcion|default:"Sin descripción" }}
+Puntaje máximo: {{ tarea.puntaje_maximo }}
+Fecha de publicación: {{ tarea.fecha_publicacion|date:"d/m/Y H:i" }}
+Fecha límite: {{ tarea.fecha_limite|date:"d/m/Y H:i" }}
+{% if tarea.instrucciones %}
+Instrucciones: {{ tarea.instrucciones }}
+{% endif %}
+
+Para ver la tarea, visita:
+{{ url_tarea }}
+
+¡No olvides entregar antes de la fecha límite!
+
+Saludos,
+{{ site_name }}

@@ -1,0 +1,431 @@
+<!-- core/templates/core/dashboard_profesor.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Profesor - RetenScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard Profesor</h1>
+    <span class="badge bg-info">Profesor</span>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ TARJETAS DE RESUMEN CON ICONOS -->
+<!-- ============================================ -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase fw-light">Total Estudiantes</h6>
+                        <p class="card-text display-4">{{ total_estudiantes }}</p>
+                    </div>
+                    <div class="display-1 opacity-50">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase fw-light">Asistencias Hoy</h6>
+                        <p class="card-text display-4">{{ asistencias_hoy }}</p>
+                    </div>
+                    <div class="display-1 opacity-50">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase fw-light">Estudiantes en Riesgo</h6>
+                        <p class="card-text display-4">{{ en_riesgo|default:"0" }}</p>
+                    </div>
+                    <div class="display-1 opacity-50">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase fw-light">Tutores Activos</h6>
+                        <p class="card-text display-4">{{ total_tutores|default:"0" }}</p>
+                    </div>
+                    <div class="display-1 opacity-50">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ ACCIONES RÁPIDAS (SOLO LAS ESENCIALES)    -->
+<!-- ============================================ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'asignacion_tutores_lista' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus"></i>
+                        Asignar Tutores
+                        <small>Gestiona la asignación de estudiantes a tutores</small>
+                    </a>
+                    <a href="{% url 'estudiante_list' %}" class="btn btn-success btn-lg">
+                        <i class="bi bi-people"></i>
+                        Mis Estudiantes
+                        <small>Lista completa de estudiantes</small>
+                    </a>
+                    <a href="{% url 'dashboard_riesgo' %}" class="btn btn-warning btn-lg">
+                        <i class="bi bi-robot"></i>
+                        IA Predictiva
+                        <small>Análisis de riesgo de deserción</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ GRÁFICOS                                  -->
+<!-- ============================================ -->
+<div class="row">
+    <!-- Gráfico 1: Rendimiento por Materia -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Rendimiento por Materia</h5>
+                <span class="badge bg-info">{{ materias_labels|length }} materias</span>
+            </div>
+            <div class="card-body">
+                <canvas id="materiasChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico 2: Distribución de Calificaciones -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribución de Calificaciones</h5>
+                <span class="badge bg-success">Rangos</span>
+            </div>
+            <div class="card-body">
+                <canvas id="rangosChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ GRÁFICO 3: ASISTENCIAS POR DÍA -->
+<!-- ============================================ -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Asistencias por Día de la Semana</h5>
+                <span class="badge bg-primary">{{ dias_labels|length }} días</span>
+            </div>
+            <div class="card-body">
+                <canvas id="diasChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ GRÁFICO IA: Riesgo por Curso -->
+<!-- ============================================ -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-robot"></i> IA: Riesgo por Curso</h5>
+                {% if ia_disponible %}
+                    <span class="badge bg-light text-dark">IA Activa</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">IA No disponible</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if ia_disponible and riesgo_por_curso %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Curso</th>
+                                    <th>Total Estudiantes</th>
+                                    <th>En Riesgo</th>
+                                    <th>% Riesgo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for curso in riesgo_por_curso %}
+                                    <tr>
+                                        <td><strong>{{ curso.carrera }}</strong></td>
+                                        <td>{{ curso.total }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if curso.riesgo > 0 %}bg-danger
+                                                {% else %}bg-success{% endif %}">
+                                                {{ curso.riesgo }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if curso.riesgo > curso.total|divisibleby:2 %}bg-danger
+                                                    {% elif curso.riesgo > 0 %}bg-warning
+                                                    {% else %}bg-success{% endif %}" 
+                                                    role="progressbar" 
+                                                    style="width: {% widthratio curso.riesgo curso.total 100 %}%;" 
+                                                    aria-valuenow="{% widthratio curso.riesgo curso.total 100 %}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100">
+                                                    {% widthratio curso.riesgo curso.total 100 %}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if curso.riesgo > 0 %}
+                                                <span class="badge bg-warning text-dark">Atención</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Bien</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% elif ia_disponible %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-robot" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="mt-2 text-muted">No hay datos suficientes para mostrar riesgo por curso</p>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-robot" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="mt-2 text-muted">Modelo IA no disponible</p>
+                        <small>Entrena el modelo en el <a href="{% url 'dashboard_riesgo' %}">Dashboard de IA</a></small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ✅ SCRIPT PARA INICIALIZAR GRÁFICOS -->
+<!-- ============================================ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ============================================
+    // 1. GRÁFICO: Rendimiento por Materia (Barra)
+    // ============================================
+    const ctx1 = document.getElementById('materiasChart');
+    if (ctx1) {
+        const materiasLabels = {{ materias_labels|safe }};
+        const materiasValues = {{ materias_values|safe }};
+        const coloresMaterias = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6f42c1', '#fd7e14', '#20c997'];
+        
+        new Chart(ctx1.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: materiasLabels,
+                datasets: [{
+                    label: 'Promedio',
+                    data: materiasValues,
+                    backgroundColor: coloresMaterias.slice(0, materiasLabels.length),
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 20,
+                        ticks: {
+                            stepSize: 2
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // 2. GRÁFICO: Distribución de Calificaciones (Doughnut)
+    // ============================================
+    const ctx2 = document.getElementById('rangosChart');
+    if (ctx2) {
+        const rangoLabels = {{ rango_labels|safe }};
+        const rangoValues = {{ rango_values|safe }};
+        const coloresRangos = {
+            'Sobresaliente (18-20)': '#1cc88a',
+            'Bueno (14-17)': '#36b9cc',
+            'Regular (10-13)': '#f6c23e',
+            'Bajo (0-9)': '#e74a3b'
+        };
+        const backgroundColors = rangoLabels.map(label => coloresRangos[label] || '#858796');
+        
+        new Chart(ctx2.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: rangoLabels,
+                datasets: [{
+                    data: rangoValues,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // ============================================
+    // 3. GRÁFICO: Asistencias por Día (Línea)
+    // ============================================
+    const ctx3 = document.getElementById('diasChart');
+    if (ctx3) {
+        const diasLabels = {{ dias_labels|safe }};
+        const diasValues = {{ dias_values|safe }};
+        
+        new Chart(ctx3.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: diasLabels,
+                datasets: [{
+                    label: 'Asistencias',
+                    data: diasValues,
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#1cc88a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<!-- ✅ ESTILOS ADICIONALES -->
+<style>
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+    }
+    .card .card-header {
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .display-4 {
+        font-weight: 700;
+    }
+    .opacity-50 {
+        opacity: 0.5;
+    }
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        min-width: 180px;
+        text-align: center;
+    }
+    .btn-lg i {
+        font-size: 1.5rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .btn-lg small {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.65rem;
+        opacity: 0.8;
+        font-weight: 300;
+    }
+    .gap-3 {
+        gap: 1rem !important;
+    }
+    @media (max-width: 768px) {
+        .btn-lg {
+            min-width: 100%;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

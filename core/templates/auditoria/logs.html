@@ -1,0 +1,163 @@
+<!-- templates/auditoria/logs.html -->
+{% extends 'layout/base.html' %}
+
+{% block title %}Logs de Auditoría - RetenScan{% endblock %}
+
+{% block extra_head %}
+<style>
+    .log-entry {
+        transition: background 0.2s;
+    }
+    .log-entry:hover {
+        background: #f8f9fa;
+    }
+    .badge-action {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.6rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-shield-lock"></i> Logs de Auditoría</h1>
+    <span class="badge bg-primary">{{ total }} registros</span>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Buscar por usuario, acción o IP..." 
+                       value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="accion" class="form-select">
+                    <option value="">Todas las acciones</option>
+                    {% for valor, nombre in acciones %}
+                        <option value="{{ valor }}" {% if accion == valor %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a href="{% url 'auditoria_logs' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de logs -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>IP</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                        <tr class="log-entry">
+                            <td class="text-nowrap">
+                                <small>{{ log.created_at|date:"d/m/Y H:i:s" }}</small>
+                            </td>
+                            <td>
+                                {% if log.usuario %}
+                                    <strong>{{ log.usuario.get_full_name|default:log.usuario.username }}</strong>
+                                {% else %}
+                                    <span class="text-muted">Anónimo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-action 
+                                    {% if log.accion == 'login' %}bg-success
+                                    {% elif log.accion == 'login_failed' %}bg-danger
+                                    {% elif log.accion == 'delete' %}bg-danger
+                                    {% elif log.accion == 'create' %}bg-primary
+                                    {% elif log.accion == 'update' %}bg-warning text-dark
+                                    {% elif log.accion == '2fa_enabled' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ log.get_accion_display }}
+                                </span>
+                            </td>
+                            <td><code>{{ log.ip }}</code></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#log-{{ log.idLog }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <div class="collapse mt-2" id="log-{{ log.idLog }}">
+                                    <pre class="bg-light p-2 rounded small mb-0">
+                                        {{ log.detalles|pprint }}
+                                    </pre>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #ccc;"></i>
+                                <p class="mt-2 text-muted">No hay logs registrados</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if logs.has_other_pages %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if logs.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ logs.previous_page_number }}&{{ request.GET.urlencode|slice:'1:' }}">
+                        Anterior
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in logs.paginator.page_range %}
+                {% if logs.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode|slice:'1:' }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ logs.next_page_number }}&{{ request.GET.urlencode|slice:'1:' }}">
+                        Siguiente
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

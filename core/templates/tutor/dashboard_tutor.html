@@ -1,0 +1,975 @@
+<!-- templates/layout/tutor/dashboard_tutor.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Tutor - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --dashboard-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --shadow-hover: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stat-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-card .stat-icon {
+            opacity: 0.2;
+            font-size: 3.5rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.35;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stat-card.bg-primary { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
+        .stat-card.bg-danger { background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%); }
+        .stat-card.bg-warning { background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); }
+
+        /* ============================================
+           TARJETAS DE GRÁFICOS
+           ============================================ */
+        .chart-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .chart-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .chart-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* ============================================
+           LISTAS DE ALERTAS E INTERVENCIONES
+           ============================================ */
+        .alert-list .list-group-item {
+            border-left: 4px solid transparent;
+            padding: 0.75rem 1rem;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .alert-list .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .alert-list .list-group-item.border-danger {
+            border-left-color: #dc3545;
+        }
+
+        .alert-list .list-group-item.border-warning {
+            border-left-color: #ffc107;
+        }
+
+        .alert-list .list-group-item.border-info {
+            border-left-color: #0dcaf0;
+        }
+
+        .alert-list .list-group-item.border-success {
+            border-left-color: #198754;
+        }
+
+        /* ============================================
+           TARJETA DE IA
+           ============================================ */
+        .ia-card .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: #ffffff;
+        }
+
+        .ia-card .card-header .badge {
+            font-size: 0.75rem;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .chart-card:nth-child(1) { animation-delay: 0.10s; }
+        .chart-card:nth-child(2) { animation-delay: 0.15s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .stat-card:focus-visible,
+        .chart-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .list-group-item:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2.5rem;
+            }
+
+            .chart-card .card-body {
+                padding: 0.75rem;
+            }
+
+            .alert-list .list-group-item {
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .chart-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .chart-card .card-header {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .alert-list .list-group-item {
+                background-color: #2d2d2d;
+                border-bottom-color: #2d2d44;
+            }
+
+            .alert-list .list-group-item:hover {
+                background-color: #252540;
+            }
+
+            .alert-list .list-group-item .text-muted {
+                color: #8a8a9a;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-badge" aria-hidden="true"></i> Tutor
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> 
+            Dashboard Tutor
+            <small class="text-muted fs-6 ms-2">Panel de control</small>
+        </h1>
+        <span class="badge bg-success badge-status" role="status">
+            <i class="bi bi-person" aria-hidden="true"></i> Tutor
+        </span>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- TARJETAS DE ESTADÍSTICAS                    -->
+    <!-- ============================================ -->
+    <section aria-label="Resumen estadístico" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-people" aria-hidden="true"></i> Estudiantes Asignados
+                    </h6>
+                    <p class="stat-value" aria-label="{{ total_asignados }} estudiantes asignados">
+                        {{ total_asignados|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-people"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> En Riesgo
+                    </h6>
+                    <p class="stat-value" aria-label="{{ en_riesgo|default:0 }} estudiantes en riesgo">
+                        {{ en_riesgo|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i> Intervenciones Programadas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ intervenciones_programadas|length }} intervenciones programadas">
+                        {{ intervenciones_programadas|length|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICOS                                    -->
+    <!-- ============================================ -->
+    <section aria-label="Gráficos de estudiantes" class="row g-3">
+        <!-- Gráfico 1: Estado de Mis Estudiantes -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-pie-chart" aria-hidden="true"></i> 
+                        Estado de Mis Estudiantes
+                    </h5>
+                    <span class="badge bg-primary">{{ estado_labels|length }} estados</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="estadoChart" 
+                                aria-label="Gráfico de estado de estudiantes" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Gráfico 2: Niveles de Riesgo -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Niveles de Riesgo
+                    </h5>
+                    <span class="badge bg-danger">Alertas</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="riesgoChart" 
+                                aria-label="Gráfico de niveles de riesgo" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SEGUNDA FILA - TIPOS DE INTERVENCIÓN       -->
+    <!-- ============================================ -->
+    <section aria-label="Tipos de intervención" class="row g-3 mt-2">
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-bar-chart" aria-hidden="true"></i> 
+                        Tipos de Intervención
+                    </h5>
+                    <span class="badge bg-info">{{ intervencion_labels|length }} tipos</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="intervencionChart" 
+                                aria-label="Gráfico de tipos de intervención" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Alertas de Mis Estudiantes -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header bg-danger text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="text-white">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Alertas de Mis Estudiantes
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ alertas_mis_estudiantes|length }}</span>
+                </header>
+                <div class="card-body alert-list">
+                    {% if alertas_mis_estudiantes %}
+                        <div class="list-group list-group-flush" role="list">
+                            {% for alerta in alertas_mis_estudiantes %}
+                                <a href="{% url 'estudiante_detail' alerta.idEstudiante.idEstudiante %}" 
+                                   class="list-group-item list-group-item-action border-{{ alerta.nivel|lower|default:'secondary' }}"
+                                   role="listitem">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ alerta.idEstudiante.nombre }} {{ alerta.idEstudiante.apellido_paterno }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <span class="badge 
+                                                    {% if alerta.nivel == 'Critico' %}bg-danger
+                                                    {% elif alerta.nivel == 'Alto' %}bg-warning text-dark
+                                                    {% elif alerta.nivel == 'Medio' %}bg-info
+                                                    {% else %}bg-success{% endif %}">
+                                                    {{ alerta.nivel }}
+                                                </span>
+                                                {{ alerta.idFactor.nombre }}
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">{{ alerta.fecha_deteccion|date:"d/m/Y" }}</small>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-check-circle text-success"></i>
+                            </div>
+                            <p class="empty-title">No hay alertas activas</p>
+                            <p class="empty-description">Todos tus estudiantes están dentro de los parámetros normales.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INTERVENCIONES PROGRAMADAS Y ÚLTIMAS        -->
+    <!-- ============================================ -->
+    <section aria-label="Intervenciones" class="row g-3 mt-2">
+        <div class="col-md-6">
+            <article class="card chart-card">
+                <header class="card-header bg-warning text-dark d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i> 
+                        Intervenciones Programadas
+                    </h5>
+                    <span class="badge bg-dark">{{ intervenciones_programadas|length }}</span>
+                </header>
+                <div class="card-body alert-list">
+                    {% if intervenciones_programadas %}
+                        <div class="list-group list-group-flush" role="list">
+                            {% for inv in intervenciones_programadas %}
+                                <div class="list-group-item" role="listitem">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ inv.idEstudiante.nombre }} {{ inv.idEstudiante.apellido_paterno }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <span class="badge bg-info">{{ inv.tipo_intervencion }}</span>
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-calendar" aria-hidden="true"></i>
+                                                {{ inv.fecha_programada|date:"d/m/Y" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-calendar"></i>
+                            </div>
+                            <p class="empty-title">No hay intervenciones programadas</p>
+                            <p class="empty-description">No tienes intervenciones programadas para los próximos días.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+
+        <div class="col-md-6">
+            <article class="card chart-card">
+                <header class="card-header bg-info text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="text-white">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i> 
+                        Últimas Intervenciones
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ ultimas_intervenciones|length }}</span>
+                </header>
+                <div class="card-body alert-list">
+                    {% if ultimas_intervenciones %}
+                        <div class="list-group list-group-flush" role="list">
+                            {% for inv in ultimas_intervenciones %}
+                                <div class="list-group-item" role="listitem">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ inv.idEstudiante.nombre }} {{ inv.idEstudiante.apellido_paterno }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <span class="badge bg-secondary">{{ inv.tipo_intervencion }}</span>
+                                            </small>
+                                        </div>
+                                        <div>
+                                            {% if inv.efectiva %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Efectiva
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar" aria-hidden="true"></i>
+                                        {{ inv.fecha_realizada|date:"d/m/Y"|default:"No realizada" }}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <p class="empty-title">Sin intervenciones registradas</p>
+                            <p class="empty-description">No hay intervenciones registradas en el historial.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- IA: RIESGO DE MIS ESTUDIANTES              -->
+    <!-- ============================================ -->
+    <section aria-label="Inteligencia artificial - riesgo de estudiantes" class="row g-3 mt-2">
+        <div class="col-md-6">
+            <article class="card chart-card ia-card">
+                <header class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="text-white">
+                        <i class="bi bi-robot" aria-hidden="true"></i> 
+                        IA: Riesgo de Mis Estudiantes
+                    </h5>
+                    {% if ia_disponible %}
+                        <span class="badge bg-light text-dark" role="status">
+                            <i class="bi bi-check-circle text-success" aria-hidden="true"></i> IA Activa
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark" role="status">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> IA No disponible
+                        </span>
+                    {% endif %}
+                </header>
+                <div class="card-body">
+                    {% if ia_disponible %}
+                        <div class="chart-container" style="position: relative; height: 250px;">
+                            <canvas id="iaRiesgoTutorChart" 
+                                    aria-label="Gráfico de riesgo predictivo por IA" 
+                                    role="img"></canvas>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i> 
+                                Distribución de riesgo predictivo de tus estudiantes
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <p class="empty-title">Modelo IA no disponible</p>
+                            <p class="empty-description">
+                                Entrena el modelo en el 
+                                <a href="{% url 'dashboard_riesgo' %}" class="text-decoration-none">
+                                    Dashboard de IA
+                                </a>
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+
+        <!-- Lista de estudiantes en riesgo IA -->
+        <div class="col-md-6">
+            <article class="card chart-card">
+                <header class="card-header bg-warning text-dark d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        IA: Mis Estudiantes en Riesgo
+                    </h5>
+                    <span class="badge bg-danger">{{ estudiantes_riesgo_ia|length }}</span>
+                </header>
+                <div class="card-body alert-list">
+                    {% if estudiantes_riesgo_ia %}
+                        <div class="list-group list-group-flush" role="list">
+                            {% for alerta in estudiantes_riesgo_ia|slice:":5" %}
+                                <a href="{% url 'estudiante_detail' alerta.estudiante_id %}" 
+                                   class="list-group-item list-group-item-action border-{{ alerta.nivel_riesgo|lower|default:'secondary' }}"
+                                   role="listitem">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ alerta.estudiante_nombre|default:"Sin nombre" }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <span class="badge 
+                                                    {% if alerta.nivel_riesgo == 'Crítico' %}bg-danger
+                                                    {% elif alerta.nivel_riesgo == 'Alto' %}bg-warning text-dark
+                                                    {% elif alerta.nivel_riesgo == 'Medio' %}bg-info
+                                                    {% else %}bg-success{% endif %}">
+                                                    {{ alerta.nivel_riesgo|default:"Sin nivel" }}
+                                                </span>
+                                                {{ alerta.carnet|default:"Sin carnet" }}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary">{{ alerta.probabilidad|default:0 }}%</span>
+                                            <br>
+                                            <small class="text-muted">riesgo</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                        {% if estudiantes_riesgo_ia|length > 5 %}
+                            <div class="text-center mt-2">
+                                <a href="{% url 'dashboard_riesgo' %}" 
+                                   class="btn btn-sm btn-primary"
+                                   aria-label="Ver todos los estudiantes en riesgo">
+                                    Ver todos ({{ estudiantes_riesgo_ia|length }})
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-check-circle text-success"></i>
+                            </div>
+                            <p class="empty-title">Tus estudiantes no tienen riesgo según IA</p>
+                            <p class="empty-description">Todos tus estudiantes están dentro de los parámetros normales.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- ACCIONES RÁPIDAS                            -->
+    <!-- ============================================ -->
+    <section aria-label="Acciones rápidas" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-fill text-warning" aria-hidden="true"></i> 
+                        Acciones Rápidas
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{% url 'estudiante_list' %}" 
+                           class="btn btn-primary btn-action"
+                           aria-label="Ver mis estudiantes">
+                            <i class="bi bi-people" aria-hidden="true"></i> Mis Estudiantes
+                        </a>
+                        <a href="{% url 'reunion_list' %}" 
+                           class="btn btn-success btn-action"
+                           aria-label="Ver mis reuniones">
+                            <i class="bi bi-calendar-event" aria-hidden="true"></i> Mis Reuniones
+                        </a>
+                        <a href="{% url 'mensaje_list' %}" 
+                           class="btn btn-info btn-action"
+                           aria-label="Ver mis mensajes">
+                            <i class="bi bi-envelope" aria-hidden="true"></i> Mis Mensajes
+                            {% if no_leidos > 0 %}
+                                <span class="badge bg-danger ms-1">{{ no_leidos }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'dashboard_riesgo' %}" 
+                           class="btn btn-warning btn-action"
+                           aria-label="Ver dashboard de IA predictiva">
+                            <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+                        </a>
+                        <a href="{% url 'tutor_reporte' %}" 
+                           class="btn btn-secondary btn-action"
+                           aria-label="Ver reportes">
+                            <i class="bi bi-file-pdf" aria-hidden="true"></i> Reportes
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // CONFIGURACIÓN GLOBAL DE CHART.JS
+            // ============================================
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.font.family = "'Segoe UI', system-ui, -apple-system, sans-serif";
+                Chart.defaults.color = '#495057';
+            }
+
+            // ============================================
+            // 1. GRÁFICO: Estado de estudiantes (Doughnut)
+            // ============================================
+            const ctx1 = document.getElementById('estadoChart');
+            if (ctx1) {
+                const estadoLabels = {{ estado_labels|safe|default:"[]" }};
+                const estadoValues = {{ estado_values|safe|default:"[]" }};
+                const coloresEstado = {
+                    'Activo': '#1cc88a',
+                    'Inactivo': '#f6c23e',
+                    'Suspendido': '#36b9cc',
+                    'Egresado': '#4e73df',
+                    'Abandonado': '#e74a3b'
+                };
+                const backgroundColors = estadoLabels.map(label => coloresEstado[label] || '#858796');
+
+                if (estadoLabels.length > 0 && estadoValues.some(v => v > 0)) {
+                    new Chart(ctx1.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: estadoLabels,
+                            datasets: [{
+                                data: estadoValues,
+                                backgroundColor: backgroundColors,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 10,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            let percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 2. GRÁFICO: Niveles de Riesgo (Barra)
+            // ============================================
+            const ctx2 = document.getElementById('riesgoChart');
+            if (ctx2) {
+                const riesgoLabels = {{ riesgo_labels|safe|default:"[]" }};
+                const riesgoValues = {{ riesgo_values|safe|default:"[]" }};
+                const coloresRiesgo = {
+                    'Bajo': '#1cc88a',
+                    'Medio': '#f6c23e',
+                    'Alto': '#e74a3b',
+                    'Critico': '#dc3545'
+                };
+                const backgroundColors = riesgoLabels.map(label => coloresRiesgo[label] || '#858796');
+
+                if (riesgoLabels.length > 0 && riesgoValues.some(v => v > 0)) {
+                    new Chart(ctx2.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: riesgoLabels,
+                            datasets: [{
+                                label: 'Estudiantes',
+                                data: riesgoValues,
+                                backgroundColor: backgroundColors,
+                                borderRadius: 5,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 3. GRÁFICO: Tipos de Intervención (Barra)
+            // ============================================
+            const ctx3 = document.getElementById('intervencionChart');
+            if (ctx3) {
+                const intervencionLabels = {{ intervencion_labels|safe|default:"[]" }};
+                const intervencionValues = {{ intervencion_values|safe|default:"[]" }};
+                const coloresIntervencion = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+
+                if (intervencionLabels.length > 0 && intervencionValues.some(v => v > 0)) {
+                    new Chart(ctx3.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: intervencionLabels,
+                            datasets: [{
+                                label: 'Intervenciones',
+                                data: intervencionValues,
+                                backgroundColor: coloresIntervencion.slice(0, intervencionLabels.length),
+                                borderRadius: 5,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 4. GRÁFICO IA: Distribución de Riesgo Predictivo (Tutor)
+            // ============================================
+            const iaCtx = document.getElementById('iaRiesgoTutorChart');
+            if (iaCtx) {
+                const iaLabels = {{ ia_labels|safe|default:"[]" }};
+                const iaValues = {{ ia_values|safe|default:"[]" }};
+                const iaColors = {
+                    'Crítico': '#dc3545',
+                    'Alto': '#fd7e14',
+                    'Medio': '#ffc107',
+                    'Bajo': '#20c997'
+                };
+                const backgroundColors = iaLabels.map(label => iaColors[label] || '#6c757d');
+
+                if (iaLabels.length > 0 && iaValues.some(v => v > 0)) {
+                    new Chart(iaCtx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: iaLabels,
+                            datasets: [{
+                                data: iaValues,
+                                backgroundColor: backgroundColors,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 10,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            let percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Dashboard de tutor cargado');
+            {% if ia_disponible %}
+                console.log('ℹ️ IA disponible - Mostrando riesgos predictivos');
+            {% else %}
+                console.log('ℹ️ IA no disponible - Modelo no entrenado');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

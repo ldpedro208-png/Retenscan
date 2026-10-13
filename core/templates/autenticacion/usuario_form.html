@@ -1,0 +1,1119 @@
+<!-- templates/layout/autenticacion/usuario_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Crear Usuario" }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --input-focus-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+        }
+
+        /* Tarjeta del formulario */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+        
+        .form-card .card-header h5 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* Secciones del formulario */
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-section-title i {
+            font-size: 1.1rem;
+        }
+        
+        .form-section-divider {
+            border: 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.05);
+            margin: 0 0 1rem 0;
+        }
+
+        /* Campos del formulario mejorados */
+        .form-floating-custom {
+            position: relative;
+        }
+        
+        .form-floating-custom .form-control,
+        .form-floating-custom .form-select {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .form-floating-custom .form-control:focus,
+        .form-floating-custom .form-select:focus {
+            box-shadow: var(--input-focus-shadow);
+            border-color: #0d6efd;
+        }
+        
+        .form-floating-custom .form-control.is-invalid,
+        .form-floating-custom .form-select.is-invalid {
+            border-color: #dc3545;
+        }
+        
+        .form-floating-custom .form-control.is-invalid:focus,
+        .form-floating-custom .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+        
+        .form-floating-custom .form-control.is-valid,
+        .form-floating-custom .form-select.is-valid {
+            border-color: #198754;
+        }
+        
+        .form-floating-custom .form-control.is-valid:focus,
+        .form-floating-custom .form-select.is-valid:focus {
+            box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
+        }
+
+        /* Etiquetas flotantes personalizadas */
+        .form-label-custom {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+        
+        .form-label-custom .required {
+            color: #dc3545;
+            margin-left: 0.15rem;
+        }
+        
+        .form-label-custom .optional {
+            color: #6c757d;
+            font-weight: 400;
+            font-size: 0.8rem;
+            margin-left: 0.25rem;
+        }
+
+        /* Texto de ayuda */
+        .form-help-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .form-help-text i {
+            font-size: 0.9rem;
+        }
+        
+        .form-help-text.warning {
+            color: #856404;
+        }
+        
+        .form-help-text.success {
+            color: #198754;
+        }
+
+        /* Checkbox personalizado */
+        .form-check-custom {
+            padding-left: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .form-check-custom .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-left: -2.5rem;
+            border-radius: 0.25rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .form-check-custom .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .form-check-custom .form-check-input:focus {
+            box-shadow: var(--input-focus-shadow);
+        }
+        
+        .form-check-custom .form-check-label {
+            font-weight: 500;
+        }
+        
+        .form-check-custom .form-check-help {
+            display: block;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* Botones */
+        .btn-form {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-form i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-form:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-form:active {
+            transform: translateY(0);
+        }
+        
+        .btn-form.btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+        }
+        
+        .btn-form.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+        
+        .btn-form.btn-secondary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(108, 117, 125, 0.3);
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Accesibilidad */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .btn-form:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: none;
+        }
+
+        /* Mensajes de error del formulario */
+        .form-error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .form-error i {
+            font-size: 0.9rem;
+        }
+
+        /* Estilos para campos con icono */
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon .form-control {
+            padding-left: 2.5rem;
+        }
+        
+        .input-with-icon .input-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+            
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+            
+            .form-card .card-header h5 {
+                font-size: 1.1rem;
+            }
+            
+            .btn-form {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+            
+            .btn-form.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+            
+            .form-section-title {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+            
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .form-card .card-header h5 {
+                font-size: 1rem;
+            }
+            
+            .form-label-custom {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+            
+            .form-control,
+            .form-select {
+                background-color: #3d3d3d;
+                border-color: #4d4d4d;
+                color: #e0e0e0;
+            }
+            
+            .form-control:focus,
+            .form-select:focus {
+                background-color: #3d3d3d;
+                color: #e0e0e0;
+            }
+            
+            .form-control::placeholder {
+                color: #8a8a8a;
+            }
+            
+            .form-help-text {
+                color: #adb5bd;
+            }
+            
+            .form-section-title {
+                color: #adb5bd;
+            }
+            
+            .form-section-divider {
+                border-top-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .form-check-custom .form-check-help {
+                color: #adb5bd;
+            }
+            
+            .form-label-custom .optional {
+                color: #adb5bd;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'usuario_list' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Usuarios
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-plus" aria-hidden="true"></i> {{ titulo|default:"Crear Usuario" }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card form-card">
+                
+                <!-- Encabezado -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-plus fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h5 class="mb-0">{{ titulo|default:"Crear Nuevo Usuario" }}</h5>
+                            <small class="opacity-75">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Complete todos los campos obligatorios (*)
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Cuerpo -->
+                <div class="card-body">
+                    <form method="post" id="usuarioForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ============================================ -->
+                        <!-- DATOS PERSONALES -->
+                        <!-- ============================================ -->
+                        <section aria-label="Datos personales" class="form-section">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-person-badge" aria-hidden="true"></i>
+                                Datos Personales
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            <div class="row g-3">
+                                <!-- Username -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="username" class="form-label-custom">
+                                            <i class="bi bi-person" aria-hidden="true"></i>
+                                            Nombre de usuario
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-person input-icon" aria-hidden="true"></i>
+                                            <input type="text" 
+                                                   id="username" 
+                                                   name="username" 
+                                                   class="form-control" 
+                                                   placeholder="Ej: jperez" 
+                                                   required
+                                                   autocomplete="username"
+                                                   aria-describedby="usernameHelp"
+                                                   pattern="^[a-zA-Z0-9_]{3,30}$"
+                                                   title="3-30 caracteres, solo letras, números y guión bajo">
+                                        </div>
+                                        <div id="usernameHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Nombre único para iniciar sesión (3-30 caracteres)
+                                        </div>
+                                        <div id="usernameFeedback" class="form-error" style="display: none;">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            <span id="usernameErrorMessage"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="email" class="form-label-custom">
+                                            <i class="bi bi-envelope" aria-hidden="true"></i>
+                                            Correo Electrónico
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-envelope input-icon" aria-hidden="true"></i>
+                                            <input type="email" 
+                                                   id="email" 
+                                                   name="email" 
+                                                   class="form-control" 
+                                                   placeholder="ejemplo@universidad.edu" 
+                                                   required
+                                                   autocomplete="email"
+                                                   aria-describedby="emailHelp">
+                                        </div>
+                                        <div id="emailHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Correo institucional válido
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- First Name -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="first_name" class="form-label-custom">
+                                            <i class="bi bi-person" aria-hidden="true"></i>
+                                            Nombre
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-person input-icon" aria-hidden="true"></i>
+                                            <input type="text" 
+                                                   id="first_name" 
+                                                   name="first_name" 
+                                                   class="form-control" 
+                                                   placeholder="Ej: Juan" 
+                                                   required
+                                                   autocomplete="given-name"
+                                                   aria-describedby="nameHelp">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Last Name -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="last_name" class="form-label-custom">
+                                            <i class="bi bi-person" aria-hidden="true"></i>
+                                            Apellidos
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-person input-icon" aria-hidden="true"></i>
+                                            <input type="text" 
+                                                   id="last_name" 
+                                                   name="last_name" 
+                                                   class="form-control" 
+                                                   placeholder="Ej: Pérez García" 
+                                                   required
+                                                   autocomplete="family-name"
+                                                   aria-describedby="nameHelp">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Carnet -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="carnet" class="form-label-custom">
+                                            <i class="bi bi-card-text" aria-hidden="true"></i>
+                                            Carnet Universitario
+                                            <span class="optional">(opcional)</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-card-text input-icon" aria-hidden="true"></i>
+                                            <input type="text" 
+                                                   id="carnet" 
+                                                   name="carnet" 
+                                                   class="form-control" 
+                                                   placeholder="Ej: 2020-12345" 
+                                                   autocomplete="off"
+                                                   aria-describedby="carnetHelp"
+                                                   pattern="^[A-Za-z0-9\-]{1,20}$">
+                                        </div>
+                                        <div id="carnetHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Solo para usuarios con carnet universitario
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Teléfono -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="telefono" class="form-label-custom">
+                                            <i class="bi bi-telephone" aria-hidden="true"></i>
+                                            Teléfono
+                                            <span class="optional">(opcional)</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-telephone input-icon" aria-hidden="true"></i>
+                                            <input type="tel" 
+                                                   id="telefono" 
+                                                   name="telefono" 
+                                                   class="form-control" 
+                                                   placeholder="Ej: 555-1234" 
+                                                   autocomplete="tel"
+                                                   aria-describedby="telefonoHelp"
+                                                   pattern="^[\+\d\s\-]{7,15}$">
+                                        </div>
+                                        <div id="telefonoHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Formato: +XX XXX XXX XXX
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- ROLES Y PERMISOS -->
+                        <!-- ============================================ -->
+                        <section aria-label="Roles y permisos" class="form-section mt-4">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                                Roles y Permisos
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            <div class="row g-3">
+                                <!-- Rol -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="rol" class="form-label-custom">
+                                            <i class="bi bi-tag" aria-hidden="true"></i>
+                                            Rol
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <select id="rol" 
+                                                name="rol" 
+                                                class="form-select" 
+                                                required
+                                                aria-describedby="rolHelp">
+                                            <option value="">Selecciona un rol...</option>
+                                            {% for rol in roles %}
+                                                <option value="{{ rol.0 }}">{{ rol.1 }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div id="rolHelp" class="form-help-text warning">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            <strong>Nota:</strong> Los estudiantes se crean desde el módulo de 
+                                            <a href="{% url 'estudiante_create' %}" class="text-decoration-none">
+                                                "Nuevo Estudiante"
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Universidad -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="universidad_id" class="form-label-custom">
+                                            <i class="bi bi-building" aria-hidden="true"></i>
+                                            Universidad
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <select id="universidad_id" 
+                                                name="universidad_id" 
+                                                class="form-select" 
+                                                required
+                                                aria-describedby="universidadHelp">
+                                            <option value="">Selecciona una universidad...</option>
+                                            {% for universidad in universidades %}
+                                                <option value="{{ universidad.idUniversidad }}">
+                                                    {{ universidad.nombre }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if not es_superuser %}
+                                            <div id="universidadHelp" class="form-help-text">
+                                                <i class="bi bi-lock" aria-hidden="true"></i>
+                                                Universidad asignada automáticamente
+                                            </div>
+                                        {% else %}
+                                            <div id="universidadHelp" class="form-help-text">
+                                                <i class="bi bi-globe" aria-hidden="true"></i>
+                                                Selecciona la universidad a la que pertenece el usuario
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admin de Universidad (Solo Superadmin) -->
+                            {% if es_superuser %}
+                                <div class="mt-3">
+                                    <div class="form-check form-check-custom">
+                                        <input type="checkbox" 
+                                               id="es_admin_universidad" 
+                                               name="es_admin_universidad" 
+                                               class="form-check-input">
+                                        <label for="es_admin_universidad" class="form-check-label">
+                                            <i class="bi bi-building" aria-hidden="true"></i>
+                                            Administrador de Universidad
+                                        </label>
+                                        <span class="form-check-help">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Este usuario podrá gestionar todos los usuarios, estudiantes y recursos de su universidad
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- CONTRASEÑA (OPCIONAL) -->
+                        <!-- ============================================ -->
+                        <section aria-label="Contraseña" class="form-section mt-4">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-key" aria-hidden="true"></i>
+                                Contraseña
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="password" class="form-label-custom">
+                                            <i class="bi bi-lock" aria-hidden="true"></i>
+                                            Contraseña
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-lock input-icon" aria-hidden="true"></i>
+                                            <input type="password" 
+                                                   id="password" 
+                                                   name="password" 
+                                                   class="form-control" 
+                                                   placeholder="Contraseña segura" 
+                                                   required
+                                                   autocomplete="new-password"
+                                                   aria-describedby="passwordHelp"
+                                                   minlength="8">
+                                        </div>
+                                        <div id="passwordHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Mínimo 8 caracteres, combinando letras, números y símbolos
+                                        </div>
+                                        <div id="passwordStrength" class="mt-1" style="display: none;">
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                                            </div>
+                                            <span class="strength-label" style="font-size: 0.75rem;">Muy débil</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label for="password_confirm" class="form-label-custom">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                            Confirmar Contraseña
+                                            <span class="required" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-with-icon">
+                                            <i class="bi bi-check-circle input-icon" aria-hidden="true"></i>
+                                            <input type="password" 
+                                                   id="password_confirm" 
+                                                   name="password_confirm" 
+                                                   class="form-control" 
+                                                   placeholder="Repite la contraseña" 
+                                                   required
+                                                   autocomplete="new-password"
+                                                   aria-describedby="passwordConfirmHelp">
+                                        </div>
+                                        <div id="passwordConfirmHelp" class="form-help-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Ambas contraseñas deben coincidir
+                                        </div>
+                                        <div id="passwordMatchFeedback" class="form-error" style="display: none;">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            Las contraseñas no coinciden
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Requisitos de contraseña -->
+                            <div id="passwordRequirements" class="password-requirements" style="display: none;">
+                                <div class="row g-2 mt-2">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled small">
+                                            <li data-rule="length" class="text-muted">
+                                                <i class="bi bi-circle" aria-hidden="true"></i> Mínimo 8 caracteres
+                                            </li>
+                                            <li data-rule="uppercase" class="text-muted">
+                                                <i class="bi bi-circle" aria-hidden="true"></i> Al menos una mayúscula
+                                            </li>
+                                            <li data-rule="lowercase" class="text-muted">
+                                                <i class="bi bi-circle" aria-hidden="true"></i> Al menos una minúscula
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled small">
+                                            <li data-rule="number" class="text-muted">
+                                                <i class="bi bi-circle" aria-hidden="true"></i> Al menos un número
+                                            </li>
+                                            <li data-rule="symbol" class="text-muted">
+                                                <i class="bi bi-circle" aria-hidden="true"></i> Al menos un símbolo
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- ERRORES DEL FORMULARIO -->
+                        <!-- ============================================ -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <li>{{ field.label }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                                        aria-label="Cerrar errores"></button>
+                            </div>
+                        {% endif %}
+
+                        <!-- ============================================ -->
+                        <!-- BOTONES DE ACCIÓN -->
+                        <!-- ============================================ -->
+                        <div class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'usuario_list' %}" 
+                               class="btn btn-secondary btn-form"
+                               aria-label="Cancelar y volver al listado de usuarios">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> 
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-form" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> 
+                                {{ titulo|default:"Crear Usuario" }}
+                            </button>
+                        </div>
+
+                        <!-- Información adicional -->
+                        <p class="text-muted small mt-3 mb-0">
+                            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                            Todos los datos serán almacenados de forma segura.
+                            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#privacidadModal">
+                                Política de privacidad
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal: Política de privacidad -->
+    <div class="modal fade" id="privacidadModal" tabindex="-1" 
+         aria-labelledby="privacidadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h5 class="modal-title" id="privacidadModalLabel">
+                        <i class="bi bi-shield-lock" aria-hidden="true"></i> 
+                        Política de Privacidad
+                    </h5>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <p>La información proporcionada será utilizada exclusivamente para:</p>
+                    <ul>
+                        <li>Gestión de usuarios del sistema</li>
+                        <li>Asignación de roles y permisos</li>
+                        <li>Comunicación institucional</li>
+                        <li>Reportes y estadísticas</li>
+                    </ul>
+                    <p class="text-muted small">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        Tus datos están protegidos según la Ley de Protección de Datos.
+                    </p>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-check" aria-hidden="true"></i> Entendido
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. VALIDACIÓN DE USUARIO EN TIEMPO REAL
+            // ============================================
+            const usernameInput = document.getElementById('username');
+            const usernameFeedback = document.getElementById('usernameFeedback');
+            const usernameErrorMessage = document.getElementById('usernameErrorMessage');
+            
+            if (usernameInput) {
+                usernameInput.addEventListener('input', function() {
+                    const value = this.value;
+                    const pattern = /^[a-zA-Z0-9_]{3,30}$/;
+                    
+                    if (value.length === 0) {
+                        usernameFeedback.style.display = 'none';
+                        this.classList.remove('is-invalid', 'is-valid');
+                        return;
+                    }
+                    
+                    if (pattern.test(value)) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                        usernameFeedback.style.display = 'none';
+                    } else {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                        usernameFeedback.style.display = 'flex';
+                        
+                        if (value.length < 3) {
+                            usernameErrorMessage.textContent = 'El nombre de usuario debe tener al menos 3 caracteres';
+                        } else if (value.length > 30) {
+                            usernameErrorMessage.textContent = 'El nombre de usuario no puede tener más de 30 caracteres';
+                        } else {
+                            usernameErrorMessage.textContent = 'Solo letras, números y guión bajo (_)';
+                        }
+                    }
+                });
+            }
+
+            // ============================================
+            // 2. VALIDACIÓN DE CONTRASEÑA EN TIEMPO REAL
+            // ============================================
+            const passwordInput = document.getElementById('password');
+            const passwordConfirm = document.getElementById('password_confirm');
+            const passwordStrength = document.getElementById('passwordStrength');
+            const passwordRequirements = document.getElementById('passwordRequirements');
+            const matchFeedback = document.getElementById('passwordMatchFeedback');
+            
+            const rules = {
+                length: function(pwd) { return pwd.length >= 8; },
+                uppercase: function(pwd) { return /[A-Z]/.test(pwd); },
+                lowercase: function(pwd) { return /[a-z]/.test(pwd); },
+                number: function(pwd) { return /\d/.test(pwd); },
+                symbol: function(pwd) { return /[!@#$%^&*(),.?":{}|<>]/.test(pwd); }
+            };
+
+            function checkPasswordStrength(password) {
+                let score = 0;
+                const checks = [
+                    rules.length(password),
+                    rules.uppercase(password),
+                    rules.lowercase(password),
+                    rules.number(password),
+                    rules.symbol(password)
+                ];
+                
+                checks.forEach(function(check) { if (check) score++; });
+                return score;
+            }
+
+            function getStrengthLevel(score) {
+                const levels = [
+                    { min: 0, label: 'Muy débil', color: '#dc3545', width: '20%' },
+                    { min: 1, label: 'Débil', color: '#fd7e14', width: '40%' },
+                    { min: 2, label: 'Regular', color: '#ffc107', width: '60%' },
+                    { min: 3, label: 'Fuerte', color: '#20c997', width: '80%' },
+                    { min: 4, label: 'Muy fuerte', color: '#198754', width: '100%' },
+                    { min: 5, label: 'Excelente', color: '#0d6efd', width: '100%' }
+                ];
+                
+                let level = levels[0];
+                for (let i = levels.length - 1; i >= 0; i--) {
+                    if (score >= levels[i].min) {
+                        level = levels[i];
+                        break;
+                    }
+                }
+                return level;
+            }
+
+            function updatePasswordStrength(password) {
+                if (password.length === 0) {
+                    passwordStrength.style.display = 'none';
+                    passwordRequirements.style.display = 'none';
+                    return;
+                }
+                
+                passwordStrength.style.display = 'block';
+                passwordRequirements.style.display = 'block';
+                
+                const score = checkPasswordStrength(password);
+                const level = getStrengthLevel(score);
+                
+                const bar = passwordStrength.querySelector('.progress-bar');
+                const label = passwordStrength.querySelector('.strength-label');
+                
+                if (bar) {
+                    bar.style.width = level.width;
+                    bar.style.backgroundColor = level.color;
+                }
+                
+                if (label) {
+                    label.textContent = level.label;
+                    label.style.color = level.color;
+                }
+                
+                // Actualizar requisitos
+                const requirements = passwordRequirements.querySelectorAll('[data-rule]');
+                requirements.forEach(function(req) {
+                    const rule = req.dataset.rule;
+                    const isValid = rules[rule] ? rules[rule](password) : false;
+                    const icon = req.querySelector('i');
+                    
+                    if (icon) {
+                        if (isValid) {
+                            icon.className = 'bi bi-check-circle-fill text-success';
+                            req.classList.remove('text-muted');
+                        } else {
+                            icon.className = 'bi bi-circle';
+                            req.classList.add('text-muted');
+                        }
+                    }
+                });
+            }
+
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    updatePasswordStrength(this.value);
+                    
+                    if (passwordConfirm && passwordConfirm.value) {
+                        checkPasswordMatch(this.value, passwordConfirm.value);
+                    }
+                });
+            }
+
+            if (passwordConfirm) {
+                passwordConfirm.addEventListener('input', function() {
+                    const password = passwordInput ? passwordInput.value : '';
+                    checkPasswordMatch(password, this.value);
+                });
+            }
+
+            function checkPasswordMatch(pwd1, pwd2) {
+                if (pwd1 && pwd2) {
+                    const match = pwd1 === pwd2;
+                    
+                    if (match) {
+                        passwordConfirm.classList.remove('is-invalid');
+                        passwordConfirm.classList.add('is-valid');
+                        matchFeedback.style.display = 'none';
+                    } else {
+                        passwordConfirm.classList.remove('is-valid');
+                        passwordConfirm.classList.add('is-invalid');
+                        matchFeedback.style.display = 'flex';
+                    }
+                } else {
+                    passwordConfirm.classList.remove('is-invalid', 'is-valid');
+                    matchFeedback.style.display = 'none';
+                }
+            }
+
+            // ============================================
+            // 3. VALIDACIÓN DEL FORMULARIO ANTES DE ENVIAR
+            // ============================================
+            const form = document.getElementById('usuarioForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const password = passwordInput ? passwordInput.value : '';
+                    const confirm = passwordConfirm ? passwordConfirm.value : '';
+                    
+                    // Verificar que las contraseñas coincidan
+                    if (password !== confirm) {
+                        e.preventDefault();
+                        if (passwordConfirm) {
+                            passwordConfirm.classList.add('is-invalid');
+                            matchFeedback.style.display = 'flex';
+                            passwordConfirm.focus();
+                            passwordConfirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    }
+                    
+                    // Deshabilitar botón para evitar doble envío
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                    }
+                });
+            }
+
+            // ============================================
+            // 4. SOPORTE PARA TECLADO
+            // ============================================
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(function(input) {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        // No prevenir para que el formulario se envíe normalmente
+                        // Solo si es el último campo, el formulario se envía automáticamente
+                        if (this.id === 'password_confirm') {
+                            const form = this.closest('form');
+                            if (form) {
+                                form.dispatchEvent(new Event('submit'));
+                            }
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 5. MENSAJES DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Formulario de usuario cargado con accesibilidad mejorada');
+        });
+    </script>
+{% endblock %}

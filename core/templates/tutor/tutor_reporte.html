@@ -1,0 +1,822 @@
+<!-- templates/layout/tutor/tutor_reporte.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Reportes de Tutoría - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --report-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stat-card {
+            border: none;
+            border-radius: var(--report-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card .stat-icon {
+            opacity: 0.15;
+            font-size: 2.5rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.25;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stat-card.bg-primary { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
+        .stat-card.bg-danger { background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%); }
+        .stat-card.bg-success { background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); }
+        .stat-card.bg-info { background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); }
+
+        /* ============================================
+           TARJETA DE INFORMACIÓN
+           ============================================ */
+        .info-card {
+            border: none;
+            border-radius: var(--report-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            height: 100%;
+        }
+
+        .info-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .info-card .card-header {
+            border: none;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .info-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .info-card .card-body {
+            padding: 1.25rem;
+        }
+
+        .info-card .card-body ul {
+            padding-left: 1.25rem;
+            margin-bottom: 0;
+        }
+
+        .info-card .card-body ul li {
+            padding: 0.2rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           TABLA DE ESTUDIANTES
+           ============================================ */
+        .table-estudiantes thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            background: #f8f9fa;
+        }
+
+        .table-estudiantes tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-estudiantes tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-estudiantes tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-estudiantes tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.20s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .stat-card:focus-visible,
+        .info-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+
+            .table-estudiantes {
+                font-size: 0.85rem;
+            }
+
+            .table-estudiantes thead th,
+            .table-estudiantes tbody td {
+                padding: 0.4rem 0.4rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .info-card .card-body ul li {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 1.5rem;
+            }
+
+            .table-estudiantes {
+                font-size: 0.75rem;
+            }
+
+            .table-estudiantes thead th,
+            .table-estudiantes tbody td {
+                padding: 0.2rem 0.2rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .info-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .info-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .table-estudiantes thead th {
+                background: #252540;
+                color: #c8d6e5;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-estudiantes tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-estudiantes tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_tutor' %}" class="text-decoration-none">
+                    <i class="bi bi-person-badge" aria-hidden="true"></i> Tutor
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-file-pdf" aria-hidden="true"></i> Reportes
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-file-pdf" aria-hidden="true"></i> 
+            Reportes de Tutoría
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'tutor_reporte_pdf' %}" 
+               class="btn btn-danger btn-action"
+               aria-label="Descargar reporte en PDF">
+                <i class="bi bi-download" aria-hidden="true"></i> Descargar Reporte PDF
+            </a>
+            <button type="button" 
+                    class="btn btn-secondary btn-action"
+                    onclick="window.print()"
+                    aria-label="Imprimir reporte">
+                <i class="bi bi-printer" aria-hidden="true"></i> Imprimir
+            </button>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- ESTADÍSTICAS                                -->
+    <!-- ============================================ -->
+    <section aria-label="Estadísticas de tutoría" class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-people" aria-hidden="true"></i> Total Estudiantes
+                    </h6>
+                    <p class="stat-value" aria-label="{{ total_estudiantes }} estudiantes">
+                        {{ total_estudiantes|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-people"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> En Riesgo
+                    </h6>
+                    <p class="stat-value" aria-label="{{ en_riesgo|default:0 }} estudiantes en riesgo">
+                        {{ en_riesgo|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> Sin Riesgo
+                    </h6>
+                    <p class="stat-value" aria-label="{{ sin_riesgo|default:0 }} estudiantes sin riesgo">
+                        {{ sin_riesgo|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <article class="card stat-card text-white bg-info">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-clipboard-check" aria-hidden="true"></i> Intervenciones
+                    </h6>
+                    <p class="stat-value" aria-label="{{ total_intervenciones|default:0 }} intervenciones">
+                        {{ total_intervenciones|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INFORMACIÓN DEL REPORTE                    -->
+    <!-- ============================================ -->
+    <section aria-label="Información del reporte" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <article class="card info-card">
+                <header class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i> Información
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <p class="fw-semibold">Este reporte incluye:</p>
+                    <ul>
+                        <li>📋 Lista completa de tus estudiantes asignados</li>
+                        <li>📊 Estado académico de cada estudiante</li>
+                        <li>⚠️ Indicadores de riesgo detectados</li>
+                        <li>📝 Resumen de intervenciones realizadas</li>
+                        <li>📈 Estadísticas generales de tu grupo</li>
+                    </ul>
+                    <small class="text-muted">
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                        Última actualización: {{ fecha_actual|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-6">
+            <article class="card info-card">
+                <header class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-download" aria-hidden="true"></i> Formatos Disponibles
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'tutor_reporte_pdf' %}" 
+                           class="btn btn-danger btn-action"
+                           aria-label="Descargar reporte en PDF">
+                            <i class="bi bi-file-pdf" aria-hidden="true"></i> 
+                            Descargar como PDF
+                        </a>
+                        <button type="button" 
+                                class="btn btn-outline-secondary btn-action"
+                                onclick="window.print()"
+                                aria-label="Imprimir reporte">
+                            <i class="bi bi-printer" aria-hidden="true"></i> 
+                            Imprimir
+                        </button>
+                        <button type="button" 
+                                class="btn btn-outline-success btn-action"
+                                id="exportExcel"
+                                aria-label="Exportar a Excel">
+                            <i class="bi bi-file-excel" aria-hidden="true"></i> 
+                            Exportar a Excel
+                        </button>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- LISTA DE ESTUDIANTES                        -->
+    <!-- ============================================ -->
+    <section aria-label="Lista de estudiantes">
+        <article class="card info-card">
+            <header class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                    Lista de Estudiantes
+                    <span class="badge bg-secondary ms-2">{{ estudiantes|length }}</span>
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            id="filterToggle"
+                            aria-label="Mostrar/ocultar filtros">
+                        <i class="bi bi-funnel" aria-hidden="true"></i> Filtros
+                    </button>
+                </div>
+            </header>
+            <div class="card-body p-0">
+                <!-- Filtros (colapsables) -->
+                <div class="p-3 bg-light border-bottom" id="filterSection" style="display: none;">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="text" 
+                                   id="searchFilter" 
+                                   class="form-control form-control-sm" 
+                                   placeholder="Buscar por nombre o carnet..."
+                                   aria-label="Buscar estudiantes">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="estadoFilter" class="form-select form-select-sm">
+                                <option value="">Todos los estados</option>
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                                <option value="Suspendido">Suspendido</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="riesgoFilter" class="form-select form-select-sm">
+                                <option value="">Todos los riesgos</option>
+                                <option value="si">En Riesgo</option>
+                                <option value="no">Sin Riesgo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-secondary w-100" id="clearFilters">
+                                <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-estudiantes" 
+                           aria-label="Tabla de estudiantes asignados">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <i class="bi bi-card-text" aria-hidden="true"></i> Carnet
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-person" aria-hidden="true"></i> Nombre
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-mortarboard" aria-hidden="true"></i> Carrera
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-flag" aria-hidden="true"></i> Estado
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Riesgo
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Intervenciones
+                                </th>
+                                <th scope="col" class="text-center">
+                                    <i class="bi bi-tools" aria-hidden="true"></i> Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="estudiantesTableBody">
+                            {% for estudiante in estudiantes %}
+                                <tr data-estado="{{ estudiante.estado_academico }}"
+                                    data-riesgo="{% if estudiante.idEstudiante in estudiantes_riesgo %}si{% else %}no{% endif %}"
+                                    data-nombre="{{ estudiante.nombre }} {{ estudiante.apellido_paterno }}"
+                                    data-carnet="{{ estudiante.carnet }}">
+                                    <td>
+                                        <strong>{{ estudiante.carnet|default:"-" }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ estudiante.nombre }} {{ estudiante.apellido_paterno }}
+                                        {% if estudiante.apellido_materno %}
+                                            {{ estudiante.apellido_materno }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ estudiante.idCarrera.nombre|default:"Sin asignar" }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if estudiante.estado_academico == 'Activo' %}bg-success
+                                            {% elif estudiante.estado_academico == 'Inactivo' %}bg-warning text-dark
+                                            {% elif estudiante.estado_academico == 'Suspendido' %}bg-warning text-dark
+                                            {% elif estudiante.estado_academico == 'Egresado' %}bg-primary
+                                            {% elif estudiante.estado_academico == 'Abandonado' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ estudiante.estado_academico|default:"Sin estado" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if estudiante.idEstudiante in estudiantes_riesgo %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> En Riesgo
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle" aria-hidden="true"></i> Sin Riesgo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ estudiante.intervenciones_count|default:0 }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Ver perfil"
+                                           aria-label="Ver perfil de {{ estudiante.nombre }}">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </a>
+                                        {% if estudiante.idEstudiante in estudiantes_riesgo %}
+                                            <a href="{% url 'intervencion_create' estudiante.idEstudiante %}" 
+                                               class="btn btn-sm btn-outline-success"
+                                               title="Crear intervención"
+                                               aria-label="Crear intervención para {{ estudiante.nombre }}">
+                                                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <div class="empty-icon" aria-hidden="true">
+                                                <i class="bi bi-people"></i>
+                                            </div>
+                                            <p class="empty-title">No hay estudiantes asignados</p>
+                                            <p class="empty-description">
+                                                No tienes estudiantes asignados actualmente.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer con estadísticas -->
+            <footer class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <span class="badge bg-primary">
+                        <i class="bi bi-people" aria-hidden="true"></i>
+                        Total: {{ estudiantes|length }}
+                    </span>
+                    <span class="badge bg-danger ms-2">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        En riesgo: {{ en_riesgo|default:0 }}
+                    </span>
+                    <span class="badge bg-success ms-2">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i>
+                        Sin riesgo: {{ sin_riesgo|default:0 }}
+                    </span>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    Última actualización: {% now "d/m/Y H:i" %}
+                </small>
+            </footer>
+        </article>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const filterToggle = document.getElementById('filterToggle');
+            const filterSection = document.getElementById('filterSection');
+            const searchFilter = document.getElementById('searchFilter');
+            const estadoFilter = document.getElementById('estadoFilter');
+            const riesgoFilter = document.getElementById('riesgoFilter');
+            const clearFilters = document.getElementById('clearFilters');
+            const tableBody = document.getElementById('estudiantesTableBody');
+            const rows = tableBody ? tableBody.querySelectorAll('tr') : [];
+
+            // ============================================
+            // 1. TOGGLE DE FILTROS
+            // ============================================
+            if (filterToggle) {
+                filterToggle.addEventListener('click', function() {
+                    const isVisible = filterSection.style.display !== 'none';
+                    filterSection.style.display = isVisible ? 'none' : 'block';
+                    this.innerHTML = isVisible ? 
+                        '<i class="bi bi-funnel" aria-hidden="true"></i> Filtros' : 
+                        '<i class="bi bi-funnel-fill" aria-hidden="true"></i> Ocultar filtros';
+                });
+            }
+
+            // ============================================
+            // 2. FILTROS
+            // ============================================
+            function filterTable() {
+                const searchTerm = searchFilter.value.toLowerCase().trim();
+                const estadoValue = estadoFilter.value;
+                const riesgoValue = riesgoFilter.value;
+
+                rows.forEach(function(row) {
+                    const nombre = (row.dataset.nombre || '').toLowerCase();
+                    const carnet = (row.dataset.carnet || '').toLowerCase();
+                    const estado = row.dataset.estado || '';
+                    const riesgo = row.dataset.riesgo || '';
+
+                    const matchesSearch = searchTerm === '' || 
+                        nombre.includes(searchTerm) || 
+                        carnet.includes(searchTerm);
+
+                    const matchesEstado = estadoValue === '' || estado === estadoValue;
+                    const matchesRiesgo = riesgoValue === '' || riesgo === riesgoValue;
+
+                    if (matchesSearch && matchesEstado && matchesRiesgo) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            if (searchFilter) searchFilter.addEventListener('input', filterTable);
+            if (estadoFilter) estadoFilter.addEventListener('change', filterTable);
+            if (riesgoFilter) riesgoFilter.addEventListener('change', filterTable);
+
+            // ============================================
+            // 3. LIMPIAR FILTROS
+            // ============================================
+            if (clearFilters) {
+                clearFilters.addEventListener('click', function() {
+                    if (searchFilter) searchFilter.value = '';
+                    if (estadoFilter) estadoFilter.value = '';
+                    if (riesgoFilter) riesgoFilter.value = '';
+                    filterTable();
+                });
+            }
+
+            // ============================================
+            // 4. EXPORTAR A EXCEL (CSV)
+            // ============================================
+            const exportExcelBtn = document.getElementById('exportExcel');
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', function() {
+                    const table = document.querySelector('.table-estudiantes');
+                    if (!table) return;
+
+                    let csv = 'Carnet,Nombre,Carrera,Estado,Riesgo,Intervenciones\n';
+                    const rows = table.querySelectorAll('tbody tr:not(.empty-row)');
+
+                    rows.forEach(function(row) {
+                        if (row.style.display === 'none') return;
+                        const cols = row.querySelectorAll('td');
+                        if (cols.length >= 6) {
+                            const carnet = cols[0].textContent.trim();
+                            const nombre = cols[1].textContent.trim();
+                            const carrera = cols[2].textContent.trim();
+                            const estado = cols[3].textContent.trim();
+                            const riesgo = cols[4].textContent.trim();
+                            const intervenciones = cols[5].textContent.trim();
+                            csv += `"${carnet}","${nombre}","${carrera}","${estado}","${riesgo}","${intervenciones}"\n`;
+                        }
+                    });
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `reporte_tutoria_${new Date().toISOString().slice(0,10)}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                });
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de reportes de tutoría cargada');
+            console.log('ℹ️ ' + {{ estudiantes|length }} + ' estudiantes en el reporte');
+        });
+    </script>
+{% endblock %}

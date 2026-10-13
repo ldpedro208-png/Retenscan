@@ -1,0 +1,850 @@
+<!-- templates/layout/encuesta/encuesta_estudiantes_respuestas.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Estudiantes - {{ encuesta.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --stats-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* Tarjetas de estadísticas */
+        .stats-card {
+            border: none;
+            border-radius: var(--stats-card-radius);
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-card .card-body {
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .stats-card .stats-icon {
+            position: absolute;
+            right: 0.75rem;
+            bottom: 0.75rem;
+            font-size: 3.5rem;
+            opacity: 0.15;
+            transition: opacity var(--transition-speed) ease;
+        }
+        
+        .stats-card:hover .stats-icon {
+            opacity: 0.25;
+        }
+        
+        .stats-card .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+        
+        .stats-card .stats-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        /* Tabla mejorada */
+        .table-responsive {
+            border-radius: 0.5rem;
+        }
+        
+        .table-estudiantes {
+            margin-bottom: 0;
+        }
+        
+        .table-estudiantes thead th {
+            background: #1a1a2e;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 0.75rem 1rem;
+            border: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table-estudiantes tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table-estudiantes tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+        
+        .table-estudiantes tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .table-estudiantes tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges de estado */
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        
+        .badge-status i {
+            margin-right: 0.3rem;
+        }
+
+        /* Filtros */
+        .filters-section {
+            background: #f8f9fa;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        
+        .filters-section .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .filters-section .filter-group .filter-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        .filters-section .filter-group .filter-input {
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem;
+            min-width: 150px;
+            flex: 1;
+        }
+        
+        .filters-section .filter-group .filter-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+        
+        .filters-section .filter-group .filter-select {
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background: #ffffff;
+            font-size: 0.9rem;
+            min-width: 120px;
+        }
+        
+        .filters-section .filter-group .filter-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+        
+        .filters-section .filter-stats {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: #6c757d;
+            white-space: nowrap;
+        }
+        
+        .filters-section .filter-stats strong {
+            color: #2d3748;
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stats-card:nth-child(1) { animation-delay: 0.05s; }
+        .stats-card:nth-child(2) { animation-delay: 0.10s; }
+        .stats-card:nth-child(3) { animation-delay: 0.15s; }
+
+        /* Accesibilidad */
+        .stats-card:focus-visible,
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .table-estudiantes tbody tr:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: -2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-card .stats-number {
+                font-size: 1.75rem;
+            }
+            
+            .stats-card .stats-icon {
+                font-size: 2.5rem;
+            }
+            
+            .filters-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filters-section .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filters-section .filter-group .filter-input,
+            .filters-section .filter-group .filter-select {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .filters-section .filter-stats {
+                margin-left: 0;
+                text-align: center;
+                padding-top: 0.5rem;
+                border-top: 1px solid #e2e8f0;
+            }
+            
+            .table-estudiantes thead th {
+                font-size: 0.7rem;
+                padding: 0.5rem 0.6rem;
+            }
+            
+            .table-estudiantes tbody td {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.85rem;
+            }
+            
+            .badge-status {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-card .stats-number {
+                font-size: 1.5rem;
+            }
+            
+            .table-estudiantes {
+                font-size: 0.8rem;
+            }
+            
+            .table-estudiantes thead th {
+                font-size: 0.65rem;
+                padding: 0.4rem 0.4rem;
+            }
+            
+            .table-estudiantes tbody td {
+                padding: 0.4rem 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .filters-section {
+                background: #252540;
+            }
+            
+            .filters-section .filter-group .filter-label {
+                color: #c8d6e5;
+            }
+            
+            .filters-section .filter-group .filter-input,
+            .filters-section .filter-group .filter-select {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+            
+            .filters-section .filter-group .filter-input:focus,
+            .filters-section .filter-group .filter-select:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+            }
+            
+            .filters-section .filter-group .filter-input::placeholder {
+                color: #8a8a9a;
+            }
+            
+            .filters-section .filter-stats {
+                color: #8a8a9a;
+            }
+            
+            .filters-section .filter-stats strong {
+                color: #ecf0f1;
+            }
+            
+            .table-estudiantes tbody td {
+                border-bottom-color: #2d2d44;
+            }
+            
+            .table-estudiantes tbody tr:hover {
+                background-color: #252540;
+            }
+            
+            .table-estudiantes thead th {
+                background: #1a1a2e;
+            }
+        }
+
+        /* Estado vacío */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Export button */
+        .btn-export {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-export i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" class="text-decoration-none">
+                    {{ encuesta.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-people" aria-hidden="true"></i> 
+            Estudiantes - <span class="text-primary">{{ encuesta.titulo }}</span>
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" 
+               class="btn btn-info btn-action"
+               aria-label="Ver detalles de la encuesta">
+                <i class="bi bi-eye" aria-hidden="true"></i> Ver Encuesta
+            </a>
+            <a href="{% url 'encuesta_list' %}" 
+               class="btn btn-secondary btn-action"
+               aria-label="Volver al listado de encuestas">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- TARJETAS DE ESTADÍSTICAS                    -->
+    <!-- ============================================ -->
+    <section aria-label="Estadísticas de participación" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="card stats-card text-white bg-primary">
+                <div class="card-body">
+                    <p class="stats-label">
+                        <i class="bi bi-people" aria-hidden="true"></i> Total Asignados
+                    </p>
+                    <p class="stats-number" aria-label="{{ total }} estudiantes asignados">
+                        {{ total }}
+                    </p>
+                </div>
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-people"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stats-card text-white bg-success">
+                <div class="card-body">
+                    <p class="stats-label">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> Completaron
+                    </p>
+                    <p class="stats-number" aria-label="{{ completadas }} estudiantes completaron">
+                        {{ completadas }}
+                    </p>
+                </div>
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stats-card text-white bg-warning">
+                <div class="card-body">
+                    <p class="stats-label">
+                        <i class="bi bi-clock" aria-hidden="true"></i> Pendientes
+                    </p>
+                    <p class="stats-number" aria-label="{{ pendientes }} estudiantes pendientes">
+                        {{ pendientes }}
+                    </p>
+                </div>
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-clock"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- FILTROS Y BÚSQUEDA                         -->
+    <!-- ============================================ -->
+    <section aria-label="Filtros de búsqueda">
+        <div class="filters-section">
+            <div class="filter-group">
+                <span class="filter-label">
+                    <i class="bi bi-search" aria-hidden="true"></i> Buscar:
+                </span>
+                <input type="text" 
+                       id="searchInput" 
+                       class="filter-input" 
+                       placeholder="Nombre, carnet o email..."
+                       aria-label="Buscar estudiantes">
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">
+                    <i class="bi bi-funnel" aria-hidden="true"></i> Estado:
+                </span>
+                <select id="statusFilter" class="filter-select" aria-label="Filtrar por estado">
+                    <option value="todos">Todos</option>
+                    <option value="completada">Completada</option>
+                    <option value="pendiente">Pendiente</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">
+                    <i class="bi bi-sort" aria-hidden="true"></i> Ordenar:
+                </span>
+                <select id="sortFilter" class="filter-select" aria-label="Ordenar por">
+                    <option value="nombre">Por nombre</option>
+                    <option value="carnet">Por carnet</option>
+                    <option value="fecha_asignacion">Fecha asignación</option>
+                    <option value="estado">Por estado</option>
+                </select>
+            </div>
+            
+            <div class="filter-stats" aria-live="polite">
+                <strong id="visibleCount">{{ total }}</strong> estudiantes mostrados
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- TABLA DE ESTUDIANTES                        -->
+    <!-- ============================================ -->
+    <section aria-label="Lista de estudiantes asignados">
+        <div class="card shadow">
+            <header class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                    Lista de Estudiantes Asignados
+                    <span class="badge bg-secondary ms-2" id="totalBadge">{{ estudiantes_respuestas|length }}</span>
+                </h5>
+                
+                <!-- Botón de exportar -->
+                <button type="button" class="btn btn-sm btn-outline-primary btn-export" id="exportBtn">
+                    <i class="bi bi-download" aria-hidden="true"></i> Exportar
+                </button>
+            </header>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-estudiantes" id="estudiantesTable" aria-label="Tabla de estudiantes asignados">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <i class="bi bi-card-text" aria-hidden="true"></i> Carnet
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-person" aria-hidden="true"></i> Nombre Completo
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-envelope" aria-hidden="true"></i> Email
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Estado
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-calendar-plus" aria-hidden="true"></i> Fecha Asignación
+                                </th>
+                                <th scope="col">
+                                    <i class="bi bi-calendar-check" aria-hidden="true"></i> Fecha Respuesta
+                                </th>
+                                <th scope="col" class="text-center">
+                                    <i class="bi bi-tools" aria-hidden="true"></i> Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            {% for item in estudiantes_respuestas %}
+                            <tr data-estado="{% if item.completada %}completada{% else %}pendiente{% endif %}"
+                                data-nombre="{{ item.estudiante.nombre }} {{ item.estudiante.apellido_paterno }}"
+                                data-carnet="{{ item.estudiante.carnet|default:'' }}"
+                                data-email="{{ item.estudiante.email|default:'' }}">
+                                <td>
+                                    <strong>{{ item.estudiante.carnet|default:"-" }}</strong>
+                                </td>
+                                <td>
+                                    {{ item.estudiante.nombre }} {{ item.estudiante.apellido_paterno }}
+                                    {% if item.estudiante.apellido_materno %}
+                                        {{ item.estudiante.apellido_materno }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.estudiante.email|default:"-" }}</td>
+                                <td>
+                                    {% if item.completada %}
+                                        <span class="badge bg-success badge-status">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i> Completada
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark badge-status">
+                                            <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.fecha_asignacion|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% if item.fecha_respuesta %}
+                                        {{ item.fecha_respuesta|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'estudiante_detail' item.estudiante.idEstudiante %}" 
+                                       class="btn btn-sm btn-info" 
+                                       title="Ver perfil del estudiante"
+                                       aria-label="Ver perfil de {{ item.estudiante.nombre }}">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </a>
+                                    {% if user_rol == 'admin' or user_rol == 'profesor' %}
+                                        <a href="#" 
+                                           class="btn btn-sm btn-primary" 
+                                           title="Ver respuestas"
+                                           aria-label="Ver respuestas de {{ item.estudiante.nombre }}">
+                                            <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                                        </div>
+                                        <p class="empty-title">No hay estudiantes asignados</p>
+                                        <p class="empty-description">
+                                            Esta encuesta no tiene estudiantes asignados aún.
+                                            <br>
+                                            <a href="{% url 'encuesta_asignar' encuesta.idEncuesta %}" class="btn btn-primary btn-sm mt-3">
+                                                <i class="bi bi-person-plus" aria-hidden="true"></i> Asignar estudiantes
+                                            </a>
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pie de tabla con información -->
+            <footer class="card-footer bg-light d-flex flex-wrap justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <span id="completadasInfo">{{ completadas }}</span> de <span id="totalInfo">{{ total }}</span> estudiantes han completado la encuesta
+                </small>
+                <small class="text-muted">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    Última actualización: {% now "d/m/Y H:i" %}
+                </small>
+            </footer>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const sortFilter = document.getElementById('sortFilter');
+            const tableBody = document.getElementById('tableBody');
+            const rows = tableBody.querySelectorAll('tr:not(.empty-row)');
+            const visibleCount = document.getElementById('visibleCount');
+            const totalBadge = document.getElementById('totalBadge');
+            const completadasInfo = document.getElementById('completadasInfo');
+            const totalInfo = document.getElementById('totalInfo');
+
+            // ============================================
+            // 1. FILTRO DE BÚSQUEDA
+            // ============================================
+            function filterRows() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const statusValue = statusFilter.value;
+                
+                let visibleRows = 0;
+                let completadas = 0;
+                
+                rows.forEach(function(row) {
+                    const nombre = (row.dataset.nombre || '').toLowerCase();
+                    const carnet = (row.dataset.carnet || '').toLowerCase();
+                    const email = (row.dataset.email || '').toLowerCase();
+                    const estado = row.dataset.estado || '';
+                    
+                    const matchesSearch = searchTerm === '' || 
+                        nombre.includes(searchTerm) || 
+                        carnet.includes(searchTerm) || 
+                        email.includes(searchTerm);
+                    
+                    const matchesStatus = statusValue === 'todos' || estado === statusValue;
+                    
+                    const isVisible = matchesSearch && matchesStatus;
+                    
+                    if (isVisible) {
+                        row.style.display = '';
+                        visibleRows++;
+                        if (estado === 'completada') {
+                            completadas++;
+                        }
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Actualizar contadores
+                visibleCount.textContent = visibleRows;
+                if (completadasInfo) completadasInfo.textContent = completadas;
+                
+                // Actualizar badge del header
+                if (totalBadge) totalBadge.textContent = visibleRows;
+            }
+
+            // ============================================
+            // 2. ORDENAMIENTO
+            // ============================================
+            function sortRows() {
+                const sortBy = sortFilter.value;
+                const rowsArray = Array.from(rows);
+                
+                rowsArray.sort(function(a, b) {
+                    let valueA, valueB;
+                    
+                    switch(sortBy) {
+                        case 'nombre':
+                            valueA = (a.dataset.nombre || '').toLowerCase();
+                            valueB = (b.dataset.nombre || '').toLowerCase();
+                            break;
+                        case 'carnet':
+                            valueA = (a.dataset.carnet || '').toLowerCase();
+                            valueB = (b.dataset.carnet || '').toLowerCase();
+                            break;
+                        case 'fecha_asignacion':
+                            // Usar el texto de la columna de fecha
+                            const cellsA = a.querySelectorAll('td');
+                            const cellsB = b.querySelectorAll('td');
+                            valueA = cellsA[4]?.textContent || '';
+                            valueB = cellsB[4]?.textContent || '';
+                            break;
+                        case 'estado':
+                            valueA = a.dataset.estado || '';
+                            valueB = b.dataset.estado || '';
+                            break;
+                        default:
+                            valueA = (a.dataset.nombre || '').toLowerCase();
+                            valueB = (b.dataset.nombre || '').toLowerCase();
+                    }
+                    
+                    if (valueA < valueB) return -1;
+                    if (valueA > valueB) return 1;
+                    return 0;
+                });
+                
+                // Reordenar en el DOM
+                rowsArray.forEach(function(row) {
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // ============================================
+            // 3. EVENTOS DE FILTRO Y ORDENAMIENTO
+            // ============================================
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    filterRows();
+                });
+            }
+            
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    filterRows();
+                });
+            }
+            
+            if (sortFilter) {
+                sortFilter.addEventListener('change', function() {
+                    sortRows();
+                    filterRows(); // Re-aplicar filtros después de ordenar
+                });
+            }
+
+            // ============================================
+            // 4. EXPORTAR A CSV
+            // ============================================
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    // Obtener solo filas visibles
+                    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+                    
+                    if (visibleRows.length === 0) {
+                        alert('No hay datos para exportar');
+                        return;
+                    }
+                    
+                    // Crear contenido CSV
+                    let csv = 'Carnet,Nombre,Email,Estado,Fecha Asignación,Fecha Respuesta\n';
+                    
+                    visibleRows.forEach(function(row) {
+                        const cells = row.querySelectorAll('td');
+                        const carnet = cells[0]?.textContent.trim() || '';
+                        const nombre = cells[1]?.textContent.trim() || '';
+                        const email = cells[2]?.textContent.trim() || '';
+                        const estado = cells[3]?.textContent.trim() || '';
+                        const fechaAsignacion = cells[4]?.textContent.trim() || '';
+                        const fechaRespuesta = cells[5]?.textContent.trim() || '';
+                        
+                        csv += `"${carnet}","${nombre}","${email}","${estado}","${fechaAsignacion}","${fechaRespuesta}"\n`;
+                    });
+                    
+                    // Descargar archivo
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `estudiantes_encuesta_${Date.now()}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                });
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-sm').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. INICIALIZAR CONTADORES
+            // ============================================
+            if (totalInfo) totalInfo.textContent = rows.length;
+            
+            // Contar completadas iniciales
+            let inicialCompletadas = 0;
+            rows.forEach(function(row) {
+                if (row.dataset.estado === 'completada') {
+                    inicialCompletadas++;
+                }
+            });
+            if (completadasInfo) completadasInfo.textContent = inicialCompletadas;
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de estudiantes y respuestas cargada');
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,844 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar recurso{% else %}Subir recurso{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .form-section-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #4e73df;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #eef2ff;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .form-section-title i {
+        font-size: 1.1rem;
+    }
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #4b5563;
+        margin-bottom: 0.3rem;
+    }
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .form-text {
+        font-size: 0.75rem;
+    }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+    }
+
+    /* ============================================ */
+    /* DROPZONE PRINCIPAL                           */
+    /* ============================================ */
+    .dropzone {
+        border: 2px dashed #c7cdd8;
+        border-radius: 0.5rem;
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fafbfc;
+        position: relative;
+    }
+    .dropzone:hover,
+    .dropzone.dragover {
+        border-color: #4e73df;
+        background: #eef2ff;
+    }
+    .dropzone-icon {
+        font-size: 2.5rem;
+        color: #4e73df;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .dropzone-text {
+        color: #4b5563;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    .dropzone-hint {
+        color: #9ca3af;
+        font-size: 0.75rem;
+    }
+    .dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    /* ============================================ */
+    /* PREVIEW DE ARCHIVO                           */
+    /* ============================================ */
+    .file-preview {
+        display: none;
+        background: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 0.75rem;
+    }
+    .file-preview.show {
+        display: block;
+    }
+    .file-preview-inner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .file-preview-icon {
+        width: 48px;
+        height: 48px;
+        background: #eef2ff;
+        color: #4e73df;
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .file-preview-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .file-preview-name {
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .file-preview-meta {
+        font-size: 0.75rem;
+        color: #858796;
+    }
+    .file-preview-remove {
+        background: none;
+        border: none;
+        color: #dc3545;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        transition: background 0.15s;
+    }
+    .file-preview-remove:hover {
+        background: #fef2f2;
+    }
+
+    /* ============================================ */
+    /* PREVIEW DE PORTADA                           */
+    /* ============================================ */
+    .portada-preview {
+        position: relative;
+        width: 100%;
+        max-width: 180px;
+        aspect-ratio: 3 / 4;
+        border: 2px dashed #c7cdd8;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        background: #fafbfc;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    .portada-preview:hover {
+        border-color: #4e73df;
+        background: #eef2ff;
+    }
+    .portada-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .portada-preview input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .portada-preview-icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .portada-preview-label {
+        font-size: 0.75rem;
+    }
+    .portada-remove {
+        position: absolute;
+        top: 0.3rem;
+        right: 0.3rem;
+        background: rgba(220, 53, 69, 0.9);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        z-index: 2;
+    }
+    .portada-preview.has-image .portada-remove {
+        display: flex;
+    }
+
+    /* ============================================ */
+    /* PESTAÑAS: ARCHIVO O URL                      */
+    /* ============================================ */
+    .nav-tabs-sm .nav-link {
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+    }
+    .nav-tabs-sm .nav-link.active {
+        font-weight: 600;
+    }
+
+    /* ============================================ */
+    /* BARRA DE ACCIONES STICKY                     */
+    /* ============================================ */
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #e3e6f0;
+        padding: 1rem 1.5rem;
+        margin: 0 -1.5rem -1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 0 0 0.5rem 0.5rem;
+        z-index: 10;
+    }
+
+    .aviso-info {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 0.75rem 1rem;
+        border-radius: 0.4rem;
+        font-size: 0.85rem;
+        color: #1e40af;
+        margin-bottom: 1rem;
+    }
+    .aviso-info i {
+        margin-right: 0.4rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-cloud-upload text-primary"></i>
+                {% if form.instance.pk %}Editar recurso{% else %}Subir nuevo recurso{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">
+                Comparte material académico o de apoyo con los estudiantes
+            </p>
+        </div>
+        <a href="{% url 'biblioteca:mis_recursos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Aviso contextual para profesores -->
+    {% if user_rol == 'profesor' %}
+        <div class="aviso-info">
+            <i class="bi bi-info-circle-fill"></i>
+            Como profesor, solo puedes subir recursos a las materias que tienes asignadas.
+            Verifica que la materia seleccionada sea una de las tuyas.
+        </div>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- FORMULARIO PRINCIPAL                         -->
+    <!-- ============================================ -->
+    <form method="post" enctype="multipart/form-data" id="recursoForm" novalidate>
+        {% csrf_token %}
+
+        <!-- Errores generales -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+
+            <!-- ============================================ -->
+            <!-- COLUMNA IZQUIERDA                            -->
+            <!-- ============================================ -->
+            <div class="col-lg-8">
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 1: CONTENIDO PRINCIPAL               -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Contenido del recurso
+                    </div>
+
+                    <!-- Pestañas: Archivo / URL -->
+                    <ul class="nav nav-tabs nav-tabs-sm mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-archivo" data-bs-toggle="tab"
+                                    data-bs-target="#pane-archivo" type="button" role="tab">
+                                <i class="bi bi-file-earmark"></i> Archivo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-url" data-bs-toggle="tab"
+                                    data-bs-target="#pane-url" type="button" role="tab">
+                                <i class="bi bi-link-45deg"></i> URL externa
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Pestaña: Archivo -->
+                        <div class="tab-pane fade show active" id="pane-archivo" role="tabpanel">
+                            <div class="dropzone" id="dropzoneArchivo">
+                                <i class="bi bi-cloud-arrow-up dropzone-icon"></i>
+                                <div class="dropzone-text">
+                                    <strong>Arrastra tu archivo aquí</strong> o haz clic para seleccionar
+                                </div>
+                                <div class="dropzone-hint">
+                                    PDF, EPUB, DOCX, PPTX, XLSX, MP4, MP3, ZIP · Máx. 20 MB
+                                </div>
+                                {{ form.archivo }}
+                            </div>
+
+                            <!-- Preview del archivo -->
+                            <div class="file-preview" id="filePreview">
+                                <div class="file-preview-inner">
+                                    <div class="file-preview-icon" id="filePreviewIcon">
+                                        <i class="bi bi-file-earmark"></i>
+                                    </div>
+                                    <div class="file-preview-info">
+                                        <div class="file-preview-name" id="filePreviewName">—</div>
+                                        <div class="file-preview-meta" id="filePreviewMeta">—</div>
+                                    </div>
+                                    <button type="button" class="file-preview-remove" id="filePreviewRemove"
+                                            title="Quitar archivo">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if form.archivo.errors %}
+                                <div class="text-danger small mt-2">
+                                    {% for error in form.archivo.errors %}{{ error }}<br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Pestaña: URL -->
+                        <div class="tab-pane fade" id="pane-url" role="tabpanel">
+                            <label for="{{ form.url_externa.id_for_label }}" class="form-label">
+                                {{ form.url_externa.label }}
+                            </label>
+                            {{ form.url_externa }}
+                            <div class="form-text">
+                                Útil para videos de YouTube, Vimeo o recursos ya alojados en línea.
+                            </div>
+                            {% if form.url_externa.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.url_externa.errors %}{{ error }}<br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 2: INFORMACIÓN BÁSICA                -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-card-text"></i> Información básica
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label required">
+                                Título del recurso
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="text-danger small mt-1">{{ form.titulo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.autor.id_for_label }}" class="form-label">
+                                Autor(es)
+                            </label>
+                            {{ form.autor }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.editorial.id_for_label }}" class="form-label">
+                                Editorial / Fuente
+                            </label>
+                            {{ form.editorial }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="{{ form.anio_publicacion.id_for_label }}" class="form-label">
+                                Año de publicación
+                            </label>
+                            {{ form.anio_publicacion }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="{{ form.isbn.id_for_label }}" class="form-label">
+                                ISBN / DOI
+                            </label>
+                            {{ form.isbn }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="{{ form.idioma.id_for_label }}" class="form-label">
+                                Idioma
+                            </label>
+                            {{ form.idioma }}
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                Descripción
+                            </label>
+                            {{ form.descripcion }}
+                            <div class="form-text">
+                                Resume el contenido. Aparecerá en las tarjetas del catálogo.
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.palabras_clave.id_for_label }}" class="form-label">
+                                Palabras clave
+                            </label>
+                            {{ form.palabras_clave }}
+                            <div class="form-text">
+                                Separa con comas. Ayudan a que los estudiantes encuentren este recurso.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============================================ -->
+            <!-- COLUMNA DERECHA                              -->
+            <!-- ============================================ -->
+            <div class="col-lg-4">
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 3: PUBLICACIÓN                       -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-send-check"></i> Publicación
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.estado.id_for_label }}" class="form-label required">
+                            Estado
+                        </label>
+                        {{ form.estado }}
+                        <div class="form-text">
+                            Los recursos en borrador solo los ves tú.
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        {{ form.es_obligatorio }}
+                        <label class="form-check-label" for="{{ form.es_obligatorio.id_for_label }}">
+                            <i class="bi bi-exclamation-circle text-danger"></i>
+                            Material obligatorio
+                        </label>
+                        <div class="form-text">
+                            Se notificará a los estudiantes asignados.
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                        {{ form.destacado }}
+                        <label class="form-check-label" for="{{ form.destacado.id_for_label }}">
+                            <i class="bi bi-star text-warning"></i>
+                            Destacar en portada
+                        </label>
+                        <div class="form-text">
+                            Aparecerá primero en el catálogo.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 4: CLASIFICACIÓN                     -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-tags"></i> Clasificación
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.tipo.id_for_label }}" class="form-label required">
+                            Tipo de recurso
+                        </label>
+                        {{ form.tipo }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.nivel_dificultad.id_for_label }}" class="form-label required">
+                            Nivel de dificultad
+                        </label>
+                        {{ form.nivel_dificultad }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.idCategoria.id_for_label }}" class="form-label">
+                            Categoría
+                        </label>
+                        {{ form.idCategoria }}
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="{{ form.idMateria.id_for_label }}" class="form-label">
+                            Materia
+                        </label>
+                        {{ form.idMateria }}
+                        <div class="form-text">
+                            Déjalo vacío si es contenido transversal.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 5: PORTADA                           -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-image"></i> Portada (opcional)
+                    </div>
+
+                    <div class="text-center">
+                        <div class="portada-preview {% if form.instance.portada %}has-image{% endif %}"
+                             id="portadaPreview" style="margin: 0 auto;">
+                            {% if form.instance.portada %}
+                                <img src="{{ form.instance.portada.url }}" alt="Portada actual" id="portadaImg">
+                            {% else %}
+                                <div>
+                                    <i class="bi bi-image portada-preview-icon"></i>
+                                    <div class="portada-preview-label">Subir imagen</div>
+                                </div>
+                            {% endif %}
+                            <button type="button" class="portada-remove" id="portadaRemove"
+                                    title="Quitar portada">
+                                <i class="bi bi-x"></i>
+                            </button>
+                            {{ form.portada }}
+                        </div>
+                    </div>
+                    <div class="form-text text-center mt-2">
+                        JPG, PNG o GIF · Máx. 2 MB · Recomendado 600×800
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- BARRA DE ACCIONES                            -->
+        <!-- ============================================ -->
+        <div class="action-bar">
+            <div class="text-muted small">
+                <i class="bi bi-shield-check"></i>
+                Los recursos se guardan con la universidad <strong>{{ user.idUniversidad.nombre|default:"asignada" }}</strong>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'biblioteca:mis_recursos' %}" class="btn btn-outline-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">
+                    <i class="bi bi-check2-circle"></i>
+                    {% if form.instance.pk %}Guardar cambios{% else %}Publicar recurso{% endif %}
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ============================================
+    // 1. DROPZONE DEL ARCHIVO PRINCIPAL
+    // ============================================
+    const dropzone = document.getElementById('dropzoneArchivo');
+    const inputArchivo = document.getElementById('{{ form.archivo.id_for_label }}');
+    const filePreview = document.getElementById('filePreview');
+    const filePreviewName = document.getElementById('filePreviewName');
+    const filePreviewMeta = document.getElementById('filePreviewMeta');
+    const filePreviewIcon = document.getElementById('filePreviewIcon');
+    const filePreviewRemove = document.getElementById('filePreviewRemove');
+
+    // Mapa de iconos por extensión
+    const iconosPorExtension = {
+        'pdf':  'bi-file-earmark-pdf',
+        'epub': 'bi-book',
+        'doc':  'bi-file-earmark-word',
+        'docx': 'bi-file-earmark-word',
+        'ppt':  'bi-file-earmark-ppt',
+        'pptx': 'bi-file-earmark-ppt',
+        'xls':  'bi-file-earmark-excel',
+        'xlsx': 'bi-file-earmark-excel',
+        'mp4':  'bi-file-earmark-play',
+        'mp3':  'bi-file-earmark-music',
+        'zip':  'bi-file-earmark-zip',
+        'jpg':  'bi-file-earmark-image',
+        'jpeg': 'bi-file-earmark-image',
+        'png':  'bi-file-earmark-image',
+    };
+
+    function formatearBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function mostrarPreview(file) {
+        if (!file) {
+            filePreview.classList.remove('show');
+            return;
+        }
+        const ext = file.name.split('.').pop().toLowerCase();
+        const iconClass = iconosPorExtension[ext] || 'bi-file-earmark';
+
+        filePreviewIcon.innerHTML = '<i class="bi ' + iconClass + '"></i>';
+        filePreviewName.textContent = file.name;
+        filePreviewMeta.textContent = formatearBytes(file.size) + ' · ' + ext.toUpperCase();
+        filePreview.classList.add('show');
+    }
+
+    if (dropzone && inputArchivo) {
+        // Drag & drop
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropzone.addEventListener(evt, e => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            dropzone.addEventListener(evt, e => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                inputArchivo.files = files;
+                mostrarPreview(files[0]);
+            }
+        });
+
+        inputArchivo.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                mostrarPreview(this.files[0]);
+            } else {
+                filePreview.classList.remove('show');
+            }
+        });
+    }
+
+    // Quitar archivo
+    if (filePreviewRemove) {
+        filePreviewRemove.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            inputArchivo.value = '';
+            filePreview.classList.remove('show');
+        });
+    }
+
+    // ============================================
+    // 2. PREVIEW DE PORTADA
+    // ============================================
+    const portadaPreview = document.getElementById('portadaPreview');
+    const inputPortada = document.getElementById('{{ form.portada.id_for_label }}');
+    const portadaImg = document.getElementById('portadaImg');
+    const portadaRemove = document.getElementById('portadaRemove');
+
+    if (inputPortada && portadaPreview) {
+        inputPortada.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let img = document.getElementById('portadaImg');
+                    if (!img) {
+                        // Reemplazar placeholder por imagen
+                        portadaPreview.innerHTML =
+                            '<img src="' + e.target.result + '" alt="Nueva portada" id="portadaImg">' +
+                            '<button type="button" class="portada-remove" id="portadaRemove" title="Quitar portada">' +
+                            '<i class="bi bi-x"></i></button>';
+                        // Reasignar listener
+                        document.getElementById('portadaRemove').addEventListener('click', removePortada);
+                    } else {
+                        img.src = e.target.result;
+                    }
+                    portadaPreview.classList.add('has-image');
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    function removePortada(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (inputPortada) inputPortada.value = '';
+        portadaPreview.classList.remove('has-image');
+        portadaPreview.innerHTML =
+            '<div>' +
+            '<i class="bi bi-image portada-preview-icon"></i>' +
+            '<div class="portada-preview-label">Subir imagen</div>' +
+            '</div>' +
+            '<input type="file" name="portada" id="{{ form.portada.id_for_label }}" accept="image/*">';
+        // Reasignar listener al nuevo input
+        const nuevoInput = portadaPreview.querySelector('input[type="file"]');
+        if (nuevoInput) {
+            nuevoInput.addEventListener('change', inputPortada.onchange);
+        }
+    }
+
+    if (portadaRemove) {
+        portadaRemove.addEventListener('click', removePortada);
+    }
+
+    // ============================================
+    // 3. VALIDACIÓN EN CLIENTE
+    // ============================================
+    const form = document.getElementById('recursoForm');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let valido = true;
+            let primerError = null;
+
+            // Validar título
+            const titulo = document.getElementById('{{ form.titulo.id_for_label }}');
+            if (titulo && !titulo.value.trim()) {
+                titulo.classList.add('is-invalid');
+                valido = false;
+                if (!primerError) primerError = titulo;
+            } else if (titulo) {
+                titulo.classList.remove('is-invalid');
+            }
+
+            // Validar que haya archivo O url
+            const archivo = inputArchivo ? inputArchivo.files.length > 0 : false;
+            const url = document.getElementById('{{ form.url_externa.id_for_label }}');
+            const tieneUrl = url && url.value.trim();
+
+            if (!archivo && !tieneUrl && !form.dataset.esEdicion) {
+                valido = false;
+                alert('Debes adjuntar un archivo o proporcionar una URL externa.');
+            }
+
+            // Validar tamaño del archivo
+            if (archivo && inputArchivo.files[0].size > 20 * 1024 * 1024) {
+                valido = false;
+                alert('El archivo supera los 20 MB permitidos.');
+            }
+
+            // Validar portada
+            if (inputPortada && inputPortada.files.length > 0) {
+                if (inputPortada.files[0].size > 2 * 1024 * 1024) {
+                    valido = false;
+                    alert('La portada supera los 2 MB permitidos.');
+                }
+            }
+
+            if (!valido) {
+                e.preventDefault();
+                if (primerError) {
+                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    primerError.focus();
+                }
+                return;
+            }
+
+            // Deshabilitar botón para evitar doble submit
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+        });
+    }
+
+    // ============================================
+    // 4. SINCRONIZAR PESTAÑAS CON VALIDACIÓN
+    // ============================================
+    // Si el usuario hace clic en "URL externa", quitar required del archivo (si lo hubiera)
+    const tabUrl = document.getElementById('tab-url');
+    const tabArchivo = document.getElementById('tab-archivo');
+
+    if (tabUrl && tabArchivo) {
+        tabUrl.addEventListener('shown.bs.tab', function() {
+            // Al cambiar a URL, limpiamos el archivo para evitar confusión
+            // (opcional: solo deshabilitar visualmente)
+        });
+    }
+
+})();
+</script>
+{% endblock %}

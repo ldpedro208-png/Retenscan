@@ -1,0 +1,829 @@
+<!-- templates/layout/profesor/dashboard_profesor.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Profesor - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --dashboard-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --shadow-hover: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stat-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-card .stat-icon {
+            opacity: 0.2;
+            font-size: 3.5rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.35;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stat-card.bg-primary { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
+        .stat-card.bg-success { background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); }
+        .stat-card.bg-warning { background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); }
+
+        /* ============================================
+           TARJETAS DE GRÁFICOS
+           ============================================ */
+        .chart-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .chart-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .chart-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* ============================================
+           TABLA DE RIESGO POR CURSO
+           ============================================ */
+        .table-risk {
+            margin-bottom: 0;
+        }
+
+        .table-risk thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            background: #f8f9fa;
+        }
+
+        .table-risk tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-risk tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-risk tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-risk tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-risk .progress {
+            height: 1.25rem;
+            border-radius: 0.5rem;
+        }
+
+        .table-risk .progress .progress-bar {
+            font-weight: 600;
+            font-size: 0.75rem;
+            line-height: 1.25rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .chart-card:nth-child(1) { animation-delay: 0.10s; }
+        .chart-card:nth-child(2) { animation-delay: 0.15s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .stat-card:focus-visible,
+        .chart-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2.5rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .table-risk {
+                font-size: 0.85rem;
+            }
+
+            .table-risk thead th,
+            .table-risk tbody td {
+                padding: 0.4rem 0.4rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+
+            .chart-card .card-body {
+                padding: 0.75rem;
+            }
+
+            .table-risk {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .chart-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .chart-card .card-header {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .table-risk thead th {
+                background: #252540;
+                color: #c8d6e5;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-risk tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-risk tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .table-risk .progress {
+                background-color: #2d2d44;
+            }
+
+            .alert-info {
+                background-color: #1a2a3a;
+                border-color: #0d6efd;
+                color: #cfe2ff;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO DE IA
+           ============================================ */
+        .empty-ia {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-ia .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+        }
+
+        .empty-ia .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 0.5rem;
+        }
+
+        .empty-ia .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-badge" aria-hidden="true"></i> Profesor
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> 
+            Dashboard Profesor
+            <small class="text-muted fs-6 ms-2">Panel de control</small>
+        </h1>
+        <span class="badge bg-info badge-status" role="status">
+            <i class="bi bi-person" aria-hidden="true"></i> Profesor
+        </span>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- TARJETAS DE ESTADÍSTICAS                    -->
+    <!-- ============================================ -->
+    <section aria-label="Resumen estadístico" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-people" aria-hidden="true"></i> Total Estudiantes
+                    </h6>
+                    <p class="stat-value" aria-label="{{ total_estudiantes }} estudiantes">
+                        {{ total_estudiantes|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-people"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i> Asistencias Hoy
+                    </h6>
+                    <p class="stat-value" aria-label="{{ asistencias_hoy }} asistencias hoy">
+                        {{ asistencias_hoy|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> En Riesgo
+                    </h6>
+                    <p class="stat-value" aria-label="{{ en_riesgo|default:0 }} estudiantes en riesgo">
+                        {{ en_riesgo|default:0 }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICOS                                    -->
+    <!-- ============================================ -->
+    <section aria-label="Gráficos de rendimiento" class="row g-3">
+        <!-- Gráfico 1: Rendimiento por Materia -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-trophy" aria-hidden="true"></i> 
+                        Rendimiento por Materia
+                    </h5>
+                    <span class="badge bg-info">{{ materias_labels|length }} materias</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="materiasChart" 
+                                aria-label="Gráfico de rendimiento por materia" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Gráfico 2: Distribución de Calificaciones -->
+        <div class="col-xl-6 col-lg-6">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-pie-chart" aria-hidden="true"></i> 
+                        Distribución de Calificaciones
+                    </h5>
+                    <span class="badge bg-success">Rangos</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 250px;">
+                        <canvas id="rangosChart" 
+                                aria-label="Gráfico de distribución de calificaciones" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICO 3: ASISTENCIAS POR DÍA              -->
+    <!-- ============================================ -->
+    <section aria-label="Asistencias por día" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i> 
+                        Asistencias por Día de la Semana
+                    </h5>
+                    <span class="badge bg-primary">{{ dias_labels|length }} días</span>
+                </header>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 150px;">
+                        <canvas id="diasChart" 
+                                aria-label="Gráfico de asistencias por día" 
+                                role="img"></canvas>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- IA: RIESGO POR CURSO                        -->
+    <!-- ============================================ -->
+    <section aria-label="Riesgo por curso según IA" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="text-white">
+                        <i class="bi bi-robot" aria-hidden="true"></i> 
+                        IA: Riesgo por Curso
+                    </h5>
+                    {% if ia_disponible %}
+                        <span class="badge bg-light text-dark" role="status">
+                            <i class="bi bi-check-circle text-success" aria-hidden="true"></i> IA Activa
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark" role="status">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> IA No disponible
+                        </span>
+                    {% endif %}
+                </header>
+                <div class="card-body">
+                    {% if ia_disponible and riesgo_por_curso %}
+                        <div class="table-responsive">
+                            <table class="table table-risk" aria-label="Tabla de riesgo por curso">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-mortarboard" aria-hidden="true"></i> Curso
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-people" aria-hidden="true"></i> Total
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> En Riesgo
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-graph-up" aria-hidden="true"></i> % Riesgo
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-flag" aria-hidden="true"></i> Estado
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for curso in riesgo_por_curso %}
+                                        <tr>
+                                            <td><strong>{{ curso.carrera }}</strong></td>
+                                            <td>{{ curso.total }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if curso.riesgo > 0 %}bg-danger
+                                                    {% else %}bg-success{% endif %}">
+                                                    {{ curso.riesgo }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="progress" role="progressbar" 
+                                                     aria-label="Porcentaje de riesgo en {{ curso.carrera }}"
+                                                     aria-valuenow="{% widthratio curso.riesgo curso.total 100 %}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    <div class="progress-bar 
+                                                        {% if curso.riesgo > curso.total|divisibleby:2 %}bg-danger
+                                                        {% elif curso.riesgo > 0 %}bg-warning
+                                                        {% else %}bg-success{% endif %}" 
+                                                         style="width: {% widthratio curso.riesgo curso.total 100 %}%;">
+                                                        {% widthratio curso.riesgo curso.total 100 %}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if curso.riesgo > 0 %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Atención
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Bien
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% elif ia_disponible %}
+                        <div class="empty-ia">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <p class="empty-title">No hay datos suficientes</p>
+                            <p class="empty-description">
+                                No hay datos suficientes para mostrar el riesgo por curso.
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="empty-ia">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <p class="empty-title">Modelo IA no disponible</p>
+                            <p class="empty-description">
+                                Entrena el modelo en el 
+                                <a href="{% url 'dashboard_riesgo' %}" class="text-decoration-none">
+                                    Dashboard de IA
+                                </a>
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INFORMACIÓN DEL MÓDULO                     -->
+    <!-- ============================================ -->
+    <section aria-label="Información del módulo" class="row g-3 mt-2">
+        <div class="col-12">
+            <article class="card chart-card">
+                <header class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i> 
+                        Información del Módulo
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <strong>Funcionalidades disponibles:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>📋 Registro de asistencia de estudiantes</li>
+                                    <li>📝 Ingreso de calificaciones</li>
+                                    <li>📊 Visualización de rendimiento académico</li>
+                                    <li>⚠️ Reportes de estudiantes en riesgo académico</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-wrap gap-2 justify-content-center align-items-center h-100">
+                                <a href="{% url 'tarea_list' %}" 
+                                   class="btn btn-primary btn-action"
+                                   aria-label="Ver mis tareas">
+                                    <i class="bi bi-list-task" aria-hidden="true"></i> Mis Tareas
+                                </a>
+                                <a href="{% url 'encuesta_list' %}" 
+                                   class="btn btn-success btn-action"
+                                   aria-label="Ver mis encuestas">
+                                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Mis Encuestas
+                                </a>
+                                <a href="{% url 'estudiante_list' %}" 
+                                   class="btn btn-info btn-action"
+                                   aria-label="Ver mis cursos">
+                                    <i class="bi bi-people" aria-hidden="true"></i> Mis Cursos
+                                </a>
+                                <a href="{% url 'dashboard_riesgo' %}" 
+                                   class="btn btn-warning btn-action"
+                                   aria-label="Ver dashboard de IA predictiva">
+                                    <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // CONFIGURACIÓN GLOBAL DE CHART.JS
+            // ============================================
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.font.family = "'Segoe UI', system-ui, -apple-system, sans-serif";
+                Chart.defaults.color = '#495057';
+            }
+
+            // ============================================
+            // 1. GRÁFICO: Rendimiento por Materia (Barra)
+            // ============================================
+            const ctx1 = document.getElementById('materiasChart');
+            if (ctx1) {
+                const materiasLabels = {{ materias_labels|safe|default:"[]" }};
+                const materiasValues = {{ materias_values|safe|default:"[]" }};
+                const coloresMaterias = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6f42c1', '#fd7e14', '#20c997'];
+
+                if (materiasLabels.length > 0 && materiasValues.length > 0) {
+                    new Chart(ctx1.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: materiasLabels,
+                            datasets: [{
+                                label: 'Promedio',
+                                data: materiasValues,
+                                backgroundColor: coloresMaterias.slice(0, materiasLabels.length),
+                                borderRadius: 5,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 20,
+                                    ticks: {
+                                        stepSize: 2,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 2. GRÁFICO: Distribución de Calificaciones
+            // ============================================
+            const ctx2 = document.getElementById('rangosChart');
+            if (ctx2) {
+                const rangoLabels = {{ rango_labels|safe|default:"[]" }};
+                const rangoValues = {{ rango_values|safe|default:"[]" }};
+                const coloresRangos = {
+                    'Sobresaliente (18-20)': '#1cc88a',
+                    'Bueno (14-17)': '#36b9cc',
+                    'Regular (10-13)': '#f6c23e',
+                    'Bajo (0-9)': '#e74a3b'
+                };
+                const backgroundColors = rangoLabels.map(label => coloresRangos[label] || '#858796');
+
+                if (rangoLabels.length > 0 && rangoValues.some(v => v > 0)) {
+                    new Chart(ctx2.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: rangoLabels,
+                            datasets: [{
+                                data: rangoValues,
+                                backgroundColor: backgroundColors,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 10,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            let percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 3. GRÁFICO: Asistencias por Día (Línea)
+            // ============================================
+            const ctx3 = document.getElementById('diasChart');
+            if (ctx3) {
+                const diasLabels = {{ dias_labels|safe|default:"[]" }};
+                const diasValues = {{ dias_values|safe|default:"[]" }};
+
+                if (diasLabels.length > 0 && diasValues.length > 0) {
+                    new Chart(ctx3.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: diasLabels,
+                            datasets: [{
+                                label: 'Asistencias',
+                                data: diasValues,
+                                borderColor: '#1cc88a',
+                                backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#1cc88a',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return 'Asistencias: ' + context.parsed.y;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return value.toFixed(0);
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ============================================
+            // 4. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Dashboard de profesor cargado');
+            {% if ia_disponible %}
+                console.log('ℹ️ IA disponible - Mostrando riesgos por curso');
+            {% else %}
+                console.log('ℹ️ IA no disponible - Modelo no entrenado');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

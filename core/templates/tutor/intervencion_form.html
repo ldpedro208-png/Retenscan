@@ -1,0 +1,893 @@
+<!-- templates/layout/tutor/intervencion_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Registrar Intervención - {{ estudiante.nombre }} {{ estudiante.apellido_paterno }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: var(--danger-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           ALERTA DE INFORMACIÓN DEL ESTUDIANTE
+           ============================================ */
+        .student-info-alert {
+            background: #e7f3ff;
+            border-left: 4px solid #0d6efd;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1.5rem;
+        }
+
+        .student-info-alert .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .student-info-alert .info-item .label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .student-info-alert .info-item .value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-floating-custom {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-floating-custom .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-floating-custom .form-label .required {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-floating-custom .form-control,
+        .form-floating-custom .form-select {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .form-floating-custom .form-control:focus,
+        .form-floating-custom .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .form-floating-custom .form-control.is-invalid,
+        .form-floating-custom .form-select.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-floating-custom .form-control.is-invalid:focus,
+        .form-floating-custom .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+
+        .form-floating-custom .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .form-floating-custom .form-text .icon {
+            margin-right: 0.25rem;
+        }
+
+        /* ============================================
+           CHECKBOX MEJORADO
+           ============================================ */
+        .form-check-custom {
+            padding-left: 2.5rem;
+            margin-bottom: 1rem;
+            min-height: 1.5rem;
+        }
+
+        .form-check-custom .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-left: -2.5rem;
+            margin-top: 0.1rem;
+            border-radius: 0.25rem;
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+        }
+
+        .form-check-custom .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .form-check-custom .form-check-input:focus {
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+        }
+
+        .form-check-custom .form-check-label {
+            font-weight: 500;
+            cursor: pointer;
+            color: #2d3748;
+        }
+
+        .form-check-custom .form-check-label .icon {
+            margin-right: 0.3rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-danger {
+            background: var(--danger-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-action.btn-danger:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .student-info-alert {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .form-floating-custom .form-label {
+                font-size: 0.85rem;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .student-info-alert {
+                background: #1a2a3a;
+                border-left-color: #4dabf7;
+            }
+
+            .student-info-alert .info-item .label {
+                color: #c8d6e5;
+            }
+
+            .student-info-alert .info-item .value {
+                color: #ecf0f1;
+            }
+
+            .form-floating-custom .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-floating-custom .form-control:focus,
+            .form-floating-custom .form-select:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-floating-custom .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-text {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-select option {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-check-custom .form-check-label {
+                color: #c8d6e5;
+            }
+
+            .form-check-custom .form-check-input:checked {
+                background-color: #4dabf7;
+                border-color: #4dabf7;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_list' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" class="text-decoration-none">
+                    {{ estudiante.nombre }} {{ estudiante.apellido_paterno }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> Registrar Intervención
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-plus-circle fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Registrar Intervención</h4>
+                            <small>
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Registra una intervención para el estudiante
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Información del estudiante -->
+                    <div class="student-info-alert" role="status" aria-label="Información del estudiante">
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-person" aria-hidden="true"></i> Estudiante:
+                            </span>
+                            <span class="value">{{ estudiante.nombre }} {{ estudiante.apellido_paterno }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-card-text" aria-hidden="true"></i> Carnet:
+                            </span>
+                            <span class="value">{{ estudiante.carnet }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-mortarboard" aria-hidden="true"></i> Carrera:
+                            </span>
+                            <span class="value">{{ estudiante.idCarrera.nombre|default:"Sin asignar" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-flag" aria-hidden="true"></i> Estado:
+                            </span>
+                            <span class="value">
+                                <span class="badge 
+                                    {% if estudiante.estado_academico == 'Activo' %}bg-success
+                                    {% elif estudiante.estado_academico == 'Inactivo' %}bg-warning text-dark
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ estudiante.estado_academico|default:"Sin estado" }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="intervencionForm" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <!-- Tipo de Intervención -->
+                            <div class="col-12">
+                                <div class="form-floating-custom">
+                                    <label for="tipo_intervencion" class="form-label">
+                                        <i class="bi bi-tag" aria-hidden="true"></i>
+                                        Tipo de Intervención
+                                        <span class="required">*</span>
+                                    </label>
+                                    <select class="form-select" 
+                                            id="tipo_intervencion" 
+                                            name="tipo_intervencion" 
+                                            required
+                                            aria-describedby="tipoHelp">
+                                        <option value="">Selecciona un tipo...</option>
+                                        <option value="Tutoria">Tutoría</option>
+                                        <option value="Orientacion">Orientación</option>
+                                        <option value="Ayuda financiera">Ayuda Financiera</option>
+                                        <option value="Psicologica">Psicológica</option>
+                                        <option value="Academica">Académica</option>
+                                    </select>
+                                    <div id="tipoHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Selecciona el tipo de intervención a realizar
+                                    </div>
+                                    {% if form.tipo_intervencion.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            {{ form.tipo_intervencion.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Fechas -->
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="fecha_programada" class="form-label">
+                                        <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                        Fecha Programada
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="fecha_programada" 
+                                           name="fecha_programada"
+                                           aria-describedby="fechaProgHelp">
+                                    <div id="fechaProgHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Fecha en que se programó la intervención
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="fecha_realizada" class="form-label">
+                                        <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                        Fecha Realizada
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="fecha_realizada" 
+                                           name="fecha_realizada"
+                                           aria-describedby="fechaRealHelp">
+                                    <div id="fechaRealHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Fecha en que se realizó la intervención
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Riesgo Asociado -->
+                            <div class="col-12">
+                                <div class="form-floating-custom">
+                                    <label for="idRiesgo" class="form-label">
+                                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                        Riesgo Asociado
+                                    </label>
+                                    <select class="form-select" 
+                                            id="idRiesgo" 
+                                            name="idRiesgo"
+                                            aria-describedby="riesgoHelp">
+                                        <option value="">Selecciona un riesgo (opcional)...</option>
+                                        {% for riesgo in riesgos %}
+                                            <option value="{{ riesgo.idRiesgo }}">
+                                                {{ riesgo.idFactor.nombre }} - 
+                                                <span class="badge 
+                                                    {% if riesgo.nivel == 'Crítico' %}bg-danger
+                                                    {% elif riesgo.nivel == 'Alto' %}bg-warning text-dark
+                                                    {% elif riesgo.nivel == 'Medio' %}bg-info
+                                                    {% else %}bg-success{% endif %}">
+                                                    {{ riesgo.nivel }}
+                                                </span>
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="riesgoHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Riesgo asociado a la intervención (opcional)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="col-12">
+                                <div class="form-floating-custom">
+                                    <label for="descripcion" class="form-label">
+                                        <i class="bi bi-card-text" aria-hidden="true"></i>
+                                        Descripción de la Intervención
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="descripcion" 
+                                              name="descripcion" 
+                                              rows="3"
+                                              maxlength="1000"
+                                              placeholder="Describe la intervención realizada..."
+                                              aria-describedby="descripcionHelp"></textarea>
+                                    <div id="descripcionHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Describe detalladamente la intervención (máx. 1000 caracteres)
+                                    </div>
+                                    <div class="text-muted small text-end">
+                                        <span id="charCountDesc">0</span>/1000
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resultado -->
+                            <div class="col-12">
+                                <div class="form-floating-custom">
+                                    <label for="resultado" class="form-label">
+                                        <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                                        Resultado
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="resultado" 
+                                              name="resultado" 
+                                              rows="2"
+                                              maxlength="500"
+                                              placeholder="Describe los resultados obtenidos..."
+                                              aria-describedby="resultadoHelp"></textarea>
+                                    <div id="resultadoHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Resultados de la intervención (máx. 500 caracteres)
+                                    </div>
+                                    <div class="text-muted small text-end">
+                                        <span id="charCountResult">0</span>/500
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Efectiva -->
+                            <div class="col-12">
+                                <div class="form-check-custom">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           id="efectiva" 
+                                           name="efectiva">
+                                    <label class="form-check-label" for="efectiva">
+                                        <i class="bi bi-check-circle text-success" aria-hidden="true"></i>
+                                        <strong>Intervención efectiva</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Marca si la intervención fue efectiva y cumplió sus objetivos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Errores del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al perfil del estudiante">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-action" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> Registrar Intervención
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('intervencionForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const descripcionInput = document.getElementById('descripcion');
+            const resultadoInput = document.getElementById('resultado');
+            const charCountDesc = document.getElementById('charCountDesc');
+            const charCountResult = document.getElementById('charCountResult');
+            const fechaProgramada = document.getElementById('fecha_programada');
+            const fechaRealizada = document.getElementById('fecha_realizada');
+
+            // ============================================
+            // 1. CONTADORES DE CARACTERES
+            // ============================================
+            if (descripcionInput && charCountDesc) {
+                descripcionInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    charCountDesc.textContent = length;
+                    
+                    if (length > 1000) {
+                        charCountDesc.style.color = '#dc3545';
+                        this.classList.add('is-invalid');
+                    } else {
+                        charCountDesc.style.color = '#6c757d';
+                        this.classList.remove('is-invalid');
+                    }
+                });
+                charCountDesc.textContent = descripcionInput.value.length;
+            }
+
+            if (resultadoInput && charCountResult) {
+                resultadoInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    charCountResult.textContent = length;
+                    
+                    if (length > 500) {
+                        charCountResult.style.color = '#dc3545';
+                        this.classList.add('is-invalid');
+                    } else {
+                        charCountResult.style.color = '#6c757d';
+                        this.classList.remove('is-invalid');
+                    }
+                });
+                charCountResult.textContent = resultadoInput.value.length;
+            }
+
+            // ============================================
+            // 2. VALIDACIÓN DE FECHAS
+            // ============================================
+            if (fechaProgramada && fechaRealizada) {
+                fechaRealizada.addEventListener('change', function() {
+                    if (fechaProgramada.value && this.value) {
+                        const programada = new Date(fechaProgramada.value);
+                        const realizada = new Date(this.value);
+                        
+                        if (realizada < programada) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                            showToast('La fecha realizada no puede ser anterior a la fecha programada.', 'warning');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        }
+                    }
+                });
+            }
+
+            // ============================================
+            // 3. VALIDACIÓN ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                // Validar tipo de intervención
+                const tipoSelect = document.getElementById('tipo_intervencion');
+                if (!tipoSelect.value) {
+                    e.preventDefault();
+                    tipoSelect.classList.add('is-invalid');
+                    tipoSelect.focus();
+                    showToast('Por favor selecciona un tipo de intervención.', 'warning');
+                    return false;
+                }
+
+                // Validar fechas si ambas están presentes
+                if (fechaProgramada.value && fechaRealizada.value) {
+                    const programada = new Date(fechaProgramada.value);
+                    const realizada = new Date(fechaRealizada.value);
+                    
+                    if (realizada < programada) {
+                        e.preventDefault();
+                        fechaRealizada.classList.add('is-invalid');
+                        fechaRealizada.focus();
+                        showToast('La fecha realizada no puede ser anterior a la fecha programada.', 'warning');
+                        return false;
+                    }
+                }
+
+                // Deshabilitar botón para evitar doble envío
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                }
+            });
+
+            // ============================================
+            // 4. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. ENFOQUE AUTOMÁTICO
+            // ============================================
+            setTimeout(function() {
+                const tipoSelect = document.getElementById('tipo_intervencion');
+                if (tipoSelect) {
+                    tipoSelect.focus();
+                }
+            }, 300);
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Formulario de intervención cargado');
+        });
+    </script>
+{% endblock %}

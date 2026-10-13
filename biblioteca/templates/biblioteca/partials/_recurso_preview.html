@@ -1,0 +1,37 @@
+{# biblioteca/templates/biblioteca/partials/_recurso_preview.html #}
+{# Preview visual de un recurso. Parámetros: recurso (obligatorio), size (opcional) #}
+
+{% with size=size|default:"card" %}
+<div style="height:{% if size == 'mini' %}100px{% else %}140px{% endif %};
+            background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+            display:flex;align-items:center;justify-content:center;
+            position:relative;overflow:hidden;">
+
+    {% if recurso.portada %}
+        <img src="{{ recurso.portada.url }}"
+             alt="{{ recurso.titulo }}"
+             style="width:100%;height:100%;object-fit:cover;">
+    {% else %}
+        <div style="font-size:{% if size == 'mini' %}1.8rem{% else %}2.5rem{% endif %};
+                    color:#6366f1;opacity:0.6;">
+            {% if recurso.tipo == 'libro' %}<i class="bi bi-book-half"></i>
+            {% elif recurso.tipo == 'apunte' %}<i class="bi bi-file-text"></i>
+            {% elif recurso.tipo == 'paper' %}<i class="bi bi-file-earmark-text"></i>
+            {% elif recurso.tipo == 'video' %}<i class="bi bi-play-btn"></i>
+            {% elif recurso.tipo == 'ejercicio' %}<i class="bi bi-pencil-square"></i>
+            {% elif recurso.tipo == 'guia' %}<i class="bi bi-journal-text"></i>
+            {% elif recurso.tipo == 'presentacion' %}<i class="bi bi-easel"></i>
+            {% else %}<i class="bi bi-file-earmark"></i>{% endif %}
+        </div>
+    {% endif %}
+
+    {% if recurso.destacado %}
+        <span style="position:absolute;top:8px;right:8px;
+                     background:#fbbf24;color:#78350f;
+                     font-size:0.65rem;font-weight:700;
+                     padding:0.15rem 0.4rem;border-radius:0.25rem;">
+            <i class="bi bi-star-fill"></i> DESTACADO
+        </span>
+    {% endif %}
+</div>
+{% endwith %}

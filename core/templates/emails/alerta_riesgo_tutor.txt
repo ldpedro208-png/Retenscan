@@ -1,0 +1,20 @@
+ALERTA DE RIESGO ESTUDIANTIL
+
+Hola,
+
+Se ha detectado que el estudiante {{ estudiante.nombre }} {{ estudiante.apellido_paterno }} ha entrado en estado de riesgo.
+
+Factor de riesgo: {{ factor }}
+Nivel: {{ nivel }}
+Fecha de detección: {{ fecha_deteccion|date:"d/m/Y" }}
+{% if observaciones %}
+Observaciones: {{ observaciones }}
+{% endif %}
+
+Para ver el detalle del estudiante, visita:
+{{ url_estudiante }}
+
+Por favor, revisa el caso y programa una intervención si es necesario.
+
+Saludos,
+{{ site_name }}

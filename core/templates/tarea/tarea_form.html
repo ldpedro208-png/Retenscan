@@ -1,0 +1,1054 @@
+<!-- templates/layout/tarea/tarea_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Crear Nueva Tarea - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           SECCIONES
+           ============================================ */
+        .section-card {
+            border: 1px solid #e9ecef;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .section-card:hover {
+            border-color: #0d6efd;
+        }
+
+        .section-card .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .section-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            color: #2d3748;
+        }
+
+        .section-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-floating-custom {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-floating-custom .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-floating-custom .form-label .required {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-floating-custom .form-control,
+        .form-floating-custom .form-select {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .form-floating-custom .form-control:focus,
+        .form-floating-custom .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .form-floating-custom .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-floating-custom .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* ============================================
+           PREGUNTAS
+           ============================================ */
+        .pregunta-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            transition: all var(--transition-speed) ease;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .pregunta-item:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+        }
+
+        .pregunta-item .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.6rem 1rem;
+        }
+
+        .pregunta-item .card-body {
+            padding: 1rem;
+        }
+
+        .pregunta-item .opciones-list .input-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .opciones-correctas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .opciones-correctas .form-check {
+            margin-right: 0.5rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-action.btn-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-success:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(25, 135, 84, 0.4);
+        }
+
+        .btn-action.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .section-card .card-body {
+                padding: 1rem;
+            }
+
+            .pregunta-item .card-body {
+                padding: 0.75rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .opciones-correctas {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .form-floating-custom .form-label {
+                font-size: 0.85rem;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .pregunta-item .card-header strong {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .section-card {
+                border-color: #2d2d44;
+            }
+
+            .section-card .card-header {
+                background: #252540;
+                border-bottom-color: #2d2d44;
+            }
+
+            .section-card .card-header h5 {
+                color: #ecf0f1;
+            }
+
+            .form-floating-custom .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-floating-custom .form-control:focus,
+            .form-floating-custom .form-select:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-floating-custom .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-text {
+                color: #8a8a9a;
+            }
+
+            .pregunta-item {
+                border-color: #2d2d44;
+            }
+
+            .pregunta-item .card-header {
+                background: #252540;
+                border-bottom-color: #2d2d44;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_list' %}" class="text-decoration-none">
+                    <i class="bi bi-list-task" aria-hidden="true"></i> Tareas
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> Nueva Tarea
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-plus-circle fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Crear Nueva Tarea</h4>
+                            <small>
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Completa todos los campos obligatorios (*)
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <form method="post" id="tareaForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ============================================ -->
+                        <!-- INFORMACIÓN DE LA TAREA                    -->
+                        <!-- ============================================ -->
+                        <section class="section-card">
+                            <header class="card-header">
+                                <h5>
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i> 
+                                    Información de la Tarea
+                                </h5>
+                            </header>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <!-- Título -->
+                                    <div class="col-12">
+                                        <div class="form-floating-custom">
+                                            <label for="titulo" class="form-label">
+                                                <i class="bi bi-tag" aria-hidden="true"></i>
+                                                Título
+                                                <span class="required">*</span>
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="titulo" 
+                                                   name="titulo" 
+                                                   placeholder="Ej: Tarea 1 - Programación Básica" 
+                                                   required
+                                                   maxlength="200"
+                                                   aria-describedby="tituloHelp">
+                                            <div id="tituloHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Título descriptivo de la tarea (máx. 200 caracteres)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Descripción -->
+                                    <div class="col-12">
+                                        <div class="form-floating-custom">
+                                            <label for="descripcion" class="form-label">
+                                                <i class="bi bi-card-text" aria-hidden="true"></i>
+                                                Descripción
+                                            </label>
+                                            <textarea class="form-control" 
+                                                      id="descripcion" 
+                                                      name="descripcion" 
+                                                      rows="2"
+                                                      maxlength="1000"
+                                                      placeholder="Breve descripción de la tarea..."></textarea>
+                                            <div id="descripcionHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Descripción de la tarea (máx. 1000 caracteres)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Instrucciones -->
+                                    <div class="col-12">
+                                        <div class="form-floating-custom">
+                                            <label for="instrucciones" class="form-label">
+                                                <i class="bi bi-list-ul" aria-hidden="true"></i>
+                                                Instrucciones
+                                            </label>
+                                            <textarea class="form-control" 
+                                                      id="instrucciones" 
+                                                      name="instrucciones" 
+                                                      rows="3"
+                                                      maxlength="2000"
+                                                      placeholder="Instrucciones detalladas para los estudiantes..."></textarea>
+                                            <div id="instruccionesHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Instrucciones detalladas (máx. 2000 caracteres)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Puntaje y Fechas -->
+                                    <div class="col-md-4">
+                                        <div class="form-floating-custom">
+                                            <label for="puntaje_maximo" class="form-label">
+                                                <i class="bi bi-star" aria-hidden="true"></i>
+                                                Puntaje Máximo
+                                            </label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="puntaje_maximo" 
+                                                   name="puntaje_maximo" 
+                                                   value="100" 
+                                                   step="0.5" 
+                                                   min="0"
+                                                   aria-describedby="puntajeHelp">
+                                            <div id="puntajeHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Puntaje máximo de la tarea
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-floating-custom">
+                                            <label for="fecha_publicacion" class="form-label">
+                                                <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                                Fecha de Publicación
+                                                <span class="required">*</span>
+                                            </label>
+                                            <input type="datetime-local" 
+                                                   class="form-control" 
+                                                   id="fecha_publicacion" 
+                                                   name="fecha_publicacion" 
+                                                   required
+                                                   aria-describedby="fechaPubHelp">
+                                            <div id="fechaPubHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Fecha y hora de publicación
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-floating-custom">
+                                            <label for="fecha_limite" class="form-label">
+                                                <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                                Fecha Límite
+                                                <span class="required">*</span>
+                                            </label>
+                                            <input type="datetime-local" 
+                                                   class="form-control" 
+                                                   id="fecha_limite" 
+                                                   name="fecha_limite" 
+                                                   required
+                                                   aria-describedby="fechaLimHelp">
+                                            <div id="fechaLimHelp" class="form-text">
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                Fecha y hora límite para entregar
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- PREGUNTAS                                  -->
+                        <!-- ============================================ -->
+                        <section class="section-card">
+                            <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                                <h5>
+                                    <i class="bi bi-question-circle" aria-hidden="true"></i> 
+                                    Preguntas
+                                    <span class="badge bg-secondary ms-2" id="preguntasCount">0</span>
+                                </h5>
+                                <button type="button" 
+                                        class="btn btn-sm btn-success btn-action"
+                                        id="agregarPregunta"
+                                        aria-label="Agregar nueva pregunta">
+                                    <i class="bi bi-plus" aria-hidden="true"></i> Agregar Pregunta
+                                </button>
+                            </header>
+                            <div class="card-body" id="preguntasContainer">
+                                <div class="alert alert-info" id="sinPreguntas" role="status">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <strong>Agrega al menos una pregunta a la tarea.</strong>
+                                    <br>
+                                    <small>Haz clic en "Agregar Pregunta" para comenzar.</small>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Errores del formulario -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <li>{{ field.label }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'tarea_list' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al listado de tareas">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> Guardar Tarea
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TOAST CONTAINER                             -->
+    <!-- ============================================ -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const container = document.getElementById('preguntasContainer');
+            const agregarBtn = document.getElementById('agregarPregunta');
+            const sinPreguntas = document.getElementById('sinPreguntas');
+            const form = document.getElementById('tareaForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const preguntasCount = document.getElementById('preguntasCount');
+            let preguntaCounter = 0;
+
+            // ============================================
+            // 1. AGREGAR NUEVA PREGUNTA
+            // ============================================
+            agregarBtn.addEventListener('click', function() {
+                if (sinPreguntas) sinPreguntas.remove();
+
+                const idx = preguntaCounter;
+                const preguntaHTML = `
+                    <div class="pregunta-item" data-id="${idx}">
+                        <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                            <strong>
+                                <i class="bi bi-question" aria-hidden="true"></i>
+                                Pregunta ${preguntaCounter + 1}
+                            </strong>
+                            <button type="button" 
+                                    class="btn btn-sm btn-danger btn-action eliminarPregunta"
+                                    aria-label="Eliminar pregunta">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </header>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Texto -->
+                                <div class="col-12">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            Texto de la pregunta
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="pregunta_texto[]" 
+                                               required
+                                               maxlength="500"
+                                               placeholder="Escribe la pregunta...">
+                                    </div>
+                                </div>
+
+                                <!-- Tipo -->
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label">
+                                            <i class="bi bi-tag" aria-hidden="true"></i>
+                                            Tipo de respuesta
+                                        </label>
+                                        <select class="form-select" 
+                                                name="pregunta_tipo[]" 
+                                                onchange="toggleOpciones(this, ${idx})">
+                                            <option value="texto">Texto Libre</option>
+                                            <option value="opcion_unica">Opción Única</option>
+                                            <option value="opcion_multiple">Opción Múltiple</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Puntaje -->
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label">
+                                            <i class="bi bi-star" aria-hidden="true"></i>
+                                            Puntaje
+                                        </label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               name="pregunta_puntaje[]" 
+                                               value="10" 
+                                               step="0.5" 
+                                               min="0">
+                                    </div>
+                                </div>
+
+                                <!-- Obligatoria -->
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   name="pregunta_obligatoria[]" 
+                                                   value="${idx}"
+                                                   id="obligatoria_${idx}">
+                                            <label class="form-check-label" for="obligatoria_${idx}">
+                                                <i class="bi bi-exclamation-circle text-danger" aria-hidden="true"></i>
+                                                Obligatoria
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Opciones -->
+                            <div class="opciones-container" 
+                                 id="opciones_${idx}" 
+                                 style="display: none;">
+                                <label class="form-label mt-3">
+                                    <i class="bi bi-list-ul" aria-hidden="true"></i>
+                                    Opciones de respuesta
+                                </label>
+                                <div class="opciones-list">
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="opciones_${idx}[]" 
+                                               placeholder="Opción 1">
+                                        <button type="button" 
+                                                class="btn btn-outline-success agregarOpcion"
+                                                aria-label="Agregar opción">
+                                            <i class="bi bi-plus" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                        Marcar opciones correctas:
+                                    </small>
+                                    <div class="opciones-correctas" id="correctas_${idx}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', preguntaHTML);
+                preguntaCounter++;
+                updatePreguntasCount();
+
+                // Inicializar correctas para opciones
+                actualizarCorrectas(idx);
+            });
+
+            // ============================================
+            // 2. ELIMINAR PREGUNTA
+            // ============================================
+            container.addEventListener('click', function(e) {
+                if (e.target.closest('.eliminarPregunta')) {
+                    const item = e.target.closest('.pregunta-item');
+                    if (container.querySelectorAll('.pregunta-item').length <= 1) {
+                        showToast('Debes tener al menos una pregunta.', 'warning');
+                        return;
+                    }
+                    item.remove();
+                    updatePreguntasCount();
+                    actualizarNumeros();
+                    showToast('Pregunta eliminada.', 'info');
+                }
+            });
+
+            // ============================================
+            // 3. FUNCIONES DE OPCIONES
+            // ============================================
+            window.toggleOpciones = function(select, id) {
+                const container = document.getElementById(`opciones_${id}`);
+                if (container) {
+                    container.style.display = (select.value === 'opcion_unica' || select.value === 'opcion_multiple') ? 'block' : 'none';
+                    if (container.style.display === 'block') {
+                        actualizarCorrectas(id);
+                    }
+                }
+            };
+
+            function actualizarCorrectas(id) {
+                const opciones = document.querySelectorAll(`#opciones_${id} input[name="opciones_${id}[]"]`);
+                const container = document.getElementById(`correctas_${id}`);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                const tipo = document.querySelector(`#opciones_${id} select`)?.value || 'opcion_unica';
+                const isRadio = tipo === 'opcion_unica';
+                
+                opciones.forEach((input, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = `
+                        <input class="form-check-input" 
+                               type="${isRadio ? 'radio' : 'checkbox'}" 
+                               name="correctas_${id}[]" 
+                               value="${index}">
+                        <label class="form-check-label">Opción ${index + 1}</label>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // ============================================
+            // 4. AGREGAR/ELIMINAR OPCIONES
+            // ============================================
+            container.addEventListener('click', function(e) {
+                // Agregar opción
+                if (e.target.closest('.agregarOpcion')) {
+                    const btn = e.target.closest('.agregarOpcion');
+                    const container = btn.closest('.opciones-list');
+                    const parentId = btn.closest('.opciones-container').id.replace('opciones_', '');
+                    
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'input-group';
+                    inputGroup.innerHTML = `
+                        <input type="text" class="form-control" name="opciones_${parentId}[]" placeholder="Nueva opción">
+                        <button type="button" class="btn btn-outline-danger eliminarOpcion" aria-label="Eliminar opción">
+                            <i class="bi bi-x" aria-hidden="true"></i>
+                        </button>
+                    `;
+                    container.appendChild(inputGroup);
+                    actualizarCorrectas(parentId);
+                }
+
+                // Eliminar opción
+                if (e.target.closest('.eliminarOpcion')) {
+                    const group = e.target.closest('.input-group');
+                    const list = group.closest('.opciones-list');
+                    if (list.querySelectorAll('.input-group').length > 1) {
+                        group.remove();
+                        const parentId = list.closest('.opciones-container').id.replace('opciones_', '');
+                        actualizarCorrectas(parentId);
+                    } else {
+                        showToast('Debes tener al menos una opción.', 'warning');
+                    }
+                }
+            });
+
+            // ============================================
+            // 5. CONTADOR DE PREGUNTAS
+            // ============================================
+            function updatePreguntasCount() {
+                const count = container.querySelectorAll('.pregunta-item').length;
+                if (preguntasCount) {
+                    preguntasCount.textContent = count;
+                }
+            }
+
+            function actualizarNumeros() {
+                container.querySelectorAll('.pregunta-item').forEach((item, index) => {
+                    const strong = item.querySelector('.card-header strong');
+                    if (strong) {
+                        strong.innerHTML = `<i class="bi bi-question" aria-hidden="true"></i> Pregunta ${index + 1}`;
+                    }
+                });
+            }
+
+            // ============================================
+            // 6. VALIDACIÓN DEL FORMULARIO
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                const preguntas = container.querySelectorAll('.pregunta-item');
+                if (preguntas.length === 0) {
+                    e.preventDefault();
+                    showToast('Debes agregar al menos una pregunta a la tarea.', 'warning');
+                    document.querySelector('.section-card:last-child').scrollIntoView({ behavior: 'smooth' });
+                    return false;
+                }
+
+                // Validar que las preguntas tengan texto
+                let hasError = false;
+                preguntas.forEach(function(item) {
+                    const textoInput = item.querySelector('input[name="pregunta_texto[]"]');
+                    if (textoInput && !textoInput.value.trim()) {
+                        hasError = true;
+                        textoInput.classList.add('is-invalid');
+                    } else if (textoInput) {
+                        textoInput.classList.remove('is-invalid');
+                    }
+                });
+
+                if (hasError) {
+                    e.preventDefault();
+                    showToast('Todas las preguntas deben tener texto.', 'warning');
+                    return false;
+                }
+
+                // Deshabilitar botón para evitar doble envío
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                }
+            });
+
+            // ============================================
+            // 7. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.querySelector('.toast-container');
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 8. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de creación de tarea cargada');
+        });
+    </script>
+{% endblock %}

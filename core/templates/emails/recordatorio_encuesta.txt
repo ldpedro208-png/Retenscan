@@ -1,0 +1,18 @@
+⏰ RECORDATORIO: ENCUESTA POR VENCER
+
+Hola {{ estudiante.nombre }},
+
+Te recordamos que tienes una encuesta pendiente que está por vencer:
+
+Título: {{ encuesta.titulo }}
+Descripción: {{ encuesta.descripcion|default:"Sin descripción" }}
+Fecha límite: {{ encuesta.fecha_fin|date:"d/m/Y H:i" }}
+Días restantes: {{ dias_restantes }} días
+
+Para responder la encuesta, visita:
+{{ url_encuesta }}
+
+¡No olvides responder antes de la fecha límite!
+
+Saludos,
+{{ site_name }}

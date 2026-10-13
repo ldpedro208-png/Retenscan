@@ -1,0 +1,973 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar material{% else %}Crear material de apoyo{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================ */
+    /* HERO HEADER                                  */
+    /* ============================================ */
+    .apoyo-hero-form {
+        background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+    }
+    .apoyo-hero-form::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+    .apoyo-hero-form-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .apoyo-hero-form h2 {
+        margin: 0 0 0.3rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .apoyo-hero-form p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.85rem;
+    }
+    .apoyo-hero-form .hero-icon {
+        width: 54px;
+        height: 54px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        backdrop-filter: blur(10px);
+    }
+
+    /* ============================================ */
+    /* FORM SECTIONS                                */
+    /* ============================================ */
+    .form-section {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.85rem;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .form-section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #10b981;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #d1fae5;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .form-section-title i {
+        font-size: 1.1rem;
+    }
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .form-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+    }
+
+    /* ============================================ */
+    /* SELECTOR VISUAL DE TIPO                      */
+    /* ============================================ */
+    .tipo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    .tipo-option {
+        border: 2px solid #e5e7eb;
+        border-radius: 0.65rem;
+        padding: 1rem 0.75rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+        position: relative;
+    }
+    .tipo-option:hover {
+        border-color: var(--opt-color, #10b981);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+    }
+    .tipo-option.selected {
+        border-color: var(--opt-color, #10b981);
+        background: var(--opt-bg, #d1fae5);
+        box-shadow: 0 6px 14px rgba(16, 185, 129, 0.15);
+    }
+    .tipo-option.selected::after {
+        content: '\F26E';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: 0.4rem;
+        right: 0.4rem;
+        color: var(--opt-color, #10b981);
+        font-size: 1.1rem;
+    }
+    .tipo-option-icon {
+        width: 42px;
+        height: 42px;
+        margin: 0 auto 0.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        background: var(--opt-bg, #d1fae5);
+        color: var(--opt-color, #10b981);
+    }
+    .tipo-option-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #374151;
+        line-height: 1.2;
+    }
+    .tipo-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Colores por tipo */
+    .tipo-option[data-tipo="motivacional"]  { --opt-color: #f59e0b; --opt-bg: #fef3c7; }
+    .tipo-option[data-tipo="habitos"]       { --opt-color: #3b82f6; --opt-bg: #dbeafe; }
+    .tipo-option[data-tipo="salud_mental"]  { --opt-color: #8b5cf6; --opt-bg: #ede9fe; }
+    .tipo-option[data-tipo="financiero"]    { --opt-color: #10b981; --opt-bg: #d1fae5; }
+    .tipo-option[data-tipo="tutorias"]      { --opt-color: #6366f1; --opt-bg: #e0e7ff; }
+    .tipo-option[data-tipo="tiempo"]        { --opt-color: #06b6d4; --opt-bg: #cffafe; }
+    .tipo-option[data-tipo="otro"]          { --opt-color: #6b7280; --opt-bg: #f3f4f6; }
+
+    /* ============================================ */
+    /* EDITOR DE CONTENIDO                          */
+    /* ============================================ */
+    .editor-toolbar {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.4rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-bottom: none;
+        border-radius: 0.5rem 0.5rem 0 0;
+        flex-wrap: wrap;
+    }
+    .editor-toolbar button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        border-radius: 0.3rem;
+        color: #4b5563;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+    }
+    .editor-toolbar button:hover {
+        background: #e5e7eb;
+        color: #111827;
+    }
+    .editor-toolbar .separator {
+        width: 1px;
+        height: 20px;
+        background: #d1d5db;
+        margin: 6px 0.25rem;
+    }
+    .editor-textarea {
+        width: 100%;
+        min-height: 240px;
+        border: 1px solid #e5e7eb;
+        border-radius: 0 0 0.5rem 0.5rem;
+        padding: 0.85rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    .editor-textarea:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* ============================================ */
+    /* PREVIEW EN VIVO                              */
+    /* ============================================ */
+    .preview-card {
+        background: #fafbfc;
+        border: 1px solid #eaecf3;
+        border-radius: 0.6rem;
+        padding: 1rem 1.25rem;
+        margin-top: 0.75rem;
+        max-height: 300px;
+        overflow-y: auto;
+        font-size: 0.9rem;
+        line-height: 1.7;
+        color: #374151;
+    }
+    .preview-card h1, .preview-card h2, .preview-card h3 { color: #111827; }
+    .preview-card ul, .preview-card ol { padding-left: 1.4rem; }
+    .preview-card a { color: #10b981; }
+    .preview-card strong { color: #111827; }
+    .preview-card blockquote {
+        border-left: 3px solid #10b981;
+        padding-left: 1rem;
+        color: #6b7280;
+        font-style: italic;
+    }
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* ============================================ */
+    /* TABS DE CONTENIDO                            */
+    /* ============================================ */
+    .nav-tabs-sm .nav-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        color: #6b7280;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+    }
+    .nav-tabs-sm .nav-link:hover {
+        color: #10b981;
+    }
+    .nav-tabs-sm .nav-link.active {
+        color: #10b981;
+        font-weight: 700;
+        border-bottom-color: #10b981;
+        background: transparent;
+    }
+
+    /* ============================================ */
+    /* FACTOR DE RIESGO                             */
+    /* ============================================ */
+    .factor-warning {
+        background: #f5f3ff;
+        border-left: 4px solid #8b5cf6;
+        padding: 0.75rem 1rem;
+        border-radius: 0.4rem;
+        font-size: 0.82rem;
+        color: #5b21b6;
+        margin-bottom: 0.75rem;
+    }
+    .factor-warning i {
+        color: #8b5cf6;
+        margin-right: 0.3rem;
+    }
+
+    /* ============================================ */
+    /* ACTION BAR                                   */
+    /* ============================================ */
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #eaecf3;
+        padding: 1rem 1.5rem;
+        margin: 0 -1.5rem -1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 0 0 0.85rem 0.85rem;
+        z-index: 10;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Responsive */
+    @media (max-width: 767px) {
+        .tipo-grid { grid-template-columns: repeat(2, 1fr); }
+        .apoyo-hero-form { padding: 1.25rem; }
+        .apoyo-hero-form h2 { font-size: 1.25rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================ -->
+    <!-- HERO HEADER                                  -->
+    <!-- ============================================ -->
+    <div class="apoyo-hero-form">
+        <div class="apoyo-hero-form-content">
+            <div class="d-flex align-items-center gap-3">
+                <div class="hero-icon">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <div>
+                    <h2>{% if form.instance.pk %}Editar material de apoyo{% else %}Crear material de apoyo{% endif %}</h2>
+                    <p>Contenido para el bienestar y éxito académico de los estudiantes</p>
+                </div>
+            </div>
+            <a href="{% url 'biblioteca:material_apoyo' %}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AVISO CONTEXTUAL SEGÚN ROL                   -->
+    <!-- ============================================ -->
+    {% if user_rol == 'tutor' %}
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-3" style="border-radius:0.6rem;">
+            <i class="bi bi-info-circle-fill mt-1"></i>
+            <div>
+                <strong>Como tutor, tu material es clave para la retención.</strong>
+                Vincula cada material con un <em>factor de riesgo</em> para que el sistema
+                pueda recomendarlo automáticamente a estudiantes en riesgo.
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- FORMULARIO                                   -->
+    <!-- ============================================ -->
+    <form method="post" enctype="multipart/form-data" id="materialForm" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+
+            <!-- ============================================ -->
+            <!-- COLUMNA IZQUIERDA                            -->
+            <!-- ============================================ -->
+            <div class="col-lg-8">
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 1: TIPO DE MATERIAL                  -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-tag-fill"></i> Tipo de material
+                    </div>
+
+                    <div class="tipo-grid">
+                        {% for value, label in form.tipo.field.choices %}
+                            {% if value %}
+                                <label class="tipo-option" data-tipo="{{ value }}">
+                                    <input type="radio" name="tipo" value="{{ value }}"
+                                           {% if form.tipo.value == value %}checked{% endif %}>
+                                    <div class="tipo-option-icon">
+                                        {% if value == 'motivacional' %}<i class="bi bi-lightbulb-fill"></i>
+                                        {% elif value == 'habitos' %}<i class="bi bi-clock-history"></i>
+                                        {% elif value == 'salud_mental' %}<i class="bi bi-heart-fill"></i>
+                                        {% elif value == 'financiero' %}<i class="bi bi-cash-coin"></i>
+                                        {% elif value == 'tutorias' %}<i class="bi bi-people-fill"></i>
+                                        {% elif value == 'tiempo' %}<i class="bi bi-hourglass-split"></i>
+                                        {% else %}<i class="bi bi-tag-fill"></i>{% endif %}
+                                    </div>
+                                    <div class="tipo-option-label">{{ label }}</div>
+                                </label>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    {% if form.tipo.errors %}
+                        <div class="text-danger small mt-2">{{ form.tipo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 2: INFORMACIÓN BÁSICA                -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-card-heading"></i> Información básica
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.titulo.id_for_label }}" class="form-label required">
+                            Título del material
+                        </label>
+                        {{ form.titulo }}
+                        <div class="form-text">
+                            Sé claro y atractivo. Este título aparecerá en las tarjetas.
+                        </div>
+                        {% if form.titulo.errors %}
+                            <div class="text-danger small mt-1">{{ form.titulo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label required">
+                            Descripción breve
+                        </label>
+                        {{ form.descripcion }}
+                        <div class="form-text">
+                            Explica en 1-2 líneas de qué trata y para qué sirve.
+                        </div>
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 3: CONTENIDO                         -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-file-earmark-text"></i> Contenido del material
+                    </div>
+
+                    <ul class="nav nav-tabs nav-tabs-sm mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-html" data-bs-toggle="tab"
+                                    data-bs-target="#pane-html" type="button" role="tab">
+                                <i class="bi bi-pencil-square"></i> Escribir contenido
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-archivo" data-bs-toggle="tab"
+                                    data-bs-target="#pane-archivo" type="button" role="tab">
+                                <i class="bi bi-paperclip"></i> Subir archivo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-url" data-bs-toggle="tab"
+                                    data-bs-target="#pane-url" type="button" role="tab">
+                                <i class="bi bi-link-45deg"></i> URL externa
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Pestaña: HTML -->
+                        <div class="tab-pane fade show active" id="pane-html" role="tabpanel">
+                            <div class="editor-toolbar">
+                                <button type="button" data-cmd="bold" title="Negrita">
+                                    <i class="bi bi-type-bold"></i>
+                                </button>
+                                <button type="button" data-cmd="italic" title="Cursiva">
+                                    <i class="bi bi-type-italic"></i>
+                                </button>
+                                <button type="button" data-cmd="underline" title="Subrayado">
+                                    <i class="bi bi-type-underline"></i>
+                                </button>
+                                <div class="separator"></div>
+                                <button type="button" data-cmd="h2" title="Título">
+                                    <i class="bi bi-type-h2"></i>
+                                </button>
+                                <button type="button" data-cmd="h3" title="Subtítulo">
+                                    <i class="bi bi-type-h3"></i>
+                                </button>
+                                <div class="separator"></div>
+                                <button type="button" data-cmd="insertUnorderedList" title="Lista">
+                                    <i class="bi bi-list-ul"></i>
+                                </button>
+                                <button type="button" data-cmd="insertOrderedList" title="Lista numerada">
+                                    <i class="bi bi-list-ol"></i>
+                                </button>
+                                <div class="separator"></div>
+                                <button type="button" data-cmd="createLink" title="Enlace">
+                                    <i class="bi bi-link-45deg"></i>
+                                </button>
+                                <button type="button" data-cmd="blockquote" title="Cita">
+                                    <i class="bi bi-quote"></i>
+                                </button>
+                                <div class="separator"></div>
+                                <button type="button" id="btnPreview" title="Vista previa">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+
+                            <textarea name="{{ form.contenido.name }}"
+                                      id="{{ form.contenido.id_for_label }}"
+                                      class="editor-textarea"
+                                      placeholder="Escribe el contenido aquí. Puedes usar **negrita**, *cursiva*, ## títulos, listas con - , y más...">{{ form.contenido.value|default:'' }}</textarea>
+
+                            <div class="form-text mt-2">
+                                <i class="bi bi-info-circle"></i>
+                                Se permite HTML básico: &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;blockquote&gt;, &lt;a&gt;.
+                            </div>
+
+                            {% if form.contenido.errors %}
+                                <div class="text-danger small mt-1">{{ form.contenido.errors.0 }}</div>
+                            {% endif %}
+
+                            <!-- Preview en vivo -->
+                            <div id="previewContainer" style="display:none;">
+                                <div class="preview-header mt-3">
+                                    <span><i class="bi bi-eye"></i> Vista previa</span>
+                                    <span class="text-muted" style="font-weight:400;">Actualización automática</span>
+                                </div>
+                                <div class="preview-card" id="previewCard"></div>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña: Archivo -->
+                        <div class="tab-pane fade" id="pane-archivo" role="tabpanel">
+                            <label for="{{ form.archivo.id_for_label }}" class="form-label">
+                                Archivo adjunto
+                            </label>
+                            {{ form.archivo }}
+                            <div class="form-text">
+                                PDF, DOCX, PPTX, imágenes o audio. Máx. 10 MB.
+                            </div>
+                            {% if form.archivo.errors %}
+                                <div class="text-danger small mt-1">{{ form.archivo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Pestaña: URL -->
+                        <div class="tab-pane fade" id="pane-url" role="tabpanel">
+                            <label for="{{ form.url_externa.id_for_label }}" class="form-label">
+                                URL externa
+                            </label>
+                            {{ form.url_externa }}
+                            <div class="form-text">
+                                Video de YouTube, artículo web, podcast, etc.
+                            </div>
+                            {% if form.url_externa.errors %}
+                                <div class="text-danger small mt-1">{{ form.url_externa.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============================================ -->
+            <!-- COLUMNA DERECHA                              -->
+            <!-- ============================================ -->
+            <div class="col-lg-4">
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 4: FACTOR DE RIESGO                  -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-shield-check"></i> Vinculación con riesgo
+                    </div>
+
+                    <div class="factor-warning">
+                        <i class="bi bi-lightbulb-fill"></i>
+                        Vincula este material con un factor de riesgo para que el sistema
+                        lo recomiende automáticamente a estudiantes con ese factor activo.
+                    </div>
+
+                    <label for="{{ form.idFactorRiesgo.id_for_label }}" class="form-label">
+                        Factor de riesgo que ayuda a mitigar
+                    </label>
+                    {{ form.idFactorRiesgo }}
+                    <div class="form-text">
+                        Opcional. Déjalo vacío si es material de uso general.
+                    </div>
+                    {% if form.idFactorRiesgo.errors %}
+                        <div class="text-danger small mt-1">{{ form.idFactorRiesgo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 5: PUBLICACIÓN                       -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-send-check"></i> Publicación
+                    </div>
+
+                    <div class="form-check form-switch mb-0">
+                        {{ form.activo }}
+                        <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Material activo
+                        </label>
+                        <div class="form-text">
+                            Solo el material activo aparece en la biblioteca.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SECCIÓN 6: RESUMEN VISUAL                    -->
+                <!-- ============================================ -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-eye-fill"></i> Cómo se verá
+                    </div>
+                    <div style="font-size:0.8rem;color:#6b7280;margin-bottom:0.75rem;">
+                        Así se mostrará la tarjeta en la biblioteca:
+                    </div>
+
+                    <div class="material-card" data-tipo="motivacional"
+                         id="cardPreview" style="animation:none;">
+                        <div class="material-header" style="padding:1rem 1rem 0.6rem;">
+                            <div class="material-icon" id="previewIcon">
+                                <i class="bi bi-lightbulb-fill"></i>
+                            </div>
+                            <div class="material-header-info">
+                                <div class="material-tipo-badge" id="previewTipo">
+                                    Motivacional
+                                </div>
+                                <h5 class="material-titulo" id="previewTitulo"
+                                    style="font-size:0.9rem;">
+                                    Título del material
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="material-body" style="padding:0 1rem 0.75rem;">
+                            <p class="material-descripcion" id="previewDesc"
+                               style="font-size:0.78rem;margin-bottom:0.5rem;">
+                                Descripción del material...
+                            </p>
+                            <div class="material-factor" id="previewFactor"
+                                 style="display:none;font-size:0.68rem;">
+                                <i class="bi bi-shield-check"></i>
+                                <span id="previewFactorText">Ayuda con: ...</span>
+                            </div>
+                        </div>
+                        <div class="material-footer" style="padding:0.6rem 1rem;">
+                            <div class="material-autor" style="font-size:0.7rem;">
+                                <div class="material-autor-avatar"
+                                     style="width:20px;height:20px;font-size:0.6rem;">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </div>
+                                <span class="material-autor-nombre">
+                                    {{ user.get_full_name|default:user.username|truncatechars:15 }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- ACTION BAR                                   -->
+        <!-- ============================================ -->
+        <div class="action-bar">
+            <div class="text-muted small">
+                <i class="bi bi-shield-check"></i>
+                Visible para estudiantes de tu universidad
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'biblioteca:material_apoyo' %}" class="btn btn-outline-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-success" id="btnSubmit">
+                    <i class="bi bi-check2-circle"></i>
+                    {% if form.instance.pk %}Guardar cambios{% else %}Publicar material{% endif %}
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    // ============================================
+    // 1. SELECTOR VISUAL DE TIPO
+    // ============================================
+    const tipoOptions = document.querySelectorAll('.tipo-option');
+
+    function syncTipo() {
+        tipoOptions.forEach(function (opt) {
+            const radio = opt.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                opt.classList.add('selected');
+            } else {
+                opt.classList.remove('selected');
+            }
+        });
+    }
+
+    tipoOptions.forEach(function (opt) {
+        opt.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                syncTipo();
+                actualizarPreviewTipo(radio.value);
+            }
+        });
+    });
+
+    syncTipo();
+
+    // ============================================
+    // 2. ACTUALIZACIÓN DE LA CARD PREVIEW
+    // ============================================
+    const previewCard = document.getElementById('cardPreview');
+    const previewIcon = document.getElementById('previewIcon');
+    const previewTipo = document.getElementById('previewTipo');
+    const previewTitulo = document.getElementById('previewTitulo');
+    const previewDesc = document.getElementById('previewDesc');
+    const previewFactor = document.getElementById('previewFactor');
+    const previewFactorText = document.getElementById('previewFactorText');
+
+    const tipoConfig = {
+        motivacional:  { label: 'Motivacional',    icon: 'bi-lightbulb-fill' },
+        habitos:       { label: 'Hábitos de Estudio', icon: 'bi-clock-history' },
+        salud_mental:  { label: 'Salud Mental',    icon: 'bi-heart-fill' },
+        financiero:    { label: 'Educación Financiera', icon: 'bi-cash-coin' },
+        tutorias:      { label: 'Guías de Tutoría', icon: 'bi-people-fill' },
+        tiempo:        { label: 'Gestión del Tiempo', icon: 'bi-hourglass-split' },
+        otro:          { label: 'Otro',            icon: 'bi-tag-fill' },
+    };
+
+    function actualizarPreviewTipo(tipo) {
+        const cfg = tipoConfig[tipo] || tipoConfig.otro;
+        if (previewCard) previewCard.dataset.tipo = tipo;
+        if (previewIcon) previewIcon.innerHTML = '<i class="bi ' + cfg.icon + '"></i>';
+        if (previewTipo) previewTipo.textContent = cfg.label;
+    }
+
+    const inputTitulo = document.getElementById('{{ form.titulo.id_for_label }}');
+    const inputDesc = document.getElementById('{{ form.descripcion.id_for_label }}');
+    const inputFactor = document.getElementById('{{ form.idFactorRiesgo.id_for_label }}');
+
+    if (inputTitulo) {
+        inputTitulo.addEventListener('input', function () {
+            previewTitulo.textContent = this.value || 'Título del material';
+        });
+    }
+    if (inputDesc) {
+        inputDesc.addEventListener('input', function () {
+            previewDesc.textContent = this.value || 'Descripción del material...';
+        });
+    }
+    if (inputFactor) {
+        inputFactor.addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            if (this.value && opt.text) {
+                previewFactor.style.display = 'inline-flex';
+                previewFactorText.textContent = 'Ayuda con: ' + opt.text.substring(0, 35);
+            } else {
+                previewFactor.style.display = 'none';
+            }
+        });
+    }
+
+    // Inicializar preview con valores actuales
+    if (inputTitulo && inputTitulo.value) previewTitulo.textContent = inputTitulo.value;
+    if (inputDesc && inputDesc.value) previewDesc.textContent = inputDesc.value;
+
+    const tipoInicial = document.querySelector('.tipo-option.selected');
+    if (tipoInicial) actualizarPreviewTipo(tipoInicial.dataset.tipo);
+
+    // ============================================
+    // 3. EDITOR DE CONTENIDO (mini)
+    // ============================================
+    const textarea = document.getElementById('{{ form.contenido.id_for_label }}');
+    const previewCardContenido = document.getElementById('previewCard');
+    const previewContainer = document.getElementById('previewContainer');
+    const btnPreview = document.getElementById('btnPreview');
+
+    function wrapSelection(prefix, suffix) {
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end);
+        const replacement = prefix + (selected || 'texto') + suffix;
+        textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+        textarea.focus();
+        textarea.selectionStart = start + prefix.length;
+        textarea.selectionEnd = start + prefix.length + (selected || 'texto').length;
+        actualizarPreviewContenido();
+    }
+
+    function insertLine(prefix) {
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(start);
+        const needsNewline = before.length > 0 && !before.endsWith('\n');
+        textarea.value = before + (needsNewline ? '\n' : '') + prefix + after;
+        textarea.focus();
+        actualizarPreviewContenido();
+    }
+
+    document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const cmd = this.dataset.cmd;
+            switch (cmd) {
+                case 'bold': wrapSelection('**', '**'); break;
+                case 'italic': wrapSelection('*', '*'); break;
+                case 'underline': wrapSelection('<u>', '</u>'); break;
+                case 'h2': insertLine('## '); break;
+                case 'h3': insertLine('### '); break;
+                case 'insertUnorderedList': insertLine('- '); break;
+                case 'insertOrderedList': insertLine('1. '); break;
+                case 'createLink': {
+                    const url = prompt('URL del enlace:');
+                    if (url) wrapSelection('[', '](' + url + ')');
+                    break;
+                }
+                case 'blockquote': insertLine('> '); break;
+            }
+        });
+    });
+
+    // ============================================
+    // 4. PREVIEW EN VIVO DEL CONTENIDO
+    // ============================================
+    function markdownToHtml(md) {
+        if (!md) return '<em class="text-muted">Escribe algo para ver la vista previa...</em>';
+        let html = md
+            // Escapar HTML básico
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Permitir etiquetas HTML específicas (revertir escapes para etiquetas comunes)
+        html = html.replace(/&lt;(\/?)(p|strong|em|u|ul|ol|li|h2|h3|blockquote|a|br)(\s[^&]*)?&gt;/gi,
+                            '<$1$2$3>');
+
+        // Markdown
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+        html = html.replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/^\s*\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // Párrafos
+        html = html.split(/\n\n+/).map(function (p) {
+            if (p.match(/^<(h2|h3|ul|ol|blockquote)/)) return p;
+            return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+        }).join('');
+
+        return html;
+    }
+
+    function actualizarPreviewContenido() {
+        if (!previewCardContenido || !textarea) return;
+        previewCardContenido.innerHTML = markdownToHtml(textarea.value);
+    }
+
+    if (textarea) {
+        textarea.addEventListener('input', function () {
+            if (previewContainer && previewContainer.style.display !== 'none') {
+                actualizarPreviewContenido();
+            }
+        });
+    }
+
+    if (btnPreview) {
+        btnPreview.addEventListener('click', function () {
+            if (previewContainer.style.display === 'none') {
+                previewContainer.style.display = 'block';
+                actualizarPreviewContenido();
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // ============================================
+    // 5. VALIDACIÓN ANTES DE ENVIAR
+    // ============================================
+    const form = document.getElementById('materialForm');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            let valido = true;
+            let primerError = null;
+
+            // Título obligatorio
+            if (inputTitulo && !inputTitulo.value.trim()) {
+                inputTitulo.classList.add('is-invalid');
+                valido = false;
+                if (!primerError) primerError = inputTitulo;
+            } else if (inputTitulo) {
+                inputTitulo.classList.remove('is-invalid');
+            }
+
+            // Descripción obligatoria
+            if (inputDesc && !inputDesc.value.trim()) {
+                inputDesc.classList.add('is-invalid');
+                valido = false;
+                if (!primerError) primerError = inputDesc;
+            } else if (inputDesc) {
+                inputDesc.classList.remove('is-invalid');
+            }
+
+            // Tipo seleccionado
+            if (!document.querySelector('.tipo-option input:checked')) {
+                valido = false;
+                alert('Selecciona un tipo de material.');
+            }
+
+            if (!valido) {
+                e.preventDefault();
+                if (primerError) {
+                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    primerError.focus();
+                }
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+        });
+    }
+
+})();
+</script>
+{% endblock %}

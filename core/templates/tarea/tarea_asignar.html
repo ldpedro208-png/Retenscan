@@ -1,0 +1,1006 @@
+<!-- core/templates/core/tarea_asignar.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Asignar Tarea - {{ tarea.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --assign-card-radius: 1rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETA DE ASIGNACIÓN
+           ============================================ */
+        .assign-card {
+            border: none;
+            border-radius: var(--assign-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .assign-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .assign-card .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .assign-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .assign-card .card-header h5 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .assign-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           GRID DE ESTUDIANTES
+           ============================================ */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .student-item {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .student-item:hover {
+            background: #f8f9fa;
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .student-item .form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .student-item .form-check-input {
+            margin-top: 0.2rem;
+            width: 1.1rem;
+            height: 1.1rem;
+            flex-shrink: 0;
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+        }
+
+        .student-item .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .student-item .form-check-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .student-item .form-check-label {
+            font-size: 0.95rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .student-item .form-check-label .student-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .student-item .form-check-label .student-info {
+            display: block;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.1rem;
+        }
+
+        .student-item .badge-assigned {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.6rem;
+        }
+
+        /* ============================================
+           FILTRO DE BÚSQUEDA
+           ============================================ */
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .filter-section .filter-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .filter-section .filter-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-section .filter-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        /* ============================================
+           SELECTOR DE TODOS
+           ============================================ */
+        .select-all-wrapper {
+            padding: 0.75rem 1rem;
+            background: #e7f3ff;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .select-all-wrapper .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .select-all-wrapper .form-check-label {
+            font-weight: 600;
+            color: #0d6efd;
+            cursor: pointer;
+        }
+
+        .select-all-wrapper .selected-count {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        /* ============================================
+           ESTADÍSTICAS DE SELECCIÓN
+           ============================================ */
+        .selection-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .selection-stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .selection-stats .stat-item .stat-value {
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .selection-stats .stat-item .stat-label {
+            color: #6c757d;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-action i {
+            margin-right: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .student-item {
+            animation: fadeInUp 0.3s ease forwards;
+        }
+
+        .student-item:nth-child(1) { animation-delay: 0.02s; }
+        .student-item:nth-child(2) { animation-delay: 0.04s; }
+        .student-item:nth-child(3) { animation-delay: 0.06s; }
+        .student-item:nth-child(4) { animation-delay: 0.08s; }
+        .student-item:nth-child(5) { animation-delay: 0.10s; }
+        .student-item:nth-child(6) { animation-delay: 0.12s; }
+        .student-item:nth-child(7) { animation-delay: 0.14s; }
+        .student-item:nth-child(8) { animation-delay: 0.16s; }
+        .student-item:nth-child(9) { animation-delay: 0.18s; }
+        .student-item:nth-child(10) { animation-delay: 0.20s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .assign-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .student-item .form-check-input:focus-visible {
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .assign-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .students-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-section .filter-input {
+                min-width: auto;
+            }
+
+            .select-all-wrapper {
+                flex-wrap: wrap;
+            }
+
+            .select-all-wrapper .selected-count {
+                margin-left: 0;
+                width: 100%;
+                text-align: left;
+                padding-top: 0.25rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .selection-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .student-item {
+                padding: 0.6rem 0.75rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .assign-card .card-body {
+                padding: 1rem;
+            }
+
+            .assign-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .assign-card .card-header h5 {
+                font-size: 1rem;
+            }
+
+            .student-item .form-check-label {
+                font-size: 0.9rem;
+            }
+
+            .student-item .form-check-label .student-info {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .assign-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .assign-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .student-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .student-item:hover {
+                background: #2d2d44;
+                border-color: #4d4d6a;
+            }
+
+            .student-item .form-check-label .student-name {
+                color: #ecf0f1;
+            }
+
+            .student-item .form-check-label .student-info {
+                color: #8a8a9a;
+            }
+
+            .filter-section {
+                background: #252540;
+            }
+
+            .filter-section .filter-label {
+                color: #c8d6e5;
+            }
+
+            .filter-section .filter-input {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .filter-section .filter-input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+            }
+
+            .filter-section .filter-input::placeholder {
+                color: #8a8a9a;
+            }
+
+            .select-all-wrapper {
+                background: #1a2a3a;
+            }
+
+            .select-all-wrapper .form-check-label {
+                color: #4dabf7;
+            }
+
+            .select-all-wrapper .selected-count {
+                color: #8a8a9a;
+            }
+
+            .selection-stats {
+                border-bottom-color: #2d2d44;
+            }
+
+            .selection-stats .stat-item .stat-value {
+                color: #ecf0f1;
+            }
+
+            .selection-stats .stat-item .stat-label {
+                color: #8a8a9a;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_list' %}" class="text-decoration-none">
+                    <i class="bi bi-list-task" aria-hidden="true"></i> Tareas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_detail' tarea.idTarea %}" class="text-decoration-none">
+                    {{ tarea.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-plus" aria-hidden="true"></i> Asignar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-person-plus" aria-hidden="true"></i> 
+            Asignar: <span class="text-primary">{{ tarea.titulo }}</span>
+        </h1>
+        <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+           class="btn btn-secondary btn-action"
+           aria-label="Volver al detalle de la tarea">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <article class="card assign-card">
+        <header class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-people" aria-hidden="true"></i> 
+                Seleccionar Estudiantes
+            </h5>
+            <span class="badge bg-light text-dark" aria-label="{{ estudiantes.count }} estudiantes activos">
+                <i class="bi bi-person" aria-hidden="true"></i> 
+                {{ estudiantes.count }} estudiantes activos
+            </span>
+        </header>
+
+        <div class="card-body">
+            <form method="post" id="asignarForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Información de la tarea -->
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <strong>Tarea:</strong> {{ tarea.titulo }}
+                    <br>
+                    <small class="text-muted">
+                        <i class="bi bi-calendar" aria-hidden="true"></i>
+                        Fecha límite: {{ tarea.fecha_limite|date:"d/m/Y H:i"|default:"No definida" }}
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-star" aria-hidden="true"></i>
+                        Puntaje máximo: {{ tarea.puntaje_maximo|default:"No definido" }}
+                    </small>
+                </div>
+
+                <!-- Filtro de estudiantes -->
+                <div class="filter-section" role="search">
+                    <span class="filter-label">
+                        <i class="bi bi-search" aria-hidden="true"></i> Buscar:
+                    </span>
+                    <input type="text" 
+                           id="filterInput" 
+                           class="filter-input" 
+                           placeholder="Filtrar por nombre, carnet o carrera..."
+                           aria-label="Filtrar estudiantes">
+                    <span class="filter-label">
+                        <i class="bi bi-sort" aria-hidden="true"></i> Ordenar:
+                    </span>
+                    <select id="sortSelect" class="filter-input" style="flex: 0.5; min-width: 120px;">
+                        <option value="nombre">Por nombre</option>
+                        <option value="carnet">Por carnet</option>
+                        <option value="carrera">Por carrera</option>
+                    </select>
+                </div>
+
+                <!-- Estadísticas de selección -->
+                <div class="selection-stats" id="selectionStats">
+                    <span class="stat-item">
+                        <i class="bi bi-check-circle text-success" aria-hidden="true"></i>
+                        <span class="stat-label">Seleccionados:</span>
+                        <span class="stat-value" id="selectedCount">0</span>
+                    </span>
+                    <span class="stat-item">
+                        <i class="bi bi-person-check text-primary" aria-hidden="true"></i>
+                        <span class="stat-label">Disponibles:</span>
+                        <span class="stat-value" id="availableCount">{{ estudiantes.count }}</span>
+                    </span>
+                    <span class="stat-item">
+                        <i class="bi bi-check2-circle text-success" aria-hidden="true"></i>
+                        <span class="stat-label">Ya asignados:</span>
+                        <span class="stat-value" id="assignedCount">{{ asignados_ids|length }}</span>
+                    </span>
+                    <span class="stat-item ms-auto">
+                        <span class="stat-label">Visible:</span>
+                        <span class="stat-value" id="visibleCount">{{ estudiantes.count }}</span>
+                    </span>
+                </div>
+
+                <!-- Selector de todos -->
+                <div class="select-all-wrapper">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           id="seleccionarTodos"
+                           aria-label="Seleccionar todos los estudiantes disponibles">
+                    <label class="form-check-label" for="seleccionarTodos">
+                        <i class="bi bi-check-all" aria-hidden="true"></i>
+                        Seleccionar todos los disponibles
+                    </label>
+                    <span class="selected-count" id="selectAllInfo">
+                        <span id="selectableCount">{{ estudiantes.count }}</span> estudiantes disponibles
+                    </span>
+                </div>
+
+                <!-- Lista de estudiantes -->
+                <div class="students-grid" id="studentsGrid" role="list">
+                    {% for estudiante in estudiantes %}
+                        <div class="student-item" 
+                             role="listitem"
+                             data-nombre="{{ estudiante.nombre }} {{ estudiante.apellido_paterno }}"
+                             data-carnet="{{ estudiante.carnet|default:'' }}"
+                             data-carrera="{{ estudiante.idCarrera.nombre|default:'' }}">
+                            <div class="form-check">
+                                <input class="form-check-input estudiante-check" 
+                                       type="checkbox" 
+                                       name="estudiantes" 
+                                       value="{{ estudiante.idEstudiante }}"
+                                       id="estudiante_{{ estudiante.idEstudiante }}"
+                                       {% if estudiante.idEstudiante in asignados_ids %}
+                                           checked disabled
+                                       {% endif %}
+                                       aria-describedby="info_{{ estudiante.idEstudiante }}">
+                                <label class="form-check-label" for="estudiante_{{ estudiante.idEstudiante }}">
+                                    <span class="student-name">
+                                        {{ estudiante.nombre }} {{ estudiante.apellido_paterno }}
+                                    </span>
+                                    <span class="student-info" id="info_{{ estudiante.idEstudiante }}">
+                                        <i class="bi bi-card-text" aria-hidden="true"></i>
+                                        {{ estudiante.carnet|default:"Sin carnet" }}
+                                        {% if estudiante.idCarrera.nombre %}
+                                            - <i class="bi bi-mortarboard" aria-hidden="true"></i>
+                                            {{ estudiante.idCarrera.nombre }}
+                                        {% endif %}
+                                    </span>
+                                </label>
+                                {% if estudiante.idEstudiante in asignados_ids %}
+                                    <span class="badge bg-success badge-assigned">
+                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Asignado
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="empty-state">
+                                <div class="empty-icon" aria-hidden="true">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <p class="empty-title">No hay estudiantes disponibles</p>
+                                <p class="empty-description">
+                                    No se encontraron estudiantes activos para asignar esta tarea.
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Botones de acción -->
+                <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                    <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+                       class="btn btn-secondary btn-action"
+                       aria-label="Cancelar y volver al detalle de la tarea">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="btn btn-primary btn-action" 
+                            id="submitBtn"
+                            {% if not estudiantes %}disabled{% endif %}>
+                        <i class="bi bi-send" aria-hidden="true"></i> 
+                        Asignar Tarea
+                    </button>
+                </footer>
+
+                <!-- Información adicional -->
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    Los estudiantes que ya tienen asignada esta tarea aparecerán como 
+                    <span class="badge bg-success">Asignado</span> y no se pueden seleccionar.
+                </p>
+            </form>
+        </div>
+    </article>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i> 
+                        Confirmar Asignación
+                    </h5>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que deseas asignar esta tarea a <strong id="confirmCount">0</strong> estudiante(s)?</p>
+                    <p class="text-muted small">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        Los estudiantes seleccionados recibirán una notificación por correo electrónico.
+                    </p>
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        Esta acción no se puede deshacer. Los estudiantes no podrán ser removidos individualmente.
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmSubmit">
+                        <i class="bi bi-send" aria-hidden="true"></i> 
+                        Confirmar Asignación
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('asignarForm');
+            const filterInput = document.getElementById('filterInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const selectAll = document.getElementById('seleccionarTodos');
+            const studentCheckboxes = document.querySelectorAll('.estudiante-check:not([disabled])');
+            const allStudentItems = document.querySelectorAll('.student-item');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const visibleCountSpan = document.getElementById('visibleCount');
+            const selectableCountSpan = document.getElementById('selectableCount');
+            const submitBtn = document.getElementById('submitBtn');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmCount = document.getElementById('confirmCount');
+            const confirmSubmit = document.getElementById('confirmSubmit');
+
+            // ============================================
+            // 1. ACTUALIZAR CONTADORES
+            // ============================================
+            function updateCounters() {
+                const visibleCheckboxes = document.querySelectorAll('.student-item:not(.hidden) .estudiante-check:not([disabled])');
+                const selectedCheckboxes = document.querySelectorAll('.estudiante-check:not([disabled]):checked');
+                
+                // Contador de seleccionados
+                const selected = selectedCheckboxes.length;
+                selectedCountSpan.textContent = selected;
+                
+                // Contador de visibles
+                const visible = visibleCheckboxes.length;
+                visibleCountSpan.textContent = visible;
+                
+                // Contador de seleccionables
+                const selectable = document.querySelectorAll('.estudiante-check:not([disabled])').length;
+                selectableCountSpan.textContent = selectable;
+                
+                // Actualizar info de "Seleccionar todos"
+                const allVisibleSelected = visibleCheckboxes.length > 0 && 
+                    visibleCheckboxes.length === document.querySelectorAll('.student-item:not(.hidden) .estudiante-check:not([disabled]):checked').length;
+                
+                if (visibleCheckboxes.length > 0) {
+                    selectAll.checked = allVisibleSelected;
+                    selectAll.indeterminate = !allVisibleSelected && 
+                        document.querySelectorAll('.student-item:not(.hidden) .estudiante-check:not([disabled]):checked').length > 0;
+                } else {
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
+                }
+                
+                // Actualizar botón de submit
+                if (submitBtn) {
+                    submitBtn.disabled = selected === 0;
+                }
+            }
+
+            // ============================================
+            // 2. FILTRO DE ESTUDIANTES
+            // ============================================
+            if (filterInput) {
+                filterInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    
+                    allStudentItems.forEach(function(item) {
+                        const nombre = item.dataset.nombre?.toLowerCase() || '';
+                        const carnet = item.dataset.carnet?.toLowerCase() || '';
+                        const carrera = item.dataset.carrera?.toLowerCase() || '';
+                        
+                        const matches = searchTerm === '' || 
+                            nombre.includes(searchTerm) || 
+                            carnet.includes(searchTerm) || 
+                            carrera.includes(searchTerm);
+                        
+                        if (matches) {
+                            item.classList.remove('hidden');
+                            item.style.display = '';
+                        } else {
+                            item.classList.add('hidden');
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    updateCounters();
+                });
+            }
+
+            // ============================================
+            // 3. ORDENAR ESTUDIANTES
+            // ============================================
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    const sortBy = this.value;
+                    const grid = document.getElementById('studentsGrid');
+                    const items = Array.from(grid.querySelectorAll('.student-item:not(.hidden)'));
+                    
+                    items.sort(function(a, b) {
+                        let valueA, valueB;
+                        
+                        switch(sortBy) {
+                            case 'nombre':
+                                valueA = a.dataset.nombre || '';
+                                valueB = b.dataset.nombre || '';
+                                break;
+                            case 'carnet':
+                                valueA = a.dataset.carnet || '';
+                                valueB = b.dataset.carnet || '';
+                                break;
+                            case 'carrera':
+                                valueA = a.dataset.carrera || '';
+                                valueB = b.dataset.carrera || '';
+                                break;
+                            default:
+                                valueA = a.dataset.nombre || '';
+                                valueB = b.dataset.nombre || '';
+                        }
+                        
+                        return valueA.localeCompare(valueB);
+                    });
+                    
+                    // Reordenar en el DOM
+                    items.forEach(function(item) {
+                        grid.appendChild(item);
+                    });
+                });
+            }
+
+            // ============================================
+            // 4. SELECCIONAR TODOS
+            // ============================================
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    const visibleCheckboxes = document.querySelectorAll('.student-item:not(.hidden) .estudiante-check:not([disabled])');
+                    visibleCheckboxes.forEach(function(checkbox) {
+                        checkbox.checked = this.checked;
+                    }, this);
+                    
+                    updateCounters();
+                });
+            }
+
+            // ============================================
+            // 5. EVENTOS DE CHECKBOX INDIVIDUALES
+            // ============================================
+            studentCheckboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    updateCounters();
+                });
+            });
+
+            // ============================================
+            // 6. CONFIRMACIÓN ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const selected = document.querySelectorAll('.estudiante-check:not([disabled]):checked');
+                
+                if (selected.length === 0) {
+                    showToast('Por favor selecciona al menos un estudiante.', 'warning');
+                    return;
+                }
+                
+                // Mostrar modal de confirmación
+                confirmCount.textContent = selected.length;
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 7. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmSubmit.addEventListener('click', function() {
+                // Deshabilitar botón para evitar doble envío
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Enviando...';
+                
+                // Enviar el formulario
+                form.submit();
+            });
+
+            // ============================================
+            // 8. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+                
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+                
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+                
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+                
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 9. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.student-item .form-check-input').forEach(function(input) {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.checked = !this.checked;
+                        this.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+
+            // ============================================
+            // 10. INICIALIZAR CONTADORES
+            // ============================================
+            updateCounters();
+
+            // ============================================
+            // 11. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de asignación de tarea cargada');
+        });
+    </script>
+{% endblock %}

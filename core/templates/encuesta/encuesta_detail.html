@@ -1,0 +1,761 @@
+<!-- templates/layout/encuesta/encuesta_detail.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ encuesta.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --detail-card-radius: 1rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* Tarjeta de detalle */
+        .detail-card {
+            border: none;
+            border-radius: var(--detail-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        .detail-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .detail-card .card-body {
+            padding: 2rem;
+        }
+
+        /* Barra de progreso mejorada */
+        .progress-custom {
+            height: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+        
+        .progress-custom .progress-bar {
+            height: 100%;
+            border-radius: 0.25rem;
+            transition: width 0.6s ease;
+            background: linear-gradient(90deg, #198754, #0d6efd);
+        }
+        
+        .progress-custom .progress-bar.low {
+            background: linear-gradient(90deg, #dc3545, #fd7e14);
+        }
+        
+        .progress-custom .progress-bar.medium {
+            background: linear-gradient(90deg, #fd7e14, #ffc107);
+        }
+        
+        .progress-custom .progress-bar.high {
+            background: linear-gradient(90deg, #ffc107, #198754);
+        }
+        
+        .progress-custom .progress-bar.complete {
+            background: linear-gradient(90deg, #198754, #20c997);
+        }
+
+        /* Preguntas */
+        .question-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            transition: all var(--transition-speed) ease;
+            background: #ffffff;
+        }
+        
+        .question-item:hover {
+            border-color: #0d6efd;
+            background: #f8f9fa;
+            transform: translateX(4px);
+        }
+        
+        .question-item .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .question-item .question-text {
+            font-weight: 500;
+            color: #2d3748;
+            flex: 1;
+        }
+        
+        .question-item .question-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .question-item .question-options {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .question-item .question-options .option-item {
+            padding: 0.2rem 0;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+        
+        .question-item .question-options .option-item .option-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Badges de estado */
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Botones de acción */
+        .btn-action {
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-action i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-action:active {
+            transform: translateY(0);
+        }
+        
+        .btn-action.btn-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: none;
+        }
+        
+        .btn-action.btn-success:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(25, 135, 84, 0.4);
+        }
+        
+        .btn-action.btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9f00 100%);
+            border: none;
+            color: #1a1a2e;
+        }
+        
+        .btn-action.btn-warning:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(255, 193, 7, 0.4);
+        }
+        
+        .btn-action.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+        }
+        
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        /* Estado de asignación del estudiante */
+        .assignment-card {
+            border: none;
+            border-radius: var(--detail-card-radius);
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+        }
+        
+        .assignment-card.completed {
+            border-left-color: #198754;
+        }
+        
+        .assignment-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 1.25rem;
+        }
+        
+        .assignment-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Accesibilidad */
+        .detail-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .question-item:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .detail-card .card-body {
+                padding: 1.25rem;
+            }
+            
+            .question-item {
+                padding: 0.75rem 1rem;
+            }
+            
+            .question-item .question-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+            
+            .btn-group-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .detail-card .card-body {
+                padding: 1rem;
+            }
+            
+            .question-item {
+                padding: 0.6rem 0.75rem;
+            }
+            
+            .question-item .question-text {
+                font-size: 0.95rem;
+            }
+            
+            .badge-status {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.6rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .detail-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .detail-card .card-body {
+                background-color: #2d2d2d;
+            }
+            
+            .question-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .question-item:hover {
+                background: #2d2d44;
+                border-color: #4d4d6a;
+            }
+            
+            .question-item .question-text {
+                color: #ecf0f1;
+            }
+            
+            .question-item .question-options {
+                border-top-color: #2d2d44;
+            }
+            
+            .question-item .question-options .option-item {
+                color: #c8d6e5;
+            }
+            
+            .assignment-card {
+                background: #252540;
+            }
+            
+            .assignment-card .card-header {
+                border-bottom-color: #2d2d44;
+            }
+            
+            .progress-custom {
+                background-color: #2d2d44;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ encuesta.titulo|truncatechars:30 }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-clipboard-check" aria-hidden="true"></i> 
+            {{ encuesta.titulo }}
+            <span class="badge 
+                {% if encuesta.estado == 'activa' %}bg-success
+                {% elif encuesta.estado == 'borrador' %}bg-warning text-dark
+                {% elif encuesta.estado == 'cerrada' %}bg-secondary
+                {% else %}bg-info{% endif %} badge-status ms-2">
+                {{ encuesta.get_estado_display }}
+            </span>
+        </h1>
+        
+        <!-- Botones de acción -->
+        <div class="d-flex flex-wrap gap-2">
+            <!-- Botón Eliminar -->
+            {% if user_rol == 'admin' or user_rol == 'profesor' and encuesta.creador == request.user %}
+                <a href="{% url 'encuesta_delete' encuesta.idEncuesta %}" 
+                   class="btn btn-danger btn-action"
+                   aria-label="Eliminar encuesta {{ encuesta.titulo }}">
+                    <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                </a>
+            {% endif %}
+            
+            <!-- Botón Asignar -->
+            {% if user_rol == 'admin' or user_rol == 'profesor' and encuesta.creador == request.user %}
+                <a href="{% url 'encuesta_asignar' encuesta.idEncuesta %}" 
+                   class="btn btn-warning btn-action"
+                   aria-label="Asignar encuesta a estudiantes">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i> Asignar
+                </a>
+            {% endif %}
+            
+            <!-- Botón Resultados -->
+            {% if user_rol != 'estudiante' %}
+                <a href="{% url 'encuesta_resultados' encuesta.idEncuesta %}" 
+                   class="btn btn-secondary btn-action"
+                   aria-label="Ver resultados de la encuesta">
+                    <i class="bi bi-bar-chart" aria-hidden="true"></i> Resultados
+                </a>
+            {% endif %}
+            
+            <!-- Botón Volver -->
+            <a href="{% url 'encuesta_list' %}" 
+               class="btn btn-secondary btn-action"
+               aria-label="Volver al listado de encuestas">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- DETALLES DE LA ENCUESTA                     -->
+    <!-- ============================================ -->
+    <article class="card detail-card mb-4">
+        <div class="card-body">
+            <!-- Descripción -->
+            <p class="mb-3">{{ encuesta.descripcion|default:"Sin descripción" }}</p>
+            
+            <!-- Metadatos -->
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-tag" aria-hidden="true"></i> Estado:
+                        </small>
+                        <span class="badge 
+                            {% if encuesta.estado == 'activa' %}bg-success
+                            {% elif encuesta.estado == 'borrador' %}bg-warning text-dark
+                            {% elif encuesta.estado == 'cerrada' %}bg-secondary
+                            {% else %}bg-info{% endif %} badge-status">
+                            {{ encuesta.get_estado_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Inicio:
+                        </small>
+                        <span>{{ encuesta.fecha_inicio|date:"d/m/Y H:i"|default:"No definida" }}</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-calendar-check" aria-hidden="true"></i> Fin:
+                        </small>
+                        <span>{{ encuesta.fecha_fin|date:"d/m/Y H:i"|default:"No definida" }}</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-person" aria-hidden="true"></i> Creador:
+                        </small>
+                        <span>{{ encuesta.creador.get_full_name|default:encuesta.creador.username }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info adicional: Obligatoriedad -->
+            <div class="mt-3">
+                <small class="text-muted d-block">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i> Tipo:
+                </small>
+                {% if encuesta.es_obligatoria %}
+                    <span class="badge bg-danger">
+                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i> Obligatoria
+                    </span>
+                {% else %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> Voluntaria
+                    </span>
+                {% endif %}
+                
+                {% if encuesta.anonima %}
+                    <span class="badge bg-secondary ms-2">
+                        <i class="bi bi-incognito" aria-hidden="true"></i> Anónima
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Progreso - visible para Admin y Profesor creador -->
+            {% if user_rol == 'admin' or user_rol == 'profesor' and encuesta.creador == request.user %}
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-graph-up" aria-hidden="true"></i> Progreso:
+                        </small>
+                        <small class="text-muted">{{ encuesta.get_progreso|default:0 }}%</small>
+                    </div>
+                    <div class="progress-custom">
+                        <div class="progress-bar 
+                            {% if encuesta.get_progreso < 25 %}low
+                            {% elif encuesta.get_progreso < 50 %}medium
+                            {% elif encuesta.get_progreso < 100 %}high
+                            {% else %}complete{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ encuesta.get_progreso|default:0 }}%;" 
+                             aria-valuenow="{{ encuesta.get_progreso|default:0 }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="bi bi-people" aria-hidden="true"></i>
+                        {{ encuesta.get_respuestas_count|default:0 }} respuestas
+                    </small>
+                </div>
+            {% endif %}
+        </div>
+    </article>
+
+    <!-- ============================================ -->
+    <!-- PREGUNTAS                                   -->
+    <!-- ============================================ -->
+    <section aria-label="Preguntas de la encuesta">
+        <h4 class="mb-3">
+            <i class="bi bi-question-circle" aria-hidden="true"></i> 
+            Preguntas
+            <span class="badge bg-secondary ms-2">{{ preguntas|length }}</span>
+        </h4>
+
+        {% if preguntas %}
+            <div class="list-group" role="list">
+                {% for pregunta in preguntas %}
+                    <div class="question-item" role="listitem" tabindex="0">
+                        <div class="question-header">
+                            <div class="question-text">
+                                <span class="fw-bold">{{ forloop.counter }}.</span> 
+                                {{ pregunta.pregunta }}
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 flex-shrink-0">
+                                <span class="badge bg-info">{{ pregunta.get_tipo_display }}</span>
+                                {% if pregunta.es_obligatoria %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i> Obligatoria
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Opciones -->
+                        {% if pregunta.opciones.all %}
+                            <div class="question-options">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                                    Opciones ({{ pregunta.opciones.count }}):
+                                </small>
+                                <div class="row">
+                                    {% for opcion in pregunta.opciones.all %}
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="option-item">
+                                                <i class="bi bi-circle option-icon" aria-hidden="true"></i>
+                                                {{ opcion.texto }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Botón Responder - solo para estudiantes -->
+            {% if puede_responder %}
+                <div class="text-center mt-4">
+                    <a href="{% url 'encuesta_responder' encuesta.idEncuesta %}" 
+                       class="btn btn-success btn-action btn-lg"
+                       aria-label="Responder encuesta {{ encuesta.titulo }}">
+                        <i class="bi bi-pencil-square" aria-hidden="true"></i> 
+                        Responder Encuesta
+                    </a>
+                    {% if encuesta.fecha_fin %}
+                        <p class="text-muted small mt-2">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            Fecha límite: {{ encuesta.fecha_fin|date:"d/m/Y H:i" }}
+                            {% if encuesta.tiempo_estimado %}
+                                • <i class="bi bi-hourglass" aria-hidden="true"></i>
+                                Tiempo estimado: {{ encuesta.tiempo_estimado }} minutos
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                Esta encuesta no tiene preguntas aún.
+                {% if user_rol == 'admin' or user_rol == 'profesor' and encuesta.creador == request.user %}
+                    <a href="{% url 'encuesta_editar' encuesta.idEncuesta %}" class="alert-link">
+                        Agregar preguntas
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- ============================================ -->
+    <!-- ESTADO DE ASIGNACIÓN PARA ESTUDIANTES       -->
+    <!-- ============================================ -->
+    {% if user_rol == 'estudiante' and asignacion %}
+        <section aria-label="Mi estado en la encuesta" class="mt-4">
+            <article class="card assignment-card {% if asignacion.completada %}completed{% endif %}">
+                <header class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i> 
+                        Mi Estado
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4 col-sm-6">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Estado:
+                                </small>
+                                <span class="badge 
+                                    {% if asignacion.completada %}bg-success
+                                    {% elif encuesta.esta_activa %}bg-primary
+                                    {% else %}bg-secondary{% endif %} badge-status">
+                                    {% if asignacion.completada %}
+                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Completada
+                                    {% elif encuesta.esta_activa %}
+                                        <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                                    {% else %}
+                                        <i class="bi bi-lock" aria-hidden="true"></i> Cerrada
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-calendar-plus" aria-hidden="true"></i> Asignación:
+                                </small>
+                                <span>{{ asignacion.fecha_asignacion|date:"d/m/Y H:i" }}</span>
+                            </div>
+                        </div>
+                        {% if asignacion.completada and asignacion.fecha_completada %}
+                        <div class="col-md-4 col-sm-6">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Completada:
+                                </small>
+                                <span>{{ asignacion.fecha_completada|date:"d/m/Y H:i" }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if asignacion.calificacion is not None %}
+                        <div class="col-md-4 col-sm-6">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-star" aria-hidden="true"></i> Calificación:
+                                </small>
+                                <span class="fw-bold">{{ asignacion.calificacion }}/100</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        </section>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- ESTADÍSTICAS RÁPIDAS (opcional)             -->
+    <!-- ============================================ -->
+    {% if user_rol != 'estudiante' and estadisticas %}
+        <section aria-label="Estadísticas rápidas" class="mt-4">
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="card bg-light border-0 text-center">
+                        <div class="card-body">
+                            <h3 class="mb-0 text-primary">{{ estadisticas.total_estudiantes|default:0 }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-people" aria-hidden="true"></i> Asignados
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card bg-light border-0 text-center">
+                        <div class="card-body">
+                            <h3 class="mb-0 text-success">{{ estadisticas.respondieron|default:0 }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-check-circle" aria-hidden="true"></i> Respondieron
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card bg-light border-0 text-center">
+                        <div class="card-body">
+                            <h3 class="mb-0 text-warning">{{ estadisticas.pendientes|default:0 }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-clock" aria-hidden="true"></i> Pendientes
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card bg-light border-0 text-center">
+                        <div class="card-body">
+                            <h3 class="mb-0 text-info">{{ estadisticas.tasa_participacion|default:0 }}%</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-graph-up" aria-hidden="true"></i> Participación
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. CONFIRMACIÓN PARA ELIMINAR
+            // ============================================
+            const deleteBtn = document.querySelector('a[href*="encuesta_delete"]');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const encuestaTitulo = '{{ encuesta.titulo|escapejs }}';
+                    
+                    // Modal de confirmación personalizado
+                    if (confirm(
+                        '⚠️ ¿Estás seguro de eliminar la encuesta "' + encuestaTitulo + '"?\n\n' +
+                        'Esta acción no se puede deshacer.\n' +
+                        'Se eliminarán todas las preguntas, respuestas y asignaciones.'
+                    )) {
+                        window.location.href = this.href;
+                    }
+                });
+            }
+
+            // ============================================
+            // 2. SOPORTE PARA TECLADO EN PREGUNTAS
+            // ============================================
+            document.querySelectorAll('.question-item').forEach(function(item) {
+                item.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        // Expandir/colapsar opciones si es necesario
+                        const options = this.querySelector('.question-options');
+                        if (options) {
+                            if (options.style.display === 'none') {
+                                options.style.display = 'block';
+                            } else {
+                                options.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 3. ANIMACIÓN DE PROGRESO
+            // ============================================
+            const progressBar = document.querySelector('.progress-custom .progress-bar');
+            if (progressBar) {
+                const targetWidth = progressBar.style.width;
+                progressBar.style.width = '0%';
+                
+                setTimeout(function() {
+                    progressBar.style.width = targetWidth;
+                }, 300);
+            }
+
+            // ============================================
+            // 4. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de detalle de encuesta cargada');
+        });
+    </script>
+{% endblock %}

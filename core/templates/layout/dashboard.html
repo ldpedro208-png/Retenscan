@@ -1,0 +1,488 @@
+<!-- templates/layout/dashboard.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS específicas */
+        :root {
+            --card-radius: 0.75rem;
+            --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --card-shadow-hover: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+        }
+
+        /* Tarjetas de estadísticas mejoradas */
+        .stat-card {
+            border: none;
+            border-radius: var(--card-radius);
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .stat-card .stat-icon {
+            opacity: 0.2;
+            font-size: 4rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: -0.5rem;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .stat-card:hover .stat-icon {
+            opacity: 0.3;
+            transform: scale(1.1) rotate(-5deg);
+        }
+        
+        .stat-card .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-card .stat-change {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tarjeta de acciones rápidas */
+        .quick-actions-card {
+            border: none;
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .quick-actions-card:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .quick-actions-card .card-header {
+            background: transparent;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+        
+        .quick-actions-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Botones de acciones rápidas */
+        .btn-quick-action {
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-radius: 0.5rem;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-quick-action i {
+            font-size: 1.25rem;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-quick-action:hover {
+            transform: translateX(4px);
+        }
+        
+        .btn-quick-action .badge {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Animaciones de entrada */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stat-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        .stat-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+        
+        .stat-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        
+        .stat-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+        
+        .quick-actions-card {
+            animation: fadeInUp 0.5s ease forwards;
+            animation-delay: 0.2s;
+        }
+
+        /* Mejoras de accesibilidad */
+        .stat-card:focus-visible,
+        .btn-quick-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.75rem;
+            }
+            
+            .stat-card .stat-icon {
+                font-size: 3rem;
+            }
+            
+            .btn-quick-action {
+                font-size: 0.9rem;
+                padding: 0.6rem 0.8rem;
+            }
+            
+            .btn-quick-action i {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .stat-card .stat-icon {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Tema oscuro (opcional) */
+        @media (prefers-color-scheme: dark) {
+            .quick-actions-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .quick-actions-card .card-header {
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> 
+            Dashboard
+        </h1>
+        <span class="badge bg-secondary badge-status" role="status">
+            <i class="bi bi-clock-history" aria-hidden="true"></i> 
+            Actualizado: {% now "d/m/Y H:i" %}
+        </span>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- TARJETAS DE ESTADÍSTICAS                    -->
+    <!-- ============================================ -->
+    <section aria-label="Resumen estadístico del sistema">
+        <div class="row g-3 mb-4">
+            <!-- Total Estudiantes -->
+            <div class="col-md-4">
+                <article class="card stat-card text-white bg-primary">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-people" aria-hidden="true"></i> 
+                            Total Estudiantes
+                        </h6>
+                        <p class="stat-value" aria-label="{{ total_estudiantes|default:0 }} estudiantes">
+                            {{ total_estudiantes|default:0 }}
+                        </p>
+                        <div class="stat-change">
+                            <i class="bi bi-database" aria-hidden="true"></i> 
+                            Base de datos
+                        </div>
+                    </div>
+                    <div class="stat-icon" aria-hidden="true">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Estudiantes Activos -->
+            <div class="col-md-4">
+                <article class="card stat-card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-person-check" aria-hidden="true"></i> 
+                            Estudiantes Activos
+                        </h6>
+                        <p class="stat-value" aria-label="{{ activos|default:0 }} estudiantes activos">
+                            {{ activos|default:0 }}
+                        </p>
+                        <div class="stat-change">
+                            <i class="bi bi-check-circle" aria-hidden="true"></i> 
+                            En curso
+                        </div>
+                    </div>
+                    <div class="stat-icon" aria-hidden="true">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Estudiantes en Riesgo -->
+            <div class="col-md-4">
+                <article class="card stat-card text-white bg-danger">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                            Estudiantes en Riesgo
+                        </h6>
+                        <p class="stat-value" aria-label="{{ en_riesgo|default:0 }} estudiantes en riesgo">
+                            {{ en_riesgo|default:0 }}
+                        </p>
+                        <div class="stat-change">
+                            <i class="bi bi-flag" aria-hidden="true"></i> 
+                            Requieren atención
+                        </div>
+                    </div>
+                    <div class="stat-icon" aria-hidden="true">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- INDICADORES ADICIONALES (OPCIONAL)          -->
+    <!-- ============================================ -->
+    {% if mostrar_indicadores_adicionales %}
+    <section aria-label="Indicadores adicionales" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-3 col-6">
+                <div class="card stat-card text-white bg-info">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-calendar-check" aria-hidden="true"></i> 
+                            Asistencia
+                        </h6>
+                        <p class="stat-value">{{ promedio_asistencia|default:0 }}%</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card text-white bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-clock" aria-hidden="true"></i> 
+                            Estudio/Sem
+                        </h6>
+                        <p class="stat-value">{{ promedio_horas_estudio|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card text-white bg-secondary">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-bar-chart" aria-hidden="true"></i> 
+                            Compromiso
+                        </h6>
+                        <p class="stat-value">{{ promedio_compromiso|floatformat:2|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-heart" aria-hidden="true"></i> 
+                            Bienestar
+                        </h6>
+                        <p class="stat-value">{{ promedio_bienestar|floatformat:2|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- ACCIONES RÁPIDAS                           -->
+    <!-- ============================================ -->
+    <section aria-label="Acciones rápidas">
+        <article class="card quick-actions-card">
+            <header class="card-header">
+                <i class="bi bi-lightning-fill text-warning" aria-hidden="true"></i> 
+                Acciones Rápidas
+                <span class="badge bg-primary ms-2" aria-label="Acciones disponibles">2</span>
+            </header>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-4 col-sm-6">
+                        <a href="{% url 'estudiante_create' %}" 
+                           class="btn btn-primary btn-quick-action w-100"
+                           aria-label="Crear nuevo estudiante">
+                            <i class="bi bi-person-plus" aria-hidden="true"></i> 
+                            Nuevo Estudiante
+                            <span class="badge bg-light text-dark">+</span>
+                        </a>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <a href="{% url 'estudiante_list' %}" 
+                           class="btn btn-info btn-quick-action w-100 text-white"
+                           aria-label="Ver todos los estudiantes">
+                            <i class="bi bi-list-ul" aria-hidden="true"></i> 
+                            Ver Todos
+                            <span class="badge bg-light text-dark">{{ total_estudiantes|default:0 }}</span>
+                        </a>
+                    </div>
+                    {% if user_is_admin %}
+                    <div class="col-md-4 col-sm-6">
+                        <a href="{% url 'dashboard_riesgo' %}" 
+                           class="btn btn-warning btn-quick-action w-100"
+                           aria-label="Ver dashboard de IA predictiva">
+                            <i class="bi bi-robot" aria-hidden="true"></i> 
+                            IA Predictiva
+                            <span class="badge bg-dark text-white">Nuevo</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- ACTIVIDAD RECIENTE (OPCIONAL)               -->
+    <!-- ============================================ -->
+    {% if actividades_recientes %}
+    <section aria-label="Actividad reciente" class="mt-4">
+        <article class="card quick-actions-card">
+            <header class="card-header">
+                <i class="bi bi-clock-history text-info" aria-hidden="true"></i> 
+                Actividad Reciente
+            </header>
+            <div class="card-body">
+                <ul class="list-group list-group-flush" role="list">
+                    {% for actividad in actividades_recientes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
+                            <div>
+                                <i class="bi bi-{{ actividad.icono|default:'circle' }}" aria-hidden="true"></i>
+                                <span>{{ actividad.descripcion }}</span>
+                            </div>
+                            <small class="text-muted">{{ actividad.fecha|timesince }} atrás</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </article>
+    </section>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO ADICIONAL (BLOQUE EXTRA)          -->
+    <!-- ============================================ -->
+    {% block dashboard_extra %}{% endblock %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animar números (efecto de conteo)
+            function animateNumbers() {
+                const statValues = document.querySelectorAll('.stat-value');
+                statValues.forEach(function(element) {
+                    const text = element.textContent;
+                    const num = parseInt(text.replace(/,/g, ''));
+                    if (!isNaN(num) && num > 0) {
+                        // Solo animar si el número es válido y visible
+                        const observer = new IntersectionObserver(function(entries) {
+                            entries.forEach(function(entry) {
+                                if (entry.isIntersecting) {
+                                    let current = 0;
+                                    const increment = Math.ceil(num / 30); // 30 frames
+                                    const interval = setInterval(function() {
+                                        current += increment;
+                                        if (current >= num) {
+                                            current = num;
+                                            clearInterval(interval);
+                                        }
+                                        element.textContent = current.toLocaleString();
+                                    }, 30);
+                                    observer.unobserve(element);
+                                }
+                            });
+                        });
+                        observer.observe(element);
+                    }
+                });
+            }
+
+            // Ejecutar animación de números
+            animateNumbers();
+
+            // Agregar soporte para teclado en tarjetas estadísticas
+            document.querySelectorAll('.stat-card').forEach(function(card) {
+                card.setAttribute('tabindex', '0');
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        // Expandir o mostrar más información
+                        const title = this.querySelector('.card-title')?.textContent || '';
+                        const value = this.querySelector('.stat-value')?.textContent || '';
+                        alert(`${title.trim()}: ${value}`);
+                    }
+                });
+            });
+
+            // Log de accesibilidad
+            console.log('✅ Dashboard cargado con accesibilidad mejorada');
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,585 @@
+<!-- templates/layout/perfil.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+           
+            --profile-avatar-size: 6rem;
+            --profile-avatar-size-sm: 4rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ✅ Asegurar que el dropdown del navbar tenga prioridad */
+        .navbar .dropdown-menu {
+            z-index: 1060 !important;
+        }
+
+        /* Tarjeta de perfil - SIN z-index conflictivo */
+        .profile-card {
+            border: none;
+            border-radius: var(--profile-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            position: relative;
+            z-index: 1; /* ✅ z-index bajo para no interferir */
+        }
+        
+        .profile-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .profile-card .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            padding: 1.5rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+        
+        .profile-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-card .card-body {
+            padding: 2rem;
+        }
+
+        /* Avatar */
+        .profile-avatar {
+            width: var(--profile-avatar-size);
+            height: var(--profile-avatar-size);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            color: #0d6efd;
+            font-size: 3.5rem;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05) rotate(-3deg);
+        }
+        
+        .profile-avatar .avatar-status {
+            position: absolute;
+            bottom: 0.25rem;
+            right: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #28a745;
+            border: 2px solid white;
+        }
+
+        /* Información del perfil */
+        .profile-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem 2rem;
+        }
+        
+        .profile-info-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: baseline;
+        }
+        
+        .profile-info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .profile-info-item .label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 100px;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .profile-info-item .value {
+            color: #212529;
+            word-break: break-word;
+        }
+
+        /* Badge de rol */
+        .badge-role {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Botones de acción */
+        .btn-profile-action {
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-profile-action i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-profile-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-profile-action:active {
+            transform: translateY(0);
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .profile-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* Accesibilidad */
+        .profile-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .btn-profile-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ✅ Responsive - SIN interferir con el navbar */
+        @media (max-width: 768px) {
+            :root {
+                --profile-avatar-size: 4.5rem;
+            }
+            
+            .profile-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+            
+            .profile-card .card-body {
+                padding: 1.25rem;
+            }
+            
+            .profile-info {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+            
+            .profile-info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.75rem 0;
+            }
+            
+            .profile-info-item .label {
+                min-width: auto;
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .profile-info-item .value {
+                font-size: 0.95rem;
+            }
+            
+            .btn-profile-action {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --profile-avatar-size: 3.5rem;
+            }
+            
+            .profile-avatar {
+                font-size: 2.5rem;
+            }
+            
+            .profile-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+            
+            .badge-role {
+                font-size: 0.7re --profile-card-radius: 1rem;m;
+                padding: 0.3rem 0.6rem;
+            }
+            
+            .btn-profile-action {
+                font-size: 0.85rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .profile-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .profile-info-item {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .profile-info-item .label {
+                color: #adb5bd;
+            }
+            
+            .profile-info-item .value {
+                color: #e0e0e0;
+            }
+            
+            .profile-avatar {
+                background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+                color: #6ea8fe;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-circle" aria-hidden="true"></i> Mi Perfil
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card profile-card">
+                <!-- Encabezado -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-circle fs-1 me-3" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Mi Perfil</h4>
+                            <small class="opacity-75">
+                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                Último acceso: {{ user.last_login|date:"d/m/Y H:i"|default:"N/A" }}
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Cuerpo -->
+                <div class="card-body">
+                    <!-- Avatar e información principal -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="profile-avatar mx-auto" 
+                                 role="img" 
+                                 aria-label="Avatar de {{ user.username }}">
+                                <i class="bi bi-person-fill" aria-hidden="true"></i>
+                                <span class="avatar-status" aria-label="Usuario activo"></span>
+                            </div>
+                            <p class="mt-2 mb-0">
+                                <span class="badge badge-role bg-primary">
+                                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                                    {{ user.get_rol_display|default:"Usuario" }}
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <div class="profile-info">
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-person" aria-hidden="true"></i> Usuario
+                                    </span>
+                                    <span class="value" aria-label="Nombre de usuario">
+                                        <strong>{{ user.username }}</strong>
+                                    </span>
+                                </div>
+                                
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-person-badge" aria-hidden="true"></i> Nombre
+                                    </span>
+                                    <span class="value" aria-label="Nombre completo">
+                                        {{ user.first_name|default:"No especificado" }} 
+                                        {{ user.last_name|default:"" }}
+                                    </span>
+                                </div>
+                                
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-envelope" aria-hidden="true"></i> Email
+                                    </span>
+                                    <span class="value" aria-label="Correo electrónico">
+                                        {{ user.email|default:"No especificado" }}
+                                    </span>
+                                </div>
+                                
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-tag" aria-hidden="true"></i> Rol
+                                    </span>
+                                    <span class="value">
+                                        <span class="badge badge-role bg-{{ user.rol_color|default:'primary' }}">
+                                            {{ user.get_rol_display|default:"Usuario" }}
+                                        </span>
+                                    </span>
+                                </div>
+                                
+                                {% if user.telefono %}
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-telephone" aria-hidden="true"></i> Teléfono
+                                    </span>
+                                    <span class="value" aria-label="Teléfono">
+                                        <a href="tel:{{ user.telefono }}" class="text-decoration-none">
+                                            {{ user.telefono }}
+                                        </a>
+                                    </span>
+                                </div>
+                                {% endif %}
+
+                                {% if user.fecha_registro %}
+                                <div class="profile-info-item">
+                                    <span class="label">
+                                        <i class="bi bi-calendar-plus" aria-hidden="true"></i> Registro
+                                    </span>
+                                    <span class="value" aria-label="Fecha de registro">
+                                        {{ user.fecha_registro|date:"d/m/Y" }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Acciones -->
+                    <section aria-label="Acciones del perfil">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <a href="{% url 'password_change' %}" 
+                                   class="btn btn-warning btn-profile-action w-100"
+                                   aria-label="Cambiar contraseña">
+                                    <i class="bi bi-key" aria-hidden="true"></i> 
+                                    Cambiar Contraseña
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'dashboard' %}" 
+                                   class="btn btn-secondary btn-profile-action w-100"
+                                   aria-label="Volver al dashboard">
+                                    <i class="bi bi-arrow-left" aria-hidden="true"></i> 
+                                    Volver al Dashboard
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" 
+                                        class="btn btn-outline-info btn-profile-action w-100"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editarPerfilModal"
+                                        aria-label="Editar perfil">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i> 
+                                    Editar Perfil
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Información adicional de sesión -->
+                    <section aria-label="Información de sesión" class="mt-4 pt-3 border-top">
+                        <div class="row g-2 text-muted small">
+                            <div class="col-md-6">
+                                <i class="bi bi-browser-chrome" aria-hidden="true"></i>
+                                <span id="navegador">Cargando...</span>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                                Última actividad: {% now "d/m/Y H:i" %}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Perfil -->
+    <div class="modal fade" id="editarPerfilModal" tabindex="-1" 
+         aria-labelledby="editarPerfilModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h5 class="modal-title" id="editarPerfilModalLabel">
+                        <i class="bi bi-pencil" aria-hidden="true"></i> Editar Perfil
+                    </h5>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        Esta funcionalidad está en desarrollo. 
+                        Contacta al administrador para actualizar tu información.
+                    </p>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" disabled>
+                        <i class="bi bi-save" aria-hidden="true"></i> Guardar (Próximamente)
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. DETECTAR NAVEGADOR PARA INFO DE SESIÓN
+            // ============================================
+            function getBrowserInfo() {
+                const ua = navigator.userAgent;
+                let browser = 'Desconocido';
+                
+                if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) {
+                    browser = 'Chrome';
+                } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+                    browser = 'Safari';
+                } else if (ua.indexOf('Firefox') > -1) {
+                    browser = 'Firefox';
+                } else if (ua.indexOf('Edg') > -1) {
+                    browser = 'Edge';
+                } else if (ua.indexOf('OPR') > -1 || ua.indexOf('Opera') > -1) {
+                    browser = 'Opera';
+                } else if (ua.indexOf('Trident') > -1) {
+                    browser = 'Internet Explorer';
+                }
+                
+                return browser;
+            }
+
+            const navegadorSpan = document.getElementById('navegador');
+            if (navegadorSpan) {
+                navegadorSpan.textContent = getBrowserInfo();
+            }
+
+            // ============================================
+            // 2. ✅ SOLUCIÓN: FORZAR CIERRE DE DROPDOWN
+            //    cuando se hace clic en la página
+            // ============================================
+            // Cerrar dropdowns al hacer clic en cualquier parte de la página
+            document.addEventListener('click', function(e) {
+                // Si el clic no es dentro de un dropdown, cerrar todos
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                        const dropdown = menu.closest('.dropdown');
+                        if (dropdown) {
+                            const toggle = dropdown.querySelector('.dropdown-toggle');
+                            if (toggle && toggle.getAttribute('data-bs-toggle') === 'dropdown') {
+                                const instance = bootstrap.Dropdown.getInstance(toggle);
+                                if (instance) {
+                                    instance.hide();
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            // ============================================
+            // 3. SOPORTE PARA TECLADO EN TARJETA DE PERFIL
+            // ============================================
+            const profileCard = document.querySelector('.profile-card');
+            if (profileCard) {
+                profileCard.setAttribute('tabindex', '0');
+                profileCard.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const avatar = this.querySelector('.profile-avatar');
+                        if (avatar) {
+                            avatar.style.transform = 'scale(1.1) rotate(-5deg)';
+                            setTimeout(() => {
+                                avatar.style.transform = '';
+                            }, 300);
+                        }
+                    }
+                });
+            }
+
+            // ============================================
+            // 4. CONFIRMACIÓN PARA CAMBIAR CONTRASEÑA
+            // ============================================
+            const passwordLink = document.querySelector('a[href*="password_change"]');
+            if (passwordLink) {
+                passwordLink.addEventListener('click', function(e) {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        const confirmar = confirm(
+                            '¿Deseas cambiar tu contraseña? Serás redirigido a la página de cambio.'
+                        );
+                        if (!confirmar) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            }
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Perfil cargado con accesibilidad mejorada');
+        });
+    </script>
+{% endblock %}

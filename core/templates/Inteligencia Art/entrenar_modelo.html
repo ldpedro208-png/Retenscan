@@ -1,0 +1,780 @@
+<!-- templates/layout/Inteligencia Art/entrenar_modelo.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Entrenar Modelo Predictivo - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --train-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        }
+
+        /* ============================================
+           TARJETA PRINCIPAL
+           ============================================ */
+        .train-card {
+            border: none;
+            border-radius: var(--train-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .train-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .train-card .card-header {
+            background: var(--warning-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #1a1a2e;
+        }
+
+        .train-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .train-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .train-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           ALERTAS
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        .alert-custom ul {
+            margin-bottom: 0;
+            padding-left: 1.25rem;
+        }
+
+        .alert-custom ul li {
+            padding: 0.15rem 0;
+        }
+
+        /* ============================================
+           ESTADO DEL MODELO
+           ============================================ */
+        .model-status-card {
+            border: none;
+            border-radius: 0.75rem;
+            background: #f8f9fa;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .model-status-card:hover {
+            background: #f0f4ff;
+        }
+
+        .model-status-card .status-icon {
+            font-size: 2.5rem;
+        }
+
+        .model-status-card .status-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .model-status-card .status-detail {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* ============================================
+           ESTADÍSTICAS DE ENTRENAMIENTO
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .stats-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #ffffff;
+            border-radius: 0.5rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .stats-item .stats-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .stats-item .stats-label {
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        /* ============================================
+           BARRA DE PROGRESO
+           ============================================ */
+        #progressContainer {
+            margin-top: 1.25rem;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-text .label {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .progress-text .percentage {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0d6efd;
+        }
+
+        .progress {
+            height: 0.75rem;
+            border-radius: 0.5rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+
+        .progress .progress-bar {
+            height: 100%;
+            border-radius: 0.5rem;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #0d6efd, #0a58ca);
+        }
+
+        .progress .progress-bar.complete {
+            background: linear-gradient(90deg, #198754, #157347);
+        }
+
+        .progress-status {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .progress-status i {
+            margin-right: 0.3rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-warning {
+            background: var(--warning-gradient);
+            border: none;
+            color: #1a1a2e;
+        }
+
+        .btn-action.btn-warning:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-action.btn-warning:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .train-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .train-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .train-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .train-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .model-status-card .status-icon {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .train-card .card-body {
+                padding: 1rem;
+            }
+
+            .train-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .train-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+
+            .stats-item .stats-number {
+                font-size: 1.25rem;
+            }
+
+            .progress-text .label {
+                font-size: 0.8rem;
+            }
+
+            .progress-text .percentage {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .train-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .train-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .model-status-card {
+                background: #252540;
+            }
+
+            .model-status-card:hover {
+                background: #2d2d44;
+            }
+
+            .model-status-card .status-detail {
+                color: #8a8a9a;
+            }
+
+            .stats-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .stats-item .stats-number {
+                color: #4dabf7;
+            }
+
+            .stats-item .stats-label {
+                color: #8a8a9a;
+            }
+
+            .progress {
+                background-color: #2d2d44;
+            }
+
+            .progress-text .label {
+                color: #c8d6e5;
+            }
+
+            .progress-text .percentage {
+                color: #4dabf7;
+            }
+
+            .progress-status {
+                color: #8a8a9a;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+
+            .alert-custom.alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_riesgo' %}" class="text-decoration-none">
+                    <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Entrenar Modelo
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card train-card">
+                <!-- Header -->
+                <header class="card-header">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-robot fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Entrenar Modelo Predictivo</h4>
+                            <small class="opacity-75">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Entrena el modelo de IA para predecir riesgos de deserción
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Información -->
+                    <div class="alert alert-custom alert-info" role="alert">
+                        <i class="bi bi-info-circle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">¿Qué hace esta acción?</div>
+                            <ul>
+                                <li>El modelo utiliza datos de estudiantes para predecir el riesgo de deserción</li>
+                                <li>Se necesitan al menos <strong>50 estudiantes</strong> para un entrenamiento confiable</li>
+                                <li>El proceso puede tomar varios minutos dependiendo de la cantidad de datos</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Estado del Modelo -->
+                    <section aria-label="Estado del modelo" class="model-status-card card p-3 mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="status-icon me-3" aria-hidden="true">
+                                {% if entrenado %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="status-label">
+                                    {% if entrenado %}
+                                        <span class="badge bg-success">✅ Modelo entrenado</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">⚠️ Modelo no entrenado</span>
+                                    {% endif %}
+                                </div>
+                                <div class="status-detail">
+                                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                                    Último entrenamiento: 
+                                    {% if ultimo_entrenamiento %}
+                                        {{ ultimo_entrenamiento|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">Nunca</span>
+                                    {% endif %}
+                                </div>
+                                <div class="status-detail mt-1">
+                                    <i class="bi bi-people" aria-hidden="true"></i>
+                                    Datos disponibles: 
+                                    <strong>{{ total_estudiantes|default:0 }}</strong> estudiantes
+                                    {% if total_estudiantes < 50 %}
+                                        <span class="badge bg-warning text-dark ms-1">
+                                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                            Mínimo 50 recomendado
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas adicionales -->
+                        {% if entrenado %}
+                            <div class="stats-grid">
+                                <div class="stats-item">
+                                    <div class="stats-number">{{ precision|default:"-" }}</div>
+                                    <div class="stats-label">Precisión</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-number">{{ recall|default:"-" }}</div>
+                                    <div class="stats-label">Recall</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-number">{{ f1_score|default:"-" }}</div>
+                                    <div class="stats-label">F1-Score</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-number">{{ estudiantes_evaluados|default:0 }}</div>
+                                    <div class="stats-label">Evaluados</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </section>
+
+                    <!-- Advertencia -->
+                    {% if total_estudiantes < 50 %}
+                        <div class="alert alert-warning alert-custom" role="alert">
+                            <i class="bi bi-exclamation-triangle alert-icon" aria-hidden="true"></i>
+                            <div class="alert-content">
+                                <div class="alert-title">⚠️ Datos insuficientes</div>
+                                <p class="mb-0">
+                                    Se recomienda tener al menos <strong>50 estudiantes</strong> para un entrenamiento confiable.
+                                    Actualmente hay <strong>{{ total_estudiantes|default:0 }}</strong> estudiantes registrados.
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Barra de progreso -->
+                    <div id="progressContainer" style="display: none;">
+                        <div class="progress-text">
+                            <span class="label">
+                                <i class="bi bi-robot" aria-hidden="true"></i>
+                                Entrenando modelo...
+                            </span>
+                            <span class="percentage" id="progressPercentage">0%</span>
+                        </div>
+                        <div class="progress" role="progressbar" 
+                             aria-label="Progreso del entrenamiento"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="progress-status" id="progressStatus">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            Inicializando...
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="trainForm">
+                        {% csrf_token %}
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+                            <button type="submit" class="btn btn-warning btn-action" id="submitBtn">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> 
+                                Entrenar Modelo
+                            </button>
+                            <a href="{% url 'dashboard_riesgo' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Volver al dashboard de IA">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> 
+                                Volver al Dashboard
+                            </a>
+                        </footer>
+                    </form>
+
+                    <!-- Información adicional -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check" aria-hidden="true"></i>
+                            Los datos son procesados de forma segura y confidencial.
+                        </small>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                        Confirmar Entrenamiento
+                    </h5>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-robot" style="font-size: 3rem; color: #ffc107;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás seguro de entrenar el modelo?</h5>
+                        <p class="text-muted">
+                            Se utilizarán los datos de <strong>{{ total_estudiantes|default:0 }}</strong> estudiantes.
+                            El proceso puede tomar varios minutos.
+                        </p>
+                        <div class="alert alert-info text-start">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <strong>¿Qué se entrenará?</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>Modelo de predicción de riesgo de deserción</li>
+                                <li>Factores de riesgo más relevantes</li>
+                                <li>Niveles de riesgo para estudiantes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmSubmit">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i> 
+                        Confirmar y Entrenar
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('trainForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmSubmit = document.getElementById('confirmSubmit');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressStatus = document.getElementById('progressStatus');
+
+            // ============================================
+            // 1. CONFIRMAR ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 2. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmSubmit.addEventListener('click', function() {
+                // Mostrar progreso
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressPercentage.textContent = '0%';
+                progressStatus.innerHTML = '<i class="bi bi-clock" aria-hidden="true"></i> Inicializando entrenamiento...';
+
+                // Deshabilitar botones
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Procesando...';
+
+                // Simular progreso
+                let progress = 0;
+                const steps = [
+                    { threshold: 20, message: 'Cargando datos de estudiantes...' },
+                    { threshold: 40, message: 'Preprocesando datos...' },
+                    { threshold: 60, message: 'Entrenando modelo de IA...' },
+                    { threshold: 80, message: 'Validando resultados...' },
+                    { threshold: 95, message: 'Finalizando entrenamiento...' }
+                ];
+
+                const interval = setInterval(function() {
+                    progress += Math.random() * 8 + 2;
+                    if (progress > 95) {
+                        progress = 95;
+                        clearInterval(interval);
+                    }
+                    progressBar.style.width = progress + '%';
+                    progressPercentage.textContent = Math.round(progress) + '%';
+
+                    // Actualizar mensaje según progreso
+                    let currentStep = steps[0];
+                    for (let step of steps) {
+                        if (progress >= step.threshold) {
+                            currentStep = step;
+                        }
+                    }
+                    progressStatus.innerHTML = `<i class="bi bi-robot" aria-hidden="true"></i> ${currentStep.message}`;
+                }, 400);
+
+                // Enviar el formulario
+                setTimeout(function() {
+                    // Completar la barra
+                    progressBar.style.width = '100%';
+                    progressPercentage.textContent = '100%';
+                    progressBar.classList.add('complete');
+                    progressStatus.innerHTML = '<i class="bi bi-check-circle text-success" aria-hidden="true"></i> ¡Entrenamiento completado exitosamente!';
+
+                    // Enviar el formulario
+                    form.submit();
+                }, 3000);
+
+                // Cerrar modal
+                confirmModal.hide();
+            });
+
+            // ============================================
+            // 3. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 4. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de entrenamiento de modelo cargada');
+        });
+    </script>
+{% endblock %}

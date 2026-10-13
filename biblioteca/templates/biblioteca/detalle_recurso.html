@@ -1,0 +1,771 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}{{ recurso.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .visor-container {
+        background: #1f2937;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        min-height: 600px;
+        display: flex;
+        flex-direction: column;
+    }
+    .visor-toolbar {
+        background: #111827;
+        color: #e5e7eb;
+        padding: 0.6rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        border-bottom: 1px solid #374151;
+    }
+    .visor-body {
+        flex-grow: 1;
+        position: relative;
+        background: #374151;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .visor-body iframe {
+        width: 100%;
+        height: 100%;
+        min-height: 600px;
+        border: none;
+        background: #fff;
+    }
+    .visor-body video,
+    .visor-body audio {
+        max-width: 100%;
+        max-height: 70vh;
+    }
+    .visor-body img {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+    }
+    .visor-placeholder {
+        color: #9ca3af;
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    .visor-placeholder i {
+        font-size: 4rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+    }
+
+    .info-sidebar {
+        position: sticky;
+        top: 1rem;
+    }
+    .info-card {
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .info-card h6 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #858796;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        border-bottom: 1px dashed #e3e6f0;
+        font-size: 0.85rem;
+    }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-label {
+        color: #858796;
+        font-weight: 500;
+    }
+    .meta-value {
+        color: #2c3e50;
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+    }
+
+    .acciones-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .acciones-grid .btn {
+        font-size: 0.85rem;
+    }
+    .btn-favorito.activo {
+        background-color: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+    }
+    .btn-lectura.activo {
+        background-color: #10b981;
+        border-color: #10b981;
+        color: #fff;
+    }
+
+    .stars {
+        color: #d1d3e2;
+        font-size: 1.3rem;
+        cursor: pointer;
+    }
+    .stars .bi-star-fill {
+        color: #f59e0b;
+    }
+    .stars:hover .bi-star-fill,
+    .stars .bi-star:hover ~ .bi-star,
+    .stars .bi-star:hover {
+        color: #f59e0b;
+    }
+
+    .palabras-clave .badge {
+        font-weight: 400;
+        font-size: 0.75rem;
+    }
+
+    .related-card {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e3e6f0;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.15s;
+    }
+    .related-card:hover {
+        background: #f8f9fc;
+    }
+    .related-card:last-child { border-bottom: none; }
+    .related-icon {
+        width: 40px;
+        height: 40px;
+        background: #eef2ff;
+        color: #4e73df;
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .related-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .related-titulo {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #2c3e50;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.15rem;
+    }
+    .related-meta {
+        font-size: 0.75rem;
+        color: #858796;
+    }
+
+    .badge-estado {
+        font-size: 0.7rem;
+    }
+
+    @media (max-width: 991px) {
+        .info-sidebar {
+            position: static;
+            margin-top: 1rem;
+        }
+        .visor-container { min-height: 400px; }
+        .visor-body iframe { min-height: 400px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- ============================================ -->
+    <!-- BREADCRUMB                                   -->
+    <!-- ============================================ -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="{% url 'biblioteca:lista' %}" class="text-decoration-none">
+                    <i class="bi bi-book"></i> Biblioteca
+                </a>
+            </li>
+            {% if recurso.idMateria %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'biblioteca:lista' %}?materia={{ recurso.idMateria.idMateria }}"
+                       class="text-decoration-none">
+                        {{ recurso.idMateria.nombre }}
+                    </a>
+                </li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ recurso.titulo|truncatechars:50 }}
+            </li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+
+        <!-- ============================================ -->
+        <!-- COLUMNA PRINCIPAL: VISOR                     -->
+        <!-- ============================================ -->
+        <div class="col-lg-8">
+
+            <!-- Encabezado del recurso -->
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                <div>
+                    <h3 class="mb-1">{{ recurso.titulo }}</h3>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge bg-primary">{{ recurso.get_tipo_display }}</span>
+                        <span class="badge
+                            {% if recurso.nivel_dificultad == 'basico' %}bg-success
+                            {% elif recurso.nivel_dificultad == 'intermedio' %}bg-warning text-dark
+                            {% else %}bg-danger{% endif %}">
+                            {{ recurso.get_nivel_dificultad_display }}
+                        </span>
+                        {% if recurso.es_obligatorio %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-exclamation-circle"></i> Obligatorio
+                            </span>
+                        {% endif %}
+                        {% if recurso.estado == 'borrador' %}
+                            <span class="badge bg-secondary badge-estado">
+                                <i class="bi bi-eye-slash"></i> Borrador
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if user == recurso.subido_por or user.is_staff %}
+                        <a href="{% url 'biblioteca:editar' recurso.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Visor -->
+            <div class="visor-container mb-4">
+                <div class="visor-toolbar">
+                    <div>
+                        <i class="bi bi-file-earmark-{{ recurso.get_extension|default:'text' }}"></i>
+                        <span class="ms-1">{{ recurso.get_extension|upper|default:"Recurso" }}</span>
+                        {% if recurso.archivo %}
+                            <span class="text-muted ms-2" style="font-size: 0.75rem;">
+                                ({{ recurso.archivo.size|filesizeformat }})
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if recurso.archivo %}
+                            <a href="{% url 'biblioteca:descargar' recurso.pk %}"
+                               class="btn btn-sm btn-light">
+                                <i class="bi bi-download"></i> Descargar
+                            </a>
+                        {% endif %}
+                        {% if recurso.url_externa %}
+                            <a href="{{ recurso.url_externa }}" target="_blank" rel="noopener"
+                               class="btn btn-sm btn-light">
+                                <i class="bi bi-box-arrow-up-right"></i> Abrir externo
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="visor-body" id="visorBody">
+                    {% if recurso.archivo %}
+                        {% with ext=recurso.get_extension %}
+                            {% if ext == 'pdf' %}
+                                <iframe src="{{ recurso.archivo.url }}#toolbar=1"
+                                        title="Visor PDF de {{ recurso.titulo }}"
+                                        loading="lazy"></iframe>
+                            {% elif ext == 'mp4' or ext == 'webm' or ext == 'ogg' %}
+                                <video controls preload="metadata">
+                                    <source src="{{ recurso.archivo.url }}">
+                                    Tu navegador no soporta video HTML5.
+                                </video>
+                            {% elif ext == 'mp3' or ext == 'wav' or ext == 'ogg' %}
+                                <div class="p-5 text-center w-100">
+                                    <i class="bi bi-music-note-beamed text-white" style="font-size: 3rem;"></i>
+                                    <audio controls class="mt-3 w-100">
+                                        <source src="{{ recurso.archivo.url }}">
+                                        Tu navegador no soporta audio HTML5.
+                                    </audio>
+                                </div>
+                            {% elif ext == 'jpg' or ext == 'jpeg' or ext == 'png' or ext == 'gif' or ext == 'webp' %}
+                                <img src="{{ recurso.archivo.url }}" alt="{{ recurso.titulo }}">
+                            {% else %}
+                                <div class="visor-placeholder">
+                                    <i class="bi bi-file-earmark-arrow-down"></i>
+                                    <h5 class="text-white">Vista previa no disponible</h5>
+                                    <p class="mb-3">Este formato ({{ ext|upper }}) no se puede previsualizar en el navegador.</p>
+                                    <a href="{% url 'biblioteca:descargar' recurso.pk %}"
+                                       class="btn btn-primary">
+                                        <i class="bi bi-download"></i> Descargar archivo
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% elif recurso.url_externa %}
+                        <div class="visor-placeholder">
+                            <i class="bi bi-link-45deg"></i>
+                            <h5 class="text-white">Recurso externo</h5>
+                            <p class="mb-3">Este recurso se encuentra alojado en un sitio externo.</p>
+                            <a href="{{ recurso.url_externa }}" target="_blank" rel="noopener"
+                               class="btn btn-primary">
+                                <i class="bi bi-box-arrow-up-right"></i> Abrir recurso
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="visor-placeholder">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <h5 class="text-white">Sin contenido adjunto</h5>
+                            <p>Este recurso aún no tiene archivo ni enlace disponible.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Descripción -->
+            {% if recurso.descripcion %}
+                <div class="info-card">
+                    <h6><i class="bi bi-card-text"></i> Descripción</h6>
+                    <p class="mb-0" style="white-space: pre-line;">{{ recurso.descripcion }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Palabras clave -->
+            {% if recurso.palabras_clave %}
+                <div class="info-card palabras-clave">
+                    <h6><i class="bi bi-tags"></i> Palabras clave</h6>
+                    {% for kw in recurso.palabras_clave.split %}
+                        {% if kw %}
+                            <span class="badge bg-light text-dark border me-1 mb-1">
+                                {{ kw|cut:"," }}
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Recursos relacionados -->
+            {% if relacionados %}
+                <div class="info-card">
+                    <h6><i class="bi bi-collection"></i> Recursos relacionados</h6>
+                    {% for rel in relacionados %}
+                        <a href="{% url 'biblioteca:detalle' rel.pk %}" class="related-card">
+                            <div class="related-icon">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                            <div class="related-info">
+                                <div class="related-titulo">{{ rel.titulo }}</div>
+                                <div class="related-meta">
+                                    {{ rel.get_tipo_display }}
+                                    {% if rel.autor %}· {{ rel.autor|truncatechars:25 }}{% endif %}
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SIDEBAR: ACCIONES E INFO                     -->
+        <!-- ============================================ -->
+        <div class="col-lg-4">
+            <div class="info-sidebar">
+
+                <!-- Acciones del estudiante -->
+                {% if user_rol == 'estudiante' %}
+                    <div class="info-card">
+                        <h6><i class="bi bi-lightning-charge"></i> Acciones</h6>
+                        <div class="acciones-grid">
+                            {% if recurso.archivo %}
+                                <a href="{% url 'biblioteca:descargar' recurso.pk %}"
+                                   class="btn btn-primary">
+                                    <i class="bi bi-download"></i> Descargar
+                                </a>
+                            {% else %}
+                                <a href="{{ recurso.url_externa }}" target="_blank" rel="noopener"
+                                   class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                                </a>
+                            {% endif %}
+
+                            <button type="button"
+                                    class="btn btn-outline-warning btn-favorito"
+                                    id="btnFavorito"
+                                    data-url="{% url 'biblioteca:favorito' recurso.pk %}">
+                                <i class="bi bi-star"></i> Favorito
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-success btn-lectura"
+                                    id="btnLectura"
+                                    data-url="{% url 'biblioteca:lectura_completa' recurso.pk %}">
+                                <i class="bi bi-check2-circle"></i> Lectura completa
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-info"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalCalificar">
+                                <i class="bi bi-star-half"></i> Calificar
+                            </button>
+                        </div>
+
+                        <!-- Tiempo de lectura (contador) -->
+                        <div class="text-center text-muted mt-3" style="font-size: 0.8rem;">
+                            <i class="bi bi-clock"></i>
+                            Tiempo en esta página:
+                            <span id="tiempoLectura" data-segundos="0">00:00</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Información del recurso -->
+                <div class="info-card">
+                    <h6><i class="bi bi-info-circle"></i> Información</h6>
+
+                    <div class="meta-row">
+                        <span class="meta-label">Tipo</span>
+                        <span class="meta-value">{{ recurso.get_tipo_display }}</span>
+                    </div>
+                    {% if recurso.autor %}
+                        <div class="meta-row">
+                            <span class="meta-label">Autor</span>
+                            <span class="meta-value">{{ recurso.autor }}</span>
+                        </div>
+                    {% endif %}
+                    {% if recurso.editorial %}
+                        <div class="meta-row">
+                            <span class="meta-label">Editorial</span>
+                            <span class="meta-value">{{ recurso.editorial }}</span>
+                        </div>
+                    {% endif %}
+                    {% if recurso.anio_publicacion %}
+                        <div class="meta-row">
+                            <span class="meta-label">Año</span>
+                            <span class="meta-value">{{ recurso.anio_publicacion }}</span>
+                        </div>
+                    {% endif %}
+                    {% if recurso.isbn %}
+                        <div class="meta-row">
+                            <span class="meta-label">ISBN</span>
+                            <span class="meta-value">{{ recurso.isbn }}</span>
+                        </div>
+                    {% endif %}
+                    {% if recurso.idMateria %}
+                        <div class="meta-row">
+                            <span class="meta-label">Materia</span>
+                            <span class="meta-value">{{ recurso.idMateria.nombre }}</span>
+                        </div>
+                    {% endif %}
+                    {% if recurso.idCategoria %}
+                        <div class="meta-row">
+                            <span class="meta-label">Categoría</span>
+                            <span class="meta-value">{{ recurso.idCategoria.nombre }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="meta-row">
+                        <span class="meta-label">Idioma</span>
+                        <span class="meta-value">{{ recurso.idioma|upper }}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Nivel</span>
+                        <span class="meta-value">{{ recurso.get_nivel_dificultad_display }}</span>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="info-card">
+                    <h6><i class="bi bi-graph-up"></i> Estadísticas</h6>
+                    <div class="d-flex justify-content-around text-center">
+                        <div>
+                            <div class="h4 mb-0 text-primary">{{ recurso.total_vistas }}</div>
+                            <small class="text-muted"><i class="bi bi-eye"></i> Vistas</small>
+                        </div>
+                        <div>
+                            <div class="h4 mb-0 text-success">{{ recurso.total_descargas }}</div>
+                            <small class="text-muted"><i class="bi bi-download"></i> Descargas</small>
+                        </div>
+                        <div>
+                            <div class="h4 mb-0 text-warning">
+                                {{ recurso.promedio_calificacion|floatformat:1 }}
+                            </div>
+                            <small class="text-muted"><i class="bi bi-star-fill"></i> Promedio</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Autor del recurso -->
+                <div class="info-card">
+                    <h6><i class="bi bi-person-badge"></i> Compartido por</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; font-weight: 600;">
+                            {{ recurso.subido_por.first_name|first|default:recurso.subido_por.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold" style="font-size: 0.9rem;">
+                                {{ recurso.subido_por.get_full_name|default:recurso.subido_por.username }}
+                            </div>
+                            <small class="text-muted">
+                                {{ recurso.subido_por.get_rol_display }}
+                            </small>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        Publicado el {{ recurso.created_at|date:"d/m/Y" }}
+                    </small>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL: CALIFICAR                             -->
+<!-- ============================================ -->
+{% if user_rol == 'estudiante' %}
+    <div class="modal fade" id="modalCalificar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="formCalificar" method="post" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-star-half"></i> Calificar recurso
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="text-muted mb-3">¿Qué te pareció este recurso?</p>
+                        <div class="stars mb-3" id="starsContainer">
+                            <i class="bi bi-star" data-value="1"></i>
+                            <i class="bi bi-star" data-value="2"></i>
+                            <i class="bi bi-star" data-value="3"></i>
+                            <i class="bi bi-star" data-value="4"></i>
+                            <i class="bi bi-star" data-value="5"></i>
+                        </div>
+                        <input type="hidden" name="calificacion" id="calificacionInput" value="">
+                        <div class="mb-3">
+                            <textarea name="comentario" class="form-control" rows="3"
+                                      placeholder="Comentario opcional..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btnEnviarCalificacion" disabled>
+                            <i class="bi bi-send"></i> Enviar calificación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // ============================================
+    // 1. CONTADOR DE TIEMPO DE LECTURA
+    // ============================================
+    const tiempoSpan = document.getElementById('tiempoLectura');
+    let segundos = 0;
+    let intervalo = null;
+
+    if (tiempoSpan) {
+        intervalo = setInterval(function() {
+            segundos++;
+            const min = String(Math.floor(segundos / 60)).padStart(2, '0');
+            const seg = String(segundos % 60).padStart(2, '0');
+            tiempoSpan.textContent = min + ':' + seg;
+        }, 1000);
+    }
+
+    // Enviar tiempo al salir de la página si estuvo al menos 30 segundos
+    window.addEventListener('beforeunload', function() {
+        if (segundos >= 30) {
+            // Enviar por sendBeacon para no bloquear la salida
+            const url = "{% url 'biblioteca:lectura_completa' recurso.pk %}";
+            const data = new FormData();
+            data.append('tiempo', segundos);
+            data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            navigator.sendBeacon(url, data);
+        }
+    });
+
+    // ============================================
+    // 2. UTILIDAD: OBTENER CSRF
+    // ============================================
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // ============================================
+    // 3. FAVORITO
+    // ============================================
+    const btnFavorito = document.getElementById('btnFavorito');
+    if (btnFavorito) {
+        btnFavorito.addEventListener('click', function() {
+            fetch(this.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    this.classList.add('activo');
+                    this.innerHTML = '<i class="bi bi-star-fill"></i> Favorito';
+                }
+            })
+            .catch(err => console.error('Error favorito:', err));
+        });
+    }
+
+    // ============================================
+    // 4. LECTURA COMPLETA
+    // ============================================
+    const btnLectura = document.getElementById('btnLectura');
+    if (btnLectura) {
+        btnLectura.addEventListener('click', function() {
+            const data = new FormData();
+            data.append('tiempo', segundos);
+            fetch(this.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: data
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.ok) {
+                    this.classList.add('activo');
+                    this.innerHTML = '<i class="bi bi-check2-circle"></i> ¡Leído!';
+                    this.disabled = true;
+                }
+            })
+            .catch(err => console.error('Error lectura:', err));
+        });
+    }
+
+    // ============================================
+    // 5. CALIFICACIÓN CON ESTRELLAS
+    // ============================================
+    const starsContainer = document.getElementById('starsContainer');
+    const calificacionInput = document.getElementById('calificacionInput');
+    const btnEnviarCalificacion = document.getElementById('btnEnviarCalificacion');
+
+    if (starsContainer) {
+        const stars = starsContainer.querySelectorAll('i');
+
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const val = parseInt(this.dataset.value);
+                stars.forEach((s, i) => {
+                    s.classList.toggle('bi-star-fill', i < val);
+                    s.classList.toggle('bi-star', i >= val);
+                });
+            });
+        });
+
+        starsContainer.addEventListener('mouseleave', function() {
+            const val = parseInt(calificacionInput.value) || 0;
+            stars.forEach((s, i) => {
+                s.classList.toggle('bi-star-fill', i < val);
+                s.classList.toggle('bi-star', i >= val);
+            });
+        });
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const val = parseInt(this.dataset.value);
+                calificacionInput.value = val;
+                if (btnEnviarCalificacion) btnEnviarCalificacion.disabled = false;
+                stars.forEach((s, i) => {
+                    s.classList.toggle('bi-star-fill', i < val);
+                    s.classList.toggle('bi-star', i >= val);
+                });
+            });
+        });
+    }
+
+    // Enviar calificación por fetch
+    const formCalificar = document.getElementById('formCalificar');
+    if (formCalificar) {
+        formCalificar.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const calificacion = calificacionInput.value;
+            const comentario = this.querySelector('textarea[name="comentario"]').value;
+
+            fetch("{% url 'biblioteca:detalle' recurso.pk %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'accion': 'calificacion',
+                    'calificacion': calificacion,
+                    'comentario': comentario
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalCalificar'));
+                    if (modal) modal.hide();
+                    alert('¡Gracias por tu calificación!');
+                }
+            })
+            .catch(err => console.error('Error calificación:', err));
+        });
+    }
+
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,695 @@
+<!-- templates/emails/recordatorio_encuesta.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Recordatorio de Encuesta - RetenScan</title>
+    
+    <!-- Estilos inline para compatibilidad con clientes de email -->
+    <style>
+        /* ============================================
+           RESET Y CONFIGURACIÓN BASE
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* ============================================
+           CONTENEDOR PRINCIPAL
+           ============================================ */
+        .email-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f6f9;
+        }
+        
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* ============================================
+           HEADER
+           ============================================ */
+        .email-header {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9f00 100%);
+            color: #1a1a2e;
+            padding: 30px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .email-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+        
+        .email-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .email-header .subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 4px;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .email-header .header-icon {
+            font-size: 28px;
+            margin-right: 10px;
+        }
+        
+        /* ============================================
+           CONTENIDO
+           ============================================ */
+        .email-content {
+            padding: 40px;
+        }
+        
+        .email-content p {
+            margin-bottom: 16px;
+            color: #4a5568;
+        }
+        
+        .email-content .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        /* ============================================
+           INFO DE LA ENCUESTA
+           ============================================ */
+        .survey-info {
+            background: #f8f9fa;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .survey-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0d6efd;
+            margin-bottom: 8px;
+        }
+        
+        .survey-info .survey-description {
+            color: #4a5568;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .survey-info .survey-detail {
+            display: flex;
+            padding: 6px 0;
+            align-items: baseline;
+        }
+        
+        .survey-info .survey-detail .label {
+            font-weight: 600;
+            color: #4a5568;
+            min-width: 120px;
+            font-size: 14px;
+        }
+        
+        .survey-info .survey-detail .value {
+            color: #2d3748;
+            font-size: 14px;
+        }
+        
+        .survey-info .survey-detail .value .icon {
+            margin-right: 4px;
+        }
+        
+        /* ============================================
+           CONTADOR DE DÍAS RESTANTES
+           ============================================ */
+        .days-counter {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: #dc3545;
+            color: #ffffff;
+        }
+        
+        .days-counter.urgent {
+            background: #dc3545;
+            color: #ffffff;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .days-counter.warning {
+            background: #ffc107;
+            color: #1a1a2e;
+        }
+        
+        .days-counter.safe {
+            background: #198754;
+            color: #ffffff;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* ============================================
+           BARRA DE PROGRESO (opcional)
+           ============================================ */
+        .progress-container {
+            margin: 12px 0;
+        }
+        
+        .progress-container .progress-label {
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .progress-container .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-container .progress-bar .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #198754, #0d6efd);
+        }
+        
+        .progress-container .progress-bar .progress-fill.urgent {
+            background: linear-gradient(90deg, #dc3545, #fd7e14);
+        }
+        
+        /* ============================================
+           BOTÓN DE ACCIÓN
+           ============================================ */
+        .btn-container {
+            text-align: center;
+            margin: 32px 0 24px 0;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0b5ed7 0%, #084298 100%);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+            text-decoration: none;
+        }
+        
+        .btn-primary .btn-icon {
+            margin-right: 8px;
+        }
+        
+        /* ============================================
+           ADVERTENCIA URGENTE
+           ============================================ */
+        .urgent-warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .urgent-warning p {
+            margin: 0;
+            color: #721c24;
+            font-size: 14px;
+        }
+        
+        .urgent-warning .warning-icon {
+            margin-right: 8px;
+        }
+        
+        /* ============================================
+           SEPARADOR
+           ============================================ */
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 24px 0;
+        }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .email-footer {
+            padding: 24px 40px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .email-footer p {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 4px 0;
+        }
+        
+        .email-footer .footer-links {
+            margin-top: 8px;
+        }
+        
+        .email-footer .footer-links a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 0 8px;
+        }
+        
+        .email-footer .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ============================================
+           RESPONSIVE PARA CLIENTES DE EMAIL
+           ============================================ */
+        @media only screen and (max-width: 600px) {
+            .email-wrapper {
+                padding: 10px;
+            }
+            
+            .email-header {
+                padding: 20px 24px;
+            }
+            
+            .email-header h1 {
+                font-size: 20px;
+            }
+            
+            .email-content {
+                padding: 24px 20px;
+            }
+            
+            .survey-info {
+                padding: 16px;
+            }
+            
+            .survey-info h3 {
+                font-size: 16px;
+            }
+            
+            .survey-info .survey-detail {
+                flex-direction: column;
+                padding: 4px 0;
+            }
+            
+            .survey-info .survey-detail .label {
+                min-width: auto;
+                font-size: 13px;
+            }
+            
+            .survey-info .survey-detail .value {
+                font-size: 13px;
+            }
+            
+            .btn-primary {
+                padding: 10px 24px;
+                font-size: 14px;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .email-footer {
+                padding: 16px 20px;
+            }
+            
+            .email-footer .footer-links a {
+                display: inline-block;
+                margin: 4px 6px;
+            }
+            
+            .days-counter {
+                padding: 6px 16px;
+                font-size: 13px;
+            }
+        }
+        
+        @media only screen and (max-width: 400px) {
+            .email-header h1 {
+                font-size: 17px;
+            }
+            
+            .email-content {
+                padding: 16px;
+            }
+            
+            .survey-info h3 {
+                font-size: 15px;
+            }
+        }
+        
+        /* ============================================
+           ACCESIBILIDAD PARA EMAILS
+           ============================================ */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .days-counter.urgent {
+                animation: none;
+            }
+        }
+        
+        /* ============================================
+           TEMA OSCURO (limitado para emails)
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1a1a2e;
+            }
+            
+            .email-header {
+                background: linear-gradient(135deg, #cc9900 0%, #b38600 100%);
+                color: #ffffff;
+            }
+            
+            .email-header .subtitle {
+                color: #f0e6d3;
+            }
+            
+            .email-content p {
+                color: #c8d6e5;
+            }
+            
+            .email-content .greeting {
+                color: #ecf0f1;
+            }
+            
+            .survey-info {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .survey-info h3 {
+                color: #4dabf7;
+            }
+            
+            .survey-info .survey-description {
+                color: #c8d6e5;
+            }
+            
+            .survey-info .survey-detail .label {
+                color: #c8d6e5;
+            }
+            
+            .survey-info .survey-detail .value {
+                color: #ecf0f1;
+            }
+            
+            .progress-container .progress-label {
+                color: #c8d6e5;
+            }
+            
+            .progress-container .progress-bar {
+                background: #2d2d44;
+            }
+            
+            .urgent-warning {
+                background: #2d1a1a;
+                border-left-color: #dc3545;
+            }
+            
+            .urgent-warning p {
+                color: #f8d7da;
+            }
+            
+            .email-footer {
+                border-top-color: #2d2d44;
+            }
+            
+            .email-footer p {
+                color: #8a8a9a;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================ -->
+    <!-- EMAIL WRAPPER (Tabla para compatibilidad)    -->
+    <!-- ============================================ -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f6f9; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);">
+                    
+                    <!-- ============================================ -->
+                    <!-- HEADER                                      -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #ffc107 0%, #ff9f00 100%); color: #1a1a2e; padding: 30px 40px; position: relative; overflow: hidden;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 28px; margin-right: 10px;">⏰</span>
+                                        <h1 style="font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.02em; display: inline-block;">Recordatorio de Encuesta</h1>
+                                        <span style="display: block; font-size: 14px; opacity: 0.8; margin-top: 4px;">
+                                            Sistema de Retención Estudiantil - RetenScan
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ============================================ -->
+                    <!-- CONTENIDO                                   -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <!-- Saludo -->
+                            <p style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 16px;">
+                                <span style="font-weight: 400;">Hola</span> 
+                                <strong>{{ estudiante.nombre|default:"Usuario" }}</strong>,
+                            </p>
+                            
+                            <p style="color: #4a5568; margin-bottom: 16px;">
+                                Te recordamos que tienes una encuesta pendiente que está por vencer en el sistema 
+                                <strong>{{ site_name|default:"RetenScan" }}</strong>.
+                            </p>
+                            
+                            <!-- ======================================== -->
+                            <!-- INFORMACIÓN DE LA ENCUESTA             -->
+                            <!-- ======================================== -->
+                            <div style="background: #f8f9fa; padding: 20px 24px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                                <h3 style="font-size: 18px; font-weight: 700; color: #0d6efd; margin-bottom: 8px;">
+                                    {{ encuesta.titulo|default:"Encuesta sin título" }}
+                                </h3>
+                                
+                                <p style="color: #4a5568; margin-bottom: 16px; font-size: 14px;">
+                                    {{ encuesta.descripcion|default:"Sin descripción" }}
+                                </p>
+                                
+                                <!-- Fecha límite -->
+                                <div style="display: flex; padding: 6px 0; align-items: baseline;">
+                                    <span style="font-weight: 600; color: #4a5568; min-width: 120px; font-size: 14px;">
+                                        <span>📅</span> Fecha límite:
+                                    </span>
+                                    <span style="color: #2d3748; font-size: 14px;">
+                                        {{ encuesta.fecha_fin|date:"d/m/Y H:i"|default:"No definida" }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Días restantes -->
+                                <div style="display: flex; padding: 6px 0; align-items: center;">
+                                    <span style="font-weight: 600; color: #4a5568; min-width: 120px; font-size: 14px;">
+                                        <span>⏳</span> Días restantes:
+                                    </span>
+                                    <span style="display: inline-block; padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; 
+                                        {% if dias_restantes <= 1 %}background: #dc3545; color: #ffffff;
+                                        {% elif dias_restantes <= 3 %}background: #ffc107; color: #1a1a2e;
+                                        {% else %}background: #198754; color: #ffffff;{% endif %}">
+                                        {% if dias_restantes == 0 %}
+                                            🔥 ¡Hoy es el último día!
+                                        {% elif dias_restantes == 1 %}
+                                            ⚠️ ¡Último día!
+                                        {% elif dias_restantes <= 3 %}
+                                            ⚡ {{ dias_restantes }} días
+                                        {% else %}
+                                            {{ dias_restantes }} días
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <!-- Tiempo estimado (opcional) -->
+                                {% if encuesta.tiempo_estimado %}
+                                <div style="display: flex; padding: 6px 0; align-items: baseline;">
+                                    <span style="font-weight: 600; color: #4a5568; min-width: 120px; font-size: 14px;">
+                                        <span>⏱️</span> Tiempo estimado:
+                                    </span>
+                                    <span style="color: #2d3748; font-size: 14px;">
+                                        {{ encuesta.tiempo_estimado }} minutos
+                                    </span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Progreso (opcional) -->
+                                {% if progreso %}
+                                <div style="margin: 12px 0;">
+                                    <span style="font-size: 13px; color: #4a5568; margin-bottom: 4px; display: block;">
+                                        Progreso: {{ progreso }}%
+                                    </span>
+                                    <div style="height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
+                                        <div style="height: 100%; border-radius: 4px; transition: width 0.5s ease; background: linear-gradient(90deg, #198754, #0d6efd); width: {{ progreso }}%;">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- ======================================== -->
+                            <!-- ADVERTENCIA URGENTE                    -->
+                            <!-- ======================================== -->
+                            {% if dias_restantes <= 1 %}
+                            <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 16px 20px; border-radius: 8px; margin: 16px 0;">
+                                <p style="margin: 0; color: #721c24; font-size: 14px;">
+                                    <span style="margin-right: 8px;">🚨</span>
+                                    <strong>¡URGENTE!</strong> 
+                                    {% if dias_restantes == 0 %}
+                                        La encuesta vence hoy. ¡Respondela ahora mismo!
+                                    {% else %}
+                                        Solo queda {{ dias_restantes }} día para completar la encuesta.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- ======================================== -->
+                            <!-- BOTÓN DE ACCIÓN                        -->
+                            <!-- ======================================== -->
+                            <div style="text-align: center; margin: 32px 0 24px 0;">
+                                <a href="{{ url_encuesta|default:'#' }}" 
+                                   style="display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);">
+                                    📝 Responder encuesta ahora
+                                </a>
+                            </div>
+                            
+                            <!-- ======================================== -->
+                            <!-- CONSEJOS RÁPIDOS                       -->
+                            <!-- ======================================== -->
+                            <div style="background: #e7f3ff; padding: 16px 20px; border-radius: 8px; margin: 16px 0;">
+                                <p style="margin: 0; color: #0d6efd; font-size: 14px; font-weight: 500;">
+                                    💡 <strong>Consejo:</strong> 
+                                    {% if dias_restantes <= 1 %}
+                                        Tómate 5 minutos para completar la encuesta. ¡Tu opinión es importante!
+                                    {% else %}
+                                        Completa la encuesta hoy para no olvidarlo. Solo toma unos minutos.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <!-- Despedida -->
+                            <p style="color: #4a5568; margin: 16px 0;">
+                                ¡No olvides responder antes de la fecha límite!<br>
+                                Saludos,<br>
+                                <strong>{{ site_name|default:"RetenScan" }}</strong>
+                            </p>
+                            
+                            <!-- Separador -->
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+                            
+                            <!-- Nota automática -->
+                            <p style="font-size: 12px; color: #6c757d; text-align: center; margin: 0;">
+                                Este es un mensaje automático del sistema {{ site_name|default:"RetenScan" }}.<br>
+                                Por favor, no respondas a este correo.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- ============================================ -->
+                    <!-- FOOTER                                      -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="padding: 24px 40px; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <p style="font-size: 12px; color: #6c757d; margin: 4px 0;">
+                                <span style="color: #6c757d;">📧</span> 
+                                {{ site_email|default:"soporte@retenscan.com" }} &bull;
+                                <span style="color: #6c757d;">📱</span> 
+                                {{ site_phone|default:"+56 2 1234 5678" }}
+                            </p>
+                            <div style="margin-top: 8px;">
+                                <a href="{{ site_url|default:'#' }}" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    {{ site_name|default:"RetenScan" }}
+                                </a>
+                                <a href="#" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    Política de Privacidad
+                                </a>
+                                <a href="#" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    Ayuda
+                                </a>
+                            </div>
+                            <p style="font-size: 11px; color: #8a8a9a; margin-top: 8px;">
+                                &copy; {% now "Y" %} {{ site_name|default:"RetenScan" }}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

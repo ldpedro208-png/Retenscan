@@ -1,0 +1,262 @@
+<!-- templates/profesor/asignacion_tutores_estadisticas.html -->
+
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - RetenScan{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_profesor' %}" class="text-decoration-none">
+                    <i class="bi bi-person-badge" aria-hidden="true"></i> Profesor
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'asignacion_tutores_lista' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Asignación de Tutores
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-graph-up" aria-hidden="true"></i>
+                {{ titulo }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h3>
+            <i class="bi bi-graph-up" aria-hidden="true"></i>
+            {{ titulo }}
+        </h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'asignacion_tutores_lista' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase fw-light">Total Estudiantes</h6>
+                    <h2 class="mb-0">{{ total_estudiantes }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase fw-light">Con Tutor</h6>
+                    <h2 class="mb-0">{{ estudiantes_con_tutor }}</h2>
+                    <small>{{ porcentaje_asignados }}%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase fw-light">Pendientes</h6>
+                    <h2 class="mb-0">{{ total_pendientes }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-uppercase fw-light">Sin Tutor</h6>
+                    <h2 class="mb-0">{{ estudiantes_sin_tutor }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas por Carrera -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-building" aria-hidden="true"></i>
+                Asignaciones por Carrera
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if carreras_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Carrera</th>
+                                <th>Código</th>
+                                <th>Total Estudiantes</th>
+                                <th>Con Tutor</th>
+                                <th>% Asignados</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for carrera in carreras_stats %}
+                                <tr>
+                                    <td><strong>{{ carrera.nombre }}</strong></td>
+                                    <td><code>{{ carrera.codigo|default:"-" }}</code></td>
+                                    <td>{{ carrera.total_estudiantes }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if carrera.estudiantes_asignados > 0 %}bg-success
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ carrera.estudiantes_asignados }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar 
+                                                {% if carrera.porcentaje_asignados >= 80 %}bg-success
+                                                {% elif carrera.porcentaje_asignados >= 50 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ carrera.porcentaje_asignados }}%;" 
+                                                aria-valuenow="{{ carrera.porcentaje_asignados }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                                {{ carrera.porcentaje_asignados }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if carrera.porcentaje_asignados >= 80 %}
+                                            <span class="badge bg-success">Excelente</span>
+                                        {% elif carrera.porcentaje_asignados >= 50 %}
+                                            <span class="badge bg-warning text-dark">En Progreso</span>
+                                        {% elif carrera.porcentaje_asignados > 0 %}
+                                            <span class="badge bg-info">Iniciado</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Sin Asignar</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+                    <p class="text-muted">No hay carreras registradas</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Estadísticas por Tutor -->
+    <div class="card shadow">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-person-badge" aria-hidden="true"></i>
+                Carga de Trabajo por Tutor
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if tutores_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tutor</th>
+                                <th>Especialidad</th>
+                                <th>Estudiantes Asignados</th>
+                                <th>Capacidad Máxima</th>
+                                <th>Cupos Disponibles</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tutor in tutores_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ tutor.usuario.get_full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">@{{ tutor.usuario.username }}</small>
+                                    </td>
+                                    <td>{{ tutor.especialidad|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ tutor.total_estudiantes }}</span>
+                                    </td>
+                                    <td>{{ tutor.max_estudiantes }}</td>
+                                    <td>
+                                        {# ✅ Calcular cupos disponibles directamente sin with #}
+                                        {% with disponibles=tutor.max_estudiantes|add:tutor.total_estudiantes|add:"-0" %}
+                                            {% with disponible_real=tutor.max_estudiantes|add:"-"|add:tutor.total_estudiantes %}
+                                                <span class="badge 
+                                                    {% if disponible_real > 0 %}bg-success
+                                                    {% else %}bg-danger{% endif %}">
+                                                    {{ disponible_real }}
+                                                </span>
+                                            {% endwith %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {# ✅ Usar el campo calculado en la vista #}
+                                        {% if tutor.cupos_disponibles > 0 %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Disponible
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Completo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-person-x fs-1 d-block mb-2 text-muted"></i>
+                    <p class="text-muted">No hay tutores registrados</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h6>
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                Resumen de Asignaciones
+            </h6>
+            <div class="row text-center mt-2">
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <span class="text-muted">Universidad:</span>
+                        <strong>{{ universidad_nombre }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <span class="text-muted">Total Tutores:</span>
+                        <strong>{{ total_tutores }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <span class="text-muted">Tasa de Asignación:</span>
+                        <strong>{{ porcentaje_asignados }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

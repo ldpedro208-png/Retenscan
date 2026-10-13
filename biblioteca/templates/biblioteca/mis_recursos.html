@@ -1,0 +1,1060 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Mis Recursos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/biblioteca_preview.css' %}">
+<style>
+    /* ============================================ */
+    /* HERO HEADER                                  */
+    /* ============================================ */
+    .biblio-hero {
+        background: linear-gradient(135deg, #4e73df 0%, #7c3aed 100%);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 1.75rem 2rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(78, 115, 223, 0.2);
+    }
+    .biblio-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .biblio-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -60%;
+        right: 15%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .biblio-hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .biblio-hero h2 {
+        margin: 0 0 0.3rem;
+        font-size: 1.6rem;
+        font-weight: 700;
+    }
+    .biblio-hero p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    .biblio-hero .hero-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        backdrop-filter: blur(10px);
+    }
+    .biblio-hero .btn-hero {
+        background: rgba(255, 255, 255, 0.95);
+        color: #4e73df;
+        border: none;
+        font-weight: 600;
+        padding: 0.55rem 1.1rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+    .biblio-hero .btn-hero:hover {
+        background: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        color: #4e73df;
+    }
+    .biblio-hero .btn-hero-outline {
+        background: transparent;
+        color: #fff;
+        border: 1.5px solid rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+    .biblio-hero .btn-hero-outline:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: #fff;
+        color: #fff;
+    }
+
+    /* ============================================ */
+    /* STATS CARDS                                  */
+    /* ============================================ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+    .stat-card {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.15rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--stat-color, #4e73df);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        border-color: var(--stat-color, #4e73df);
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        background: var(--stat-bg, #eef2ff);
+        color: var(--stat-color, #4e73df);
+    }
+    .stat-card-body { flex-grow: 1; min-width: 0; }
+    .stat-card-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.1;
+        margin-bottom: 0.15rem;
+    }
+    .stat-card-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .stat-card-trend {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.25rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.15rem;
+        margin-top: 0.3rem;
+    }
+    .trend-up { background: #d1fae5; color: #047857; }
+    .trend-neutral { background: #e5e7eb; color: #4b5563; }
+
+    /* Colores semánticos por stat */
+    .stat-card.total   { --stat-color: #4e73df; --stat-bg: #eef2ff; }
+    .stat-card.pub     { --stat-color: #10b981; --stat-bg: #d1fae5; }
+    .stat-card.draft   { --stat-color: #f59e0b; --stat-bg: #fef3c7; }
+    .stat-card.views   { --stat-color: #6366f1; --stat-bg: #ede9fe; }
+    .stat-card.downloads { --stat-color: #06b6d4; --stat-bg: #cffafe; }
+    .stat-card.rating  { --stat-color: #f59e0b; --stat-bg: #fef3c7; }
+
+    /* ============================================ */
+    /* TOOLBAR (tabs + búsqueda)                    */
+    /* ============================================ */
+    .toolbar-card {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .filter-pills {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+    .filter-pills a {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-decoration: none;
+        border-radius: 0.5rem;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 500;
+    }
+    .filter-pills a:hover {
+        background: #f3f4f6;
+        color: #4e73df;
+    }
+    .filter-pills a.active {
+        background: #4e73df;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
+    }
+    .filter-pills a.active .badge {
+        background: rgba(255, 255, 255, 0.25) !important;
+        color: #fff !important;
+    }
+    .filter-pills .badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.45rem;
+        font-weight: 600;
+        background: #e5e7eb;
+        color: #4b5563;
+    }
+
+    .search-box {
+        position: relative;
+        min-width: 260px;
+        flex-grow: 0;
+    }
+    .search-box input {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem 0.5rem 2.35rem;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+        width: 100%;
+    }
+    .search-box input:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.12);
+        outline: none;
+    }
+    .search-box i {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* ============================================ */
+    /* TABLA MEJORADA                              */
+    /* ============================================ */
+    .recursos-table-card {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+    .recursos-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+    .recursos-table thead {
+        background: #f9fafb;
+        border-bottom: 1px solid #eaecf3;
+    }
+    .recursos-table thead th {
+        padding: 0.85rem 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        text-align: left;
+        white-space: nowrap;
+    }
+    .recursos-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+        animation: fadeInRow 0.3s ease backwards;
+    }
+    @keyframes fadeInRow {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .recursos-table tbody tr:hover {
+        background: #fafbff;
+    }
+    .recursos-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    .recursos-table tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+
+    /* Recurso cell */
+    .recurso-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-width: 260px;
+    }
+    .recurso-mini-preview {
+        width: 52px;
+        height: 64px;
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        font-size: 1.5rem;
+        background: #f3f4f6;
+        color: #6b7280;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s;
+    }
+    .recurso-cell:hover .recurso-mini-preview {
+        transform: scale(1.05);
+    }
+    .recurso-mini-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .recurso-mini-preview.pdf    { background: linear-gradient(135deg, #fecaca, #fee2e2); color: #dc2626; }
+    .recurso-mini-preview.video,
+    .recurso-mini-preview.youtube,
+    .recurso-mini-preview.vimeo  { background: linear-gradient(135deg, #bfdbfe, #dbeafe); color: #2563eb; }
+    .recurso-mini-preview.audio  { background: linear-gradient(135deg, #ddd6fe, #ede9fe); color: #7c3aed; }
+    .recurso-mini-preview.image  { background: linear-gradient(135deg, #a7f3d0, #d1fae5); color: #059669; }
+    .recurso-mini-preview.office { background: linear-gradient(135deg, #fde68a, #fef3c7); color: #d97706; }
+    .recurso-mini-preview.epub   { background: linear-gradient(135deg, #c7d2fe, #e0e7ff); color: #4f46e5; }
+
+    .recurso-titulo-cell {
+        font-weight: 600;
+        color: #111827;
+        font-size: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.2rem;
+        line-height: 1.3;
+    }
+    .recurso-titulo-cell a:hover {
+        color: #4e73df;
+    }
+    .recurso-meta-cell {
+        font-size: 0.75rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+    .recurso-meta-cell .sep {
+        color: #d1d5db;
+    }
+
+    /* Badges */
+    .badge-tipo {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.3rem 0.55rem;
+        border-radius: 0.4rem;
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+    .badge-estado {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.3rem 0.65rem;
+        border-radius: 2rem;
+        border: none;
+    }
+
+    /* Estado dropdown */
+    .estado-dropdown .btn {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.28rem 0.65rem;
+        border-radius: 2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.15s;
+    }
+    .estado-dropdown .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+    .estado-dropdown .btn-success {
+        background: #d1fae5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+    .estado-dropdown .btn-warning {
+        background: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+    .estado-dropdown .btn-secondary {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* Métricas en tabla */
+    .metric-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #111827;
+    }
+    .metric-label {
+        font-size: 0.65rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        display: block;
+        margin-top: 0.1rem;
+    }
+
+    /* Acciones */
+    .acciones-cell {
+        display: flex;
+        gap: 0.3rem;
+        justify-content: flex-end;
+    }
+    .btn-accion {
+        width: 32px;
+        height: 32px;
+        border-radius: 0.4rem;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        font-size: 0.85rem;
+        text-decoration: none;
+    }
+    .btn-accion:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    .btn-accion.view:hover    { background: #eef2ff; color: #4e73df; border-color: #c7d2fe; }
+    .btn-accion.edit:hover    { background: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
+    .btn-accion.delete:hover  { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+
+    /* ============================================ */
+    /* EMPTY STATE                                  */
+    /* ============================================ */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #fff;
+        border-radius: 0.75rem;
+        border: 1px solid #eaecf3;
+    }
+    .empty-illustration {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #eef2ff, #ede9fe);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        position: relative;
+    }
+    .empty-illustration::before {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border: 2px dashed #c7d2fe;
+        border-radius: 50%;
+        animation: spin-slow 20s linear infinite;
+    }
+    @keyframes spin-slow {
+        to { transform: rotate(360deg); }
+    }
+    .empty-illustration i {
+        font-size: 3rem;
+        color: #4e73df;
+    }
+    .empty-state h5 {
+        color: #1f2937;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .empty-state p {
+        color: #6b7280;
+        font-size: 0.9rem;
+        max-width: 400px;
+        margin: 0 auto 1.25rem;
+    }
+    .empty-state .btn-primary {
+        padding: 0.6rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(78, 115, 223, 0.25);
+    }
+    .empty-state .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(78, 115, 223, 0.35);
+    }
+
+    /* Responsive */
+    @media (max-width: 767px) {
+        .biblio-hero { padding: 1.25rem; }
+        .biblio-hero h2 { font-size: 1.3rem; }
+        .recursos-table thead { display: none; }
+        .recursos-table tbody tr {
+            display: block;
+            padding: 1rem;
+        }
+        .recursos-table tbody td {
+            display: block;
+            padding: 0.3rem 0;
+        }
+        .recursos-table tbody td::before {
+            content: attr(data-label);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #9ca3af;
+            display: block;
+            margin-bottom: 0.15rem;
+        }
+        .acciones-cell {
+            justify-content: flex-start;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- ============================================ -->
+    <!-- HERO HEADER                                  -->
+    <!-- ============================================ -->
+    <div class="biblio-hero">
+        <div class="biblio-hero-content">
+            <div class="d-flex align-items-center gap-3">
+                <div class="hero-icon">
+                    <i class="bi bi-folder2-open"></i>
+                </div>
+                <div>
+                    <h2>Mis Recursos</h2>
+                    <p>Gestiona el material que has compartido con los estudiantes</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'biblioteca:lista' %}" class="btn btn-hero-outline">
+                    <i class="bi bi-collection"></i> Ver catálogo
+                </a>
+                <a href="{% url 'biblioteca:subir' %}" class="btn btn-hero">
+                    <i class="bi bi-cloud-upload"></i> Subir nuevo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STATS GRID                                   -->
+    <!-- ============================================ -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-card-icon">
+                <i class="bi bi-collection-fill"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.total }}</div>
+                <div class="stat-card-label">Total recursos</div>
+            </div>
+        </div>
+        <div class="stat-card pub">
+            <div class="stat-card-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.publicados }}</div>
+                <div class="stat-card-label">Publicados</div>
+            </div>
+        </div>
+        <div class="stat-card draft">
+            <div class="stat-card-icon">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.borradores }}</div>
+                <div class="stat-card-label">Borradores</div>
+            </div>
+        </div>
+        <div class="stat-card views">
+            <div class="stat-card-icon">
+                <i class="bi bi-eye-fill"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.vistas_totales }}</div>
+                <div class="stat-card-label">Vistas totales</div>
+            </div>
+        </div>
+        <div class="stat-card downloads">
+            <div class="stat-card-icon">
+                <i class="bi bi-download"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.descargas_totales }}</div>
+                <div class="stat-card-label">Descargas</div>
+            </div>
+        </div>
+        <div class="stat-card rating">
+            <div class="stat-card-icon">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-value">{{ stats.promedio_general|floatformat:1 }}</div>
+                <div class="stat-card-label">Calificación</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TOOLBAR: FILTROS + BÚSQUEDA                  -->
+    <!-- ============================================ -->
+    <div class="toolbar-card">
+        <div class="filter-pills">
+            <a href="?estado=" class="{% if not request.GET.estado %}active{% endif %}">
+                <i class="bi bi-grid-fill"></i> Todos
+                <span class="badge">{{ stats.total }}</span>
+            </a>
+            <a href="?estado=publicado" class="{% if request.GET.estado == 'publicado' %}active{% endif %}">
+                <i class="bi bi-check-circle"></i> Publicados
+                <span class="badge">{{ stats.publicados }}</span>
+            </a>
+            <a href="?estado=borrador" class="{% if request.GET.estado == 'borrador' %}active{% endif %}">
+                <i class="bi bi-pencil-square"></i> Borradores
+                <span class="badge">{{ stats.borradores }}</span>
+            </a>
+            <a href="?estado=archivado" class="{% if request.GET.estado == 'archivado' %}active{% endif %}">
+                <i class="bi bi-archive"></i> Archivados
+                <span class="badge">{{ stats.archivados }}</span>
+            </a>
+        </div>
+
+        <form method="get" class="search-box">
+            {% if request.GET.estado %}
+                <input type="hidden" name="estado" value="{{ request.GET.estado }}">
+            {% endif %}
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" placeholder="Buscar por título, autor o palabra clave..."
+                   value="{{ q|default:'' }}">
+        </form>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TABLA DE RECURSOS                            -->
+    <!-- ============================================ -->
+    {% if recursos %}
+        <div class="recursos-table-card table-responsive">
+            <table class="recursos-table">
+                <thead>
+                    <tr>
+                        <th>Recurso</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th class="text-center">Métricas</th>
+                        <th class="text-center">Rating</th>
+                        <th>Fecha</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recursos %}
+                        <tr data-recurso-id="{{ r.pk }}" style="animation-delay: {{ forloop.counter0 }}0ms;">
+                            <td data-label="Recurso">
+                                <div class="recurso-cell">
+                                    <div class="recurso-mini-preview {{ r.preview_tipo }}">
+                                        {% if r.portada %}
+                                            <img src="{{ r.portada.url }}" alt="{{ r.titulo }}">
+                                        {% else %}
+                                            {% with t=r.preview_tipo %}
+                                                {% if t == 'pdf' %}<i class="bi bi-file-earmark-pdf"></i>
+                                                {% elif t == 'video' or t == 'youtube' or t == 'vimeo' %}<i class="bi bi-play-circle-fill"></i>
+                                                {% elif t == 'audio' %}<i class="bi bi-music-note-beamed"></i>
+                                                {% elif t == 'image' %}<i class="bi bi-image-fill"></i>
+                                                {% elif t == 'office' %}<i class="bi bi-file-earmark-text-fill"></i>
+                                                {% elif t == 'epub' %}<i class="bi bi-book-half"></i>
+                                                {% else %}<i class="bi bi-file-earmark-fill"></i>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="recurso-titulo-cell">
+                                            <a href="{% url 'biblioteca:detalle' r.pk %}" class="text-decoration-none text-dark">
+                                                {{ r.titulo }}
+                                            </a>
+                                        </div>
+                                        <div class="recurso-meta-cell">
+                                            {% if r.autor %}<span>{{ r.autor|truncatechars:35 }}</span>{% endif %}
+                                            {% if r.idMateria %}
+                                                {% if r.autor %}<span class="sep">·</span>{% endif %}
+                                                <span>{{ r.idMateria.nombre|truncatechars:30 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td data-label="Tipo">
+                                <span class="badge-tipo">
+                                    {{ r.get_tipo_display }}
+                                </span>
+                                {% if r.es_obligatorio %}
+                                    <span class="badge bg-danger ms-1" title="Obligatorio" style="font-size:0.65rem;">
+                                        <i class="bi bi-exclamation-circle-fill"></i>
+                                    </span>
+                                {% endif %}
+                                {% if r.destacado %}
+                                    <span class="badge bg-warning text-dark ms-1" title="Destacado" style="font-size:0.65rem;">
+                                        <i class="bi bi-star-fill"></i>
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Estado">
+                                <div class="dropdown estado-dropdown">
+                                    <button class="btn
+                                        {% if r.estado == 'publicado' %}btn-success
+                                        {% elif r.estado == 'borrador' %}btn-warning
+                                        {% else %}btn-secondary{% endif %}"
+                                        type="button" data-bs-toggle="dropdown"
+                                        data-estado="{{ r.estado }}">
+                                        {% if r.estado == 'publicado' %}
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        {% elif r.estado == 'borrador' %}
+                                            <i class="bi bi-pencil-fill"></i>
+                                        {% else %}
+                                            <i class="bi bi-archive-fill"></i>
+                                        {% endif %}
+                                        <span>{{ r.get_estado_display }}</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item cambiar-estado" href="#"
+                                               data-estado="publicado"
+                                               data-url="{% url 'biblioteca:cambiar_estado' r.pk %}">
+                                                <i class="bi bi-check-circle text-success"></i> Publicar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item cambiar-estado" href="#"
+                                               data-estado="borrador"
+                                               data-url="{% url 'biblioteca:cambiar_estado' r.pk %}">
+                                                <i class="bi bi-pencil-square text-warning"></i> Mover a borrador
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item cambiar-estado" href="#"
+                                               data-estado="archivado"
+                                               data-url="{% url 'biblioteca:cambiar_estado' r.pk %}">
+                                                <i class="bi bi-archive text-secondary"></i> Archivar
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td data-label="Métricas" class="text-center">
+                                <div class="d-flex justify-content-center gap-3">
+                                    <div>
+                                        <span class="metric-value">{{ r.total_vistas }}</span>
+                                        <span class="metric-label">Vistas</span>
+                                    </div>
+                                    <div>
+                                        <span class="metric-value">{{ r.total_descargas }}</span>
+                                        <span class="metric-label">Descargas</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td data-label="Rating" class="text-center">
+                                {% if r.promedio_calificacion > 0 %}
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i></span>
+                                    <span class="fw-semibold">{{ r.promedio_calificacion|floatformat:1 }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Fecha">
+                                <span class="text-muted small">
+                                    {{ r.created_at|date:"d/m/Y" }}
+                                </span>
+                            </td>
+
+                            <td data-label="Acciones">
+                                <div class="acciones-cell">
+                                    <a href="{% url 'biblioteca:detalle' r.pk %}"
+                                       class="btn-accion view" title="Ver">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'biblioteca:editar' r.pk %}"
+                                       class="btn-accion edit" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="btn-accion delete btn-eliminar"
+                                            title="Eliminar"
+                                            data-id="{{ r.pk }}"
+                                            data-titulo="{{ r.titulo }}"
+                                            data-url="{% url 'biblioteca:eliminar' r.pk %}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+            <nav class="mt-4" aria-label="Paginación">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if q %}&q={{ q }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if q %}&q={{ q }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if q %}&q={{ q }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if q %}&q={{ q }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <!-- ============================================ -->
+        <!-- EMPTY STATE                                  -->
+        <!-- ============================================ -->
+        <div class="empty-state">
+            <div class="empty-illustration">
+                <i class="bi bi-folder2-open"></i>
+            </div>
+            {% if q or request.GET.estado %}
+                <h5>No hay recursos con esos filtros</h5>
+                <p>Prueba con otros términos o limpia los filtros para ver todos tus recursos.</p>
+                <a href="{% url 'biblioteca:mis_recursos' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Limpiar filtros
+                </a>
+            {% else %}
+                <h5>Tu biblioteca está esperando</h5>
+                <p>
+                    Comparte apuntes, videos o libros con tus estudiantes.
+                    Cada recurso que subas puede marcar la diferencia en su éxito académico.
+                </p>
+                <a href="{% url 'biblioteca:subir' %}" class="btn btn-primary">
+                    <i class="bi bi-cloud-upload"></i> Subir mi primer recurso
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL: ELIMINAR                              -->
+<!-- ============================================ -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:0.75rem;overflow:hidden;">
+            <div class="modal-header bg-danger text-white" style="border:none;">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Eliminar recurso
+                </h5>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Estás seguro de que quieres eliminar este recurso?</p>
+                <p class="mb-3 text-muted small"><strong id="tituloEliminar"></strong></p>
+                <div class="alert alert-warning mb-0 small" style="border-radius:0.5rem;">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Esta acción no se puede deshacer. El archivo también se eliminará del servidor.
+                </div>
+            </div>
+            <div class="modal-footer" style="border:none;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">
+                    <i class="bi bi-trash"></i> Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    const csrftoken = (function () {
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    })();
+
+    // ============================================
+    // CAMBIO DE ESTADO VÍA AJAX
+    // ============================================
+    document.querySelectorAll('.cambiar-estado').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            const url = this.dataset.url;
+            const nuevoEstado = this.dataset.estado;
+            const btn = this.closest('.estado-dropdown').querySelector('button');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ estado: nuevoEstado })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return alert(data.error || 'Error al cambiar estado.');
+                btn.classList.remove('btn-success', 'btn-warning', 'btn-secondary');
+                const span = btn.querySelector('span');
+                const icon = btn.querySelector('i:first-child');
+                if (nuevoEstado === 'publicado') {
+                    btn.classList.add('btn-success');
+                    span.textContent = 'Publicado';
+                    icon.className = 'bi bi-check-circle-fill';
+                } else if (nuevoEstado === 'borrador') {
+                    btn.classList.add('btn-warning');
+                    span.textContent = 'Borrador';
+                    icon.className = 'bi bi-pencil-fill';
+                } else {
+                    btn.classList.add('btn-secondary');
+                    span.textContent = 'Archivado';
+                    icon.className = 'bi bi-archive-fill';
+                }
+                btn.dataset.estado = nuevoEstado;
+            })
+            .catch(() => alert('Error de red.'));
+        });
+    });
+
+    // ============================================
+    // ELIMINAR CON MODAL
+    // ============================================
+    const modalEliminar = document.getElementById('modalEliminar');
+    const tituloEliminar = document.getElementById('tituloEliminar');
+    const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+    let urlEliminar = null;
+    let filaEliminar = null;
+
+    document.querySelectorAll('.btn-eliminar').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            urlEliminar = this.dataset.url;
+            filaEliminar = this.closest('tr');
+            tituloEliminar.textContent = this.dataset.titulo;
+            new bootstrap.Modal(modalEliminar).show();
+        });
+    });
+
+    if (btnConfirmarEliminar) {
+        btnConfirmarEliminar.addEventListener('click', function () {
+            if (!urlEliminar) return;
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Eliminando...';
+
+            fetch(urlEliminar, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return alert(data.error || 'Error al eliminar.');
+                bootstrap.Modal.getInstance(modalEliminar).hide();
+                if (filaEliminar) {
+                    filaEliminar.style.transition = 'opacity 0.3s, transform 0.3s';
+                    filaEliminar.style.opacity = '0';
+                    filaEliminar.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        filaEliminar.remove();
+                        if (!document.querySelector('.recursos-table tbody tr')) window.location.reload();
+                    }, 300);
+                }
+            })
+            .catch(() => alert('Error de red.'))
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-trash"></i> Sí, eliminar';
+                urlEliminar = null;
+                filaEliminar = null;
+            });
+        });
+    }
+})();
+</script>
+{% endblock %}

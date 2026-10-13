@@ -1,0 +1,818 @@
+<!-- templates/estudiante/estudiante_detail.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Estudiante - {{ estudiante.nombre_completo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --profile-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --avatar-size: 180px;
+            --avatar-size-sm: 120px;
+        }
+
+        /* ============================================
+           TARJETA DE PERFIL
+           ============================================ */
+        .profile-card {
+            border: none;
+            border-radius: var(--profile-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .profile-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .profile-card .card-header {
+            border: none;
+            padding: 1rem 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .profile-card .card-header h5 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-card .card-body {
+            padding: 1.5rem;
+        }
+
+        /* ============================================
+           AVATAR
+           ============================================ */
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .avatar-image {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #dee2e6;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .avatar-image:hover {
+            transform: scale(1.02);
+            border-color: #0d6efd;
+        }
+
+        .avatar-placeholder {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            border-radius: 50%;
+            border: 4px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .avatar-placeholder:hover {
+            border-color: #0d6efd;
+        }
+
+        .avatar-placeholder i {
+            font-size: 100px;
+            color: #6c757d;
+        }
+
+        .avatar-status {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            background: #28a745;
+        }
+
+        .avatar-status.inactive {
+            background: #dc3545;
+        }
+
+        /* ============================================
+           TARJETAS DE INFORMACIÓN
+           ============================================ */
+        .info-card {
+            border: none;
+            border-radius: var(--profile-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .info-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .info-card .card-header {
+            border: none;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .info-card .card-header h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .info-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           LISTA DE INFORMACIÓN
+           ============================================ */
+        .info-list {
+            margin-bottom: 0;
+        }
+
+        .info-list .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-list .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-list .info-item .label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .info-list .info-item .value {
+            color: #2d3748;
+            font-size: 0.9rem;
+            text-align: right;
+            word-break: break-word;
+            max-width: 60%;
+        }
+
+        .info-list .info-item .value .badge {
+            font-size: 0.8rem;
+        }
+
+        /* ============================================
+           TABLAS
+           ============================================ */
+        .table-custom {
+            margin-bottom: 0;
+        }
+
+        .table-custom thead th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #6c757d;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .table-custom tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-action i {
+            margin-right: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9f00 100%);
+            border: none;
+            color: #1a1a2e;
+        }
+
+        .btn-action.btn-warning:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-action.btn-light {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1a1a2e;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-action.btn-light:hover {
+            background: #ffffff;
+            box-shadow: 0 0.25rem 0.75rem rgba(255, 255, 255, 0.3);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-card { animation-delay: 0.05s; }
+        .info-card:nth-child(1) { animation-delay: 0.10s; }
+        .info-card:nth-child(2) { animation-delay: 0.15s; }
+        .info-card:nth-child(3) { animation-delay: 0.20s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .profile-card:focus-visible,
+        .info-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 992px) {
+            :root {
+                --avatar-size: 150px;
+            }
+
+            .avatar-placeholder i {
+                font-size: 80px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --avatar-size: 120px;
+            }
+
+            .profile-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .avatar-placeholder i {
+                font-size: 60px;
+            }
+
+            .info-list .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+
+            .info-list .info-item .value {
+                max-width: 100%;
+                text-align: left;
+            }
+
+            .info-card .card-body {
+                padding: 1rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .table-custom {
+                font-size: 0.85rem;
+            }
+
+            .table-custom thead th,
+            .table-custom tbody td {
+                padding: 0.4rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --avatar-size: 100px;
+            }
+
+            .profile-card .card-body {
+                padding: 1rem;
+            }
+
+            .avatar-placeholder i {
+                font-size: 50px;
+            }
+
+            .profile-card .card-header h5 {
+                font-size: 1rem;
+            }
+
+            .info-card .card-header h5 {
+                font-size: 0.9rem;
+            }
+
+            .table-custom {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .profile-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .profile-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .info-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .info-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .info-list .info-item {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .info-list .info-item .label {
+                color: #c8d6e5;
+            }
+
+            .info-list .info-item .value {
+                color: #ecf0f1;
+            }
+
+            .table-custom tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .table-custom thead th {
+                color: #8a8a9a;
+            }
+
+            .table-custom tbody td {
+                color: #c8d6e5;
+                border-color: #2d2d44;
+            }
+
+            .avatar-placeholder {
+                background: linear-gradient(135deg, #2d2d44 0%, #252540 100%);
+                border-color: #4d4d5d;
+            }
+
+            .avatar-placeholder i {
+                color: #8a8a9a;
+            }
+
+            .btn-action.btn-light {
+                background: rgba(50, 50, 70, 0.9);
+                color: #e0e0e0;
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .btn-action.btn-light:hover {
+                background: #3d3d5d;
+                color: #ffffff;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_list' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person-badge" aria-hidden="true"></i> {{ estudiante.nombre_completo|truncatechars:30 }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-person-badge" aria-hidden="true"></i> 
+            Detalle de Estudiante
+            <small class="text-muted fs-6 ms-2">{{ usuario.carnet }}</small>
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'estudiante_list' %}" 
+                class="btn btn-secondary btn-action"
+                aria-label="Volver al listado de estudiantes">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row g-4">
+        <!-- ============================================ -->
+        <!-- COLUMNA IZQUIERDA - PERFIL                 -->
+        <!-- ============================================ -->
+        <div class="col-lg-4 col-md-5">
+            <!-- Tarjeta de Perfil -->
+            <article class="card profile-card" aria-label="Perfil del estudiante">
+                <header class="card-header bg-primary text-white text-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge" aria-hidden="true"></i> Estudiante
+                    </h5>
+                </header>
+                <div class="card-body text-center">
+                    <!-- Avatar -->
+                    <div class="avatar-container mb-3">
+                        {% if usuario.foto %}
+                            <img src="{{ usuario.foto.url }}" 
+                                alt="Foto de {{ estudiante.nombre_completo }}" 
+                                class="avatar-image">
+                        {% else %}
+                            <div class="avatar-placeholder">
+                                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                            </div>
+                        {% endif %}
+                        <span class="avatar-status {% if estudiante.estado_academico != 'Activo' %}inactive{% endif %}" 
+                                aria-label="Estado: {{ estudiante.estado_academico }}"></span>
+                    </div>
+
+                    <!-- Nombre -->
+                    <h4 class="mb-1">{{ estudiante.nombre_completo }}</h4>
+                    <p class="text-muted">
+                        <i class="bi bi-card-text" aria-hidden="true"></i> 
+                        {{ usuario.carnet }}
+                    </p>
+
+                    <hr>
+
+                    <!-- Botón de Edición - Solo Administradores -->
+                    {% if puede_editar %}
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="{% url 'estudiante_edit' estudiante.idEstudiante %}" 
+                                class="btn btn-warning btn-action"
+                                aria-label="Editar perfil de {{ estudiante.nombre_completo }}">
+                                <i class="bi bi-pencil" aria-hidden="true"></i> Editar Perfil
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+
+            <!-- Información Académica -->
+            <article class="card info-card mt-4" aria-label="Información académica">
+                <header class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-mortarboard" aria-hidden="true"></i> Información Académica
+                    </h5>
+                </header>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-building" aria-hidden="true"></i> Carrera:
+                            </span>
+                            <span class="value">{{ estudiante.idCarrera.nombre|default:"No asignada" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-calendar-plus" aria-hidden="true"></i> Año de Ingreso:
+                            </span>
+                            <span class="value">{{ estudiante.ano_ingreso|default:"-" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-arrow-up" aria-hidden="true"></i> Semestre Actual:
+                            </span>
+                            <span class="value">{{ estudiante.semestre_actual|default:"-" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">
+                                <i class="bi bi-flag" aria-hidden="true"></i> Estado:
+                            </span>
+                            <span class="value">
+                                <span class="badge 
+                                    {% if estudiante.estado_academico == 'Activo' %}bg-success
+                                    {% elif estudiante.estado_academico == 'Inactivo' %}bg-secondary
+                                    {% elif estudiante.estado_academico == 'Suspendido' %}bg-warning text-dark
+                                    {% elif estudiante.estado_academico == 'Egresado' %}bg-primary
+                                    {% elif estudiante.estado_academico == 'Abandonado' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ estudiante.estado_academico|default:"Sin estado" }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- COLUMNA DERECHA - HISTORIAL Y ASISTENCIAS  -->
+        <!-- ============================================ -->
+        <div class="col-lg-8 col-md-7">
+            <!-- Historial Académico -->
+            <article class="card info-card" aria-label="Historial académico">
+                <header class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i> Historial Académico
+                    </h5>
+                    {% if puede_editar_notas %}
+                        <a href="{% url 'historial_add' estudiante.idEstudiante %}" 
+                            class="btn btn-light btn-sm btn-action"
+                            aria-label="Agregar nota al historial">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Agregar Nota
+                        </a>
+                    {% endif %}
+                </header>
+                <div class="card-body">
+                    {% if historial %}
+                        <div class="table-responsive">
+                            <table class="table table-custom" aria-label="Historial académico del estudiante">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-book" aria-hidden="true"></i> Materia
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-calendar" aria-hidden="true"></i> Semestre
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-star" aria-hidden="true"></i> Nota
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-flag" aria-hidden="true"></i> Estado
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for h in historial %}
+                                        <tr>
+                                            <td>{{ h.idMateria.nombre }}</td>
+                                            <td>{{ h.semestre|default:"-" }}</td>
+                                            <td>
+                                                {% if h.nota_final %}
+                                                    <span class="fw-bold {% if h.nota_final >= 60 %}text-success{% else %}text-danger{% endif %}">
+                                                        {{ h.nota_final }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if h.estado_materia == 'Aprobada' %}bg-success
+                                                    {% elif h.estado_materia == 'Reprobada' %}bg-danger
+                                                    {% elif h.estado_materia == 'Cursando' %}bg-warning text-dark
+                                                    {% elif h.estado_materia == 'Retirada' %}bg-secondary
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ h.estado_materia|default:"-" }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-journal-text"></i>
+                            </div>
+                            <p class="empty-title">No hay historial académico</p>
+                            <p class="empty-description">No se han registrado materias para este estudiante.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+
+            <!-- Asistencias Recientes -->
+            <article class="card info-card mt-4" aria-label="Asistencias recientes">
+                <header class="card-header bg-warning text-dark d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i> Asistencias Recientes
+                    </h5>
+                    {% if puede_registrar_asistencia %}
+                        <a href="{% url 'asistencia_add' estudiante.idEstudiante %}"
+                            class="btn btn-light btn-sm btn-action"
+                            aria-label="Registrar asistencia para {{ estudiante.nombre_completo }}">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Registrar Asistencia
+                        </a>
+                    {% endif %}
+                </header>
+                <div class="card-body">
+                    {% if asistencias %}
+                        <div class="table-responsive">
+                            <table class="table table-custom" aria-label="Asistencias recientes del estudiante">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-calendar" aria-hidden="true"></i> Fecha
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-clock" aria-hidden="true"></i> Hora
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i> Presente
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-file-text" aria-hidden="true"></i> Justificación
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in asistencias %}
+                                        <tr>
+                                            <td>{{ a.fecha|date:"d/m/Y" }}</td>
+                                            <td>
+                                                {% if a.hora_entrada %}
+                                                    {{ a.hora_entrada|time:"H:i" }}
+                                                    {% if a.hora_salida %}
+                                                        - {{ a.hora_salida|time:"H:i" }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if a.presente %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Sí
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle" aria-hidden="true"></i> No
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if a.justificacion %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-check-circle" aria-hidden="true"></i> {{ a.justificacion|truncatechars:30 }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash-circle" aria-hidden="true"></i> No
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon" aria-hidden="true">
+                                <i class="bi bi-calendar-x"></i>
+                            </div>
+                            <p class="empty-title">No hay asistencias registradas</p>
+                            <p class="empty-description">No se han registrado asistencias para este estudiante.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. SOPORTE PARA TECLADO EN TARJETAS
+            // ============================================
+            document.querySelectorAll('.profile-card, .info-card').forEach(function(card) {
+                card.setAttribute('tabindex', '0');
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const header = this.querySelector('.card-header');
+                        if (header) {
+                            header.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 2. ANIMACIÓN DE ENTRADA
+            // ============================================
+            document.querySelectorAll('.avatar-image, .avatar-placeholder').forEach(function(el) {
+                el.addEventListener('mouseenter', function() {
+                    this.style.transition = 'transform 0.3s ease';
+                });
+            });
+
+            // ============================================
+            // 3. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de detalle de estudiante cargada');
+        });
+    </script>
+{% endblock %}

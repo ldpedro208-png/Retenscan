@@ -1,0 +1,749 @@
+<!-- templates/admin/aula_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if aula %}
+        Editar Aula - {{ aula.nombre }}
+    {% else %}
+        Nueva Aula - RetenScan
+    {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-floating-custom {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-floating-custom .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-floating-custom .form-label .required {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-floating-custom .form-control,
+        .form-floating-custom .form-select {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .form-floating-custom .form-control:focus,
+        .form-floating-custom .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .form-floating-custom .form-control.is-invalid,
+        .form-floating-custom .form-select.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-floating-custom .form-control.is-invalid:focus,
+        .form-floating-custom .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+
+        .form-floating-custom .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .form-floating-custom .form-text .icon {
+            margin-right: 0.25rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .form-floating-custom .form-label {
+                font-size: 0.85rem;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .form-floating-custom .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-floating-custom .form-control,
+            .form-floating-custom .form-select {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-floating-custom .form-control:focus,
+            .form-floating-custom .form-select:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-floating-custom .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-text {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-select option {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'aula_list' %}" class="text-decoration-none">
+                    <i class="bi bi-building" aria-hidden="true"></i> Aulas
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi {% if aula %}bi-pencil{% else %}bi-plus-circle{% endif %}" aria-hidden="true"></i>
+                {% if aula %}Editar Aula{% else %}Nueva Aula{% endif %}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {% if aula %}bi-pencil-square{% else %}bi-building-add{% endif %} fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">
+                                {% if aula %}
+                                    Editar Aula: {{ aula.nombre }}
+                                {% else %}
+                                    Nueva Aula
+                                {% endif %}
+                            </h4>
+                            <small>
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                {% if aula %}
+                                    Modifica los datos del aula
+                                {% else %}
+                                    Registra un nuevo espacio físico
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <form method="post" id="aulaForm" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <!-- Código -->
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="codigo" class="form-label">
+                                        <i class="bi bi-tag" aria-hidden="true"></i>
+                                        Código
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="codigo" 
+                                           name="codigo" 
+                                           value="{{ aula.codigo|default:'' }}" 
+                                           placeholder="Ej: A-101, LAB-02"
+                                           required
+                                           maxlength="20"
+                                           aria-describedby="codigoHelp">
+                                    <div id="codigoHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Código único del aula (máx. 20 caracteres)
+                                    </div>
+                                    {% if form.codigo.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            {{ form.codigo.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Nombre -->
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="nombre" class="form-label">
+                                        <i class="bi bi-building" aria-hidden="true"></i>
+                                        Nombre
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="nombre" 
+                                           name="nombre" 
+                                           value="{{ aula.nombre|default:'' }}" 
+                                           placeholder="Ej: Aula 101, Laboratorio de Física"
+                                           required
+                                           maxlength="100"
+                                           aria-describedby="nombreHelp">
+                                    <div id="nombreHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Nombre descriptivo del aula (máx. 100 caracteres)
+                                    </div>
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            {{ form.nombre.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Capacidad -->
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="capacidad" class="form-label">
+                                        <i class="bi bi-people" aria-hidden="true"></i>
+                                        Capacidad
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="capacidad" 
+                                           name="capacidad" 
+                                           value="{{ aula.capacidad|default:30 }}" 
+                                           min="1" 
+                                           max="500"
+                                           required
+                                           aria-describedby="capacidadHelp">
+                                    <div id="capacidadHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Número máximo de estudiantes que puede albergar (1-500)
+                                    </div>
+                                    <div id="capacidadFeedback" class="text-danger small mt-1" style="display: none;">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                        La capacidad debe ser un número entre 1 y 500
+                                    </div>
+                                    {% if form.capacidad.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            {{ form.capacidad.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Tipo -->
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="tipo" class="form-label">
+                                        <i class="bi bi-tag" aria-hidden="true"></i>
+                                        Tipo
+                                    </label>
+                                    <select class="form-select" 
+                                            id="tipo" 
+                                            name="tipo" 
+                                            aria-describedby="tipoHelp">
+                                        <option value="Teoria" {% if aula.tipo == 'Teoria' %}selected{% endif %}>Teoría</option>
+                                        <option value="Laboratorio" {% if aula.tipo == 'Laboratorio' %}selected{% endif %}>Laboratorio</option>
+                                        <option value="Taller" {% if aula.tipo == 'Taller' %}selected{% endif %}>Taller</option>
+                                        <option value="Virtual" {% if aula.tipo == 'Virtual' %}selected{% endif %}>Virtual</option>
+                                    </select>
+                                    <div id="tipoHelp" class="form-text">
+                                        <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                        Tipo de espacio físico
+                                    </div>
+                                    {% if form.tipo.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                            {{ form.tipo.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información adicional -->
+                        <div class="alert alert-info mt-3" role="alert">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <strong>Nota:</strong> El código del aula debe ser único en el sistema.
+                            {% if aula %}
+                                El código actual es <strong>{{ aula.codigo }}</strong>.
+                            {% endif %}
+                        </div>
+
+                        <!-- Errores del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'aula_list' %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al listado de aulas">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> 
+                                {% if aula %}Actualizar{% else %}Guardar{% endif %} Aula
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('aulaForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const capacidadInput = document.getElementById('capacidad');
+            const capacidadFeedback = document.getElementById('capacidadFeedback');
+            const codigoInput = document.getElementById('codigo');
+
+            // ============================================
+            // 1. VALIDACIÓN DE CAPACIDAD EN TIEMPO REAL
+            // ============================================
+            if (capacidadInput) {
+                capacidadInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    if (value !== '' && !isNaN(value)) {
+                        if (value < 1 || value > 500) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                            capacidadFeedback.style.display = 'block';
+                        } else {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            capacidadFeedback.style.display = 'none';
+                        }
+                    } else {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        capacidadFeedback.style.display = 'none';
+                    }
+                });
+            }
+
+            // ============================================
+            // 2. VALIDACIÓN DE CÓDIGO EN TIEMPO REAL
+            // ============================================
+            if (codigoInput) {
+                codigoInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value.length > 0) {
+                        // Verificar que solo contiene caracteres válidos
+                        const pattern = /^[A-Za-z0-9\-_]+$/;
+                        if (pattern.test(value)) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        } else {
+                            this.classList.remove('is-valid');
+                            this.classList.add('is-invalid');
+                            showToast('El código solo puede contener letras, números, guiones y guiones bajos.', 'warning');
+                        }
+                    } else {
+                        this.classList.remove('is-invalid', 'is-valid');
+                    }
+                });
+            }
+
+            // ============================================
+            // 3. VALIDACIÓN ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                // Validar código
+                if (codigoInput) {
+                    const value = codigoInput.value.trim();
+                    if (!value) {
+                        e.preventDefault();
+                        codigoInput.classList.add('is-invalid');
+                        codigoInput.focus();
+                        showToast('El código es obligatorio.', 'warning');
+                        return false;
+                    }
+                    const pattern = /^[A-Za-z0-9\-_]+$/;
+                    if (!pattern.test(value)) {
+                        e.preventDefault();
+                        codigoInput.classList.add('is-invalid');
+                        codigoInput.focus();
+                        showToast('El código solo puede contener letras, números, guiones y guiones bajos.', 'warning');
+                        return false;
+                    }
+                }
+
+                // Validar nombre
+                const nombreInput = document.getElementById('nombre');
+                if (nombreInput && !nombreInput.value.trim()) {
+                    e.preventDefault();
+                    nombreInput.classList.add('is-invalid');
+                    nombreInput.focus();
+                    showToast('El nombre es obligatorio.', 'warning');
+                    return false;
+                }
+
+                // Validar capacidad
+                if (capacidadInput) {
+                    const value = parseInt(capacidadInput.value);
+                    if (isNaN(value) || value < 1 || value > 500) {
+                        e.preventDefault();
+                        capacidadInput.classList.add('is-invalid');
+                        capacidadInput.focus();
+                        showToast('La capacidad debe ser un número entre 1 y 500.', 'warning');
+                        return false;
+                    }
+                }
+
+                // Deshabilitar botón para evitar doble envío
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                }
+            });
+
+            // ============================================
+            // 4. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. ENFOQUE AUTOMÁTICO
+            // ============================================
+            setTimeout(function() {
+                const codigoInput = document.getElementById('codigo');
+                if (codigoInput) {
+                    codigoInput.focus();
+                }
+            }, 300);
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Formulario de aula cargado');
+            {% if aula %}
+                console.log('ℹ️ Editando aula: {{ aula.codigo }} - {{ aula.nombre }}');
+            {% else %}
+                console.log('ℹ️ Creando nueva aula');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

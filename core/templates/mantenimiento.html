@@ -1,0 +1,39 @@
+<!-- templates/mantenimiento.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Sistema en Mantenimiento - RetenScan{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-tools display-1 text-warning"></i>
+                    </div>
+                    <h1 class="display-4 mb-3">Sistema en Mantenimiento</h1>
+                    <p class="lead text-muted">
+                        Estimado usuario, el sistema se encuentra en mantenimiento programado.
+                    </p>
+                    <p class="text-muted">
+                        Por favor, intenta nuevamente más tarde.
+                    </p>
+                    {% if SITE_URL %}
+                        <p class="text-muted small mt-3">
+                            <i class="bi bi-globe2" aria-hidden="true"></i>
+                            Sitio: {{ SITE_NAME }}
+                        </p>
+                    {% endif %}
+                    <hr>
+                    <p class="text-muted small">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        Última actualización: {{ config_sistema.fecha_actualizacion|date:"d/m/Y H:i" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

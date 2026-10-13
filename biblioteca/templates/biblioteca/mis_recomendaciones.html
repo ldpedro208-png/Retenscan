@@ -1,0 +1,749 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Recomendados para Mí{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/biblioteca_preview.css' %}">
+<style>
+    /* ============================================ */
+    /* HERO PERSONALIZADO                           */
+    /* ============================================ */
+    .reco-hero {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+    }
+    .reco-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+    .reco-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -70%;
+        left: -5%;
+        width: 220px;
+        height: 220px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+    .reco-hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Avatar tipo foto carnet */
+    .reco-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        flex-shrink: 0;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .reco-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .reco-saludo {
+        flex-grow: 1;
+        min-width: 200px;
+    }
+    .reco-saludo h1 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0 0 0.2rem;
+        line-height: 1.2;
+    }
+    .reco-saludo p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.85rem;
+    }
+
+    .reco-estado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(10px);
+        border-radius: 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 100%;
+    }
+    .reco-estado-badge i { font-size: 1rem; }
+    .reco-estado-badge span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ============================================ */
+    /* MINI MÉTRICAS                                */
+    /* ============================================ */
+    .metricas-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+    }
+    .metrica-card {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.75rem;
+        padding: 1rem 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        transition: all 0.2s;
+    }
+    .metrica-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
+    .metrica-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    .metrica-valor {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.1;
+    }
+    .metrica-label {
+        font-size: 0.72rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+    }
+
+    /* ============================================ */
+    /* SECCIONES                                    */
+    /* ============================================ */
+    .reco-seccion {
+        margin-bottom: 2.5rem;
+    }
+    .reco-seccion-titulo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 0.35rem;
+    }
+    .reco-seccion-titulo i {
+        width: 36px;
+        height: 36px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .reco-seccion-sub {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 1.25rem;
+        padding-left: 3rem;
+    }
+
+    /* ============================================ */
+    /* CARD DE FACTOR CON MATERIALES                */
+    /* ============================================ */
+    .factor-block {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+    .factor-block:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+    .factor-block::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--factor-color, #6366f1);
+    }
+    .factor-block.nivel-Critico  { --factor-color: #dc2626; }
+    .factor-block.nivel-Alto     { --factor-color: #ea580c; }
+    .factor-block.nivel-Medio    { --factor-color: #f59e0b; }
+    .factor-block.nivel-Bajo     { --factor-color: #10b981; }
+
+    .factor-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    .factor-nombre {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    .factor-nombre-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.6rem;
+        background: var(--factor-color, #6366f1);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    .factor-nivel-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.3rem 0.7rem;
+        border-radius: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--factor-color, #6366f1);
+        color: #fff;
+    }
+
+    .factor-mensaje {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    /* Grid de materiales dentro del factor */
+    .materiales-inline {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 0.75rem;
+    }
+    .material-mini {
+        background: #f9fafb;
+        border: 1px solid #eaecf3;
+        border-radius: 0.6rem;
+        padding: 0.85rem;
+        display: flex;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.15s;
+    }
+    .material-mini:hover {
+        background: #fff;
+        border-color: #6366f1;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(99, 102, 241, 0.1);
+    }
+    .material-mini-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .material-mini-icon.motivacional { background: #fef3c7; color: #d97706; }
+    .material-mini-icon.habitos      { background: #dbeafe; color: #2563eb; }
+    .material-mini-icon.salud_mental { background: #ede9fe; color: #7c3aed; }
+    .material-mini-icon.financiero   { background: #d1fae5; color: #059669; }
+    .material-mini-icon.tutorias     { background: #e0e7ff; color: #4f46e5; }
+    .material-mini-icon.tiempo       { background: #cffafe; color: #0891b2; }
+    .material-mini-titulo {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #111827;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.15rem;
+    }
+    .material-mini-tipo {
+        font-size: 0.68rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* ============================================ */
+    /* CARD DE MATERIA CRÍTICA                      */
+    /* ============================================ */
+    .materia-critica {
+        background: #fff;
+        border: 1px solid #eaecf3;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.2s;
+        height: 100%;
+    }
+    .materia-critica:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.1);
+    }
+    .materia-critica-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.75rem;
+        border-radius: 0.6rem;
+        background: #fef3c7;
+        color: #d97706;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+    .materia-critica-nombre {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 0.3rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.4rem;
+    }
+    .materia-critica-count {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .materia-critica-link {
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-size: 0.78rem;
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .materia-critica-link:hover {
+        text-decoration: underline;
+    }
+
+    /* ============================================ */
+    /* EMPTY STATE                                  */
+    /* ============================================ */
+    .reco-empty {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border: 2px dashed #86efac;
+        border-radius: 1rem;
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+    .reco-empty-icon {
+        width: 80px;
+        height: 80px;
+        background: #d1fae5;
+        color: #10b981;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2.5rem;
+    }
+    .reco-empty h4 {
+        color: #065f46;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .reco-empty p {
+        color: #047857;
+        max-width: 450px;
+        margin: 0 auto 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    /* ============================================ */
+    /* CTA FINAL                                    */
+    /* ============================================ */
+    .reco-cta {
+        background: linear-gradient(135deg, #1f2937, #374151);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 1.75rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: relative;
+        overflow: hidden;
+    }
+    .reco-cta::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 250px;
+        height: 250px;
+        background: rgba(99, 102, 241, 0.15);
+        border-radius: 50%;
+    }
+    .reco-cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .reco-cta h5 {
+        margin: 0 0 0.25rem;
+        font-weight: 700;
+    }
+    .reco-cta p {
+        margin: 0;
+        opacity: 0.85;
+        font-size: 0.85rem;
+    }
+    .reco-cta .btn {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ============================================ */
+    /* RESPONSIVE                                   */
+    /* ============================================ */
+    @media (max-width: 767px) {
+        .reco-hero { padding: 1rem 1.25rem; }
+        .reco-saludo h1 { font-size: 1.15rem; }
+        .reco-avatar { width: 52px; height: 52px; font-size: 1.25rem; }
+        .reco-seccion-sub { padding-left: 0; }
+        .reco-hero-content { gap: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================ -->
+    <!-- HERO PERSONALIZADO                           -->
+    <!-- ============================================ -->
+    <div class="reco-hero">
+        <div class="reco-hero-content">
+            <div class="reco-avatar">
+                {% if estudiante.idUsuario.foto %}
+                    <img src="{{ estudiante.idUsuario.foto.url }}" alt="{{ estudiante.nombre_completo }}">
+                {% else %}
+                    {{ estudiante.idUsuario.first_name|first|default:estudiante.idUsuario.username|first|upper }}
+                {% endif %}
+            </div>
+            <div class="reco-saludo">
+                <h1>Hola, {{ estudiante.idUsuario.first_name|default:estudiante.idUsuario.username }} 👋</h1>
+                <p>Estos recursos fueron seleccionados para ti según tu perfil académico</p>
+            </div>
+            <div class="reco-estado-badge">
+                <i class="bi {{ estado_general.icono }}"></i>
+                <span>{{ estado_general.mensaje }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MINI MÉTRICAS
+         ============================================ -->
+    <div class="metricas-strip">
+        <div class="metrica-card">
+            <div class="metrica-icon" style="background:#eef2ff;color:#4e73df;">
+                <i class="bi bi-book"></i>
+            </div>
+            <div>
+                <div class="metrica-valor">{{ metricas.total_accesos }}</div>
+                <div class="metrica-label">Accesos (30d)</div>
+            </div>
+        </div>
+        <div class="metrica-card">
+            <div class="metrica-icon" style="background:#d1fae5;color:#059669;">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+                <div class="metrica-valor">{{ metricas.lecturas_completas }}</div>
+                <div class="metrica-label">Lecturas completas</div>
+            </div>
+        </div>
+        <div class="metrica-card">
+            <div class="metrica-icon" style="background:#fef3c7;color:#d97706;">
+                <i class="bi bi-fire"></i>
+            </div>
+            <div>
+                <div class="metrica-valor">{{ lecturas_semana }}</div>
+                <div class="metrica-label">Esta semana</div>
+            </div>
+        </div>
+        <div class="metrica-card">
+            <div class="metrica-icon" style="background:#ede9fe;color:#7c3aed;">
+                <i class="bi bi-collection"></i>
+            </div>
+            <div>
+                <div class="metrica-valor">{{ metricas.categorias_distintas }}</div>
+                <div class="metrica-label">Categorías exploradas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         SECCIÓN 1: MATERIAL DE APOYO POR FACTOR
+         ============================================ -->
+    {% if materiales_por_factor %}
+        <div class="reco-seccion">
+            <div class="reco-seccion-titulo">
+                <i class="bi bi-heart-pulse-fill" style="background:#fee2e2;color:#dc2626;"></i>
+                Para tu bienestar
+            </div>
+            <p class="reco-seccion-sub">
+                Material seleccionado especialmente para los desafíos que estás enfrentando
+            </p>
+
+            {% for bloque in materiales_por_factor %}
+                <div class="factor-block nivel-{{ bloque.nivel }}">
+                    <div class="factor-header">
+                        <div class="factor-nombre">
+                            <div class="factor-nombre-icon">
+                                {% if 'Desmotivaci' in bloque.factor.nombre %}<i class="bi bi-lightning-charge-fill"></i>
+                                {% elif 'Estrés' in bloque.factor.nombre or 'Estres' in bloque.factor.nombre %}<i class="bi bi-emoji-dizzy-fill"></i>
+                                {% elif 'Bajo Rendimiento' in bloque.factor.nombre %}<i class="bi bi-graph-down-arrow"></i>
+                                {% elif 'Inasistencia' in bloque.factor.nombre %}<i class="bi bi-calendar-x-fill"></i>
+                                {% elif 'Económico' in bloque.factor.nombre or 'Economico' in bloque.factor.nombre %}<i class="bi bi-cash-stack"></i>
+                                {% elif 'Salud' in bloque.factor.nombre %}<i class="bi bi-heart-pulse-fill"></i>
+                                {% elif 'Familia' in bloque.factor.nombre %}<i class="bi bi-people-fill"></i>
+                                {% else %}<i class="bi bi-shield-exclamation"></i>
+                                {% endif %}
+                            </div>
+                            {{ bloque.factor.nombre }}
+                        </div>
+                        <span class="factor-nivel-badge">{{ bloque.nivel }}</span>
+                    </div>
+
+                    <p class="factor-mensaje">
+                        {% if 'Desmotivaci' in bloque.factor.nombre %}
+                            Sabemos que a veces cuesta mantener el ritmo. Estos recursos te ayudarán a recuperar la motivación.
+                        {% elif 'Estrés' in bloque.factor.nombre or 'Estres' in bloque.factor.nombre %}
+                            El estrés es normal, pero manejarlo es clave. Aquí tienes técnicas que funcionan.
+                        {% elif 'Bajo Rendimiento' in bloque.factor.nombre %}
+                            Todos podemos mejorar. Estos materiales te darán herramientas concretas para tus materias.
+                        {% elif 'Inasistencia' in bloque.factor.nombre %}
+                            Cada clase cuenta. Aquí hay material para que no pierdas el hilo del curso.
+                        {% elif 'Económico' in bloque.factor.nombre or 'Economico' in bloque.factor.nombre %}
+                            Sabemos que la situación económica puede ser difícil. Estos recursos pueden ayudarte.
+                        {% elif 'Salud' in bloque.factor.nombre %}
+                            Tu bienestar es primero. Aquí encontrarás material de apoyo para sentirte mejor.
+                        {% elif 'Familia' in bloque.factor.nombre %}
+                            Los problemas familiares afectan el estudio. Aquí hay herramientas para gestionarlo.
+                        {% else %}
+                            Aquí tienes materiales que pueden ayudarte con este desafío.
+                        {% endif %}
+                    </p>
+
+                    <div class="materiales-inline">
+                        {% for material in bloque.materiales %}
+                            <a href="{% url 'biblioteca:material_apoyo' %}?tipo={{ material.tipo }}"
+                               class="material-mini">
+                                <div class="material-mini-icon {{ material.tipo }}">
+                                    {% if material.tipo == 'motivacional' %}<i class="bi bi-lightbulb-fill"></i>
+                                    {% elif material.tipo == 'habitos' %}<i class="bi bi-clock-history"></i>
+                                    {% elif material.tipo == 'salud_mental' %}<i class="bi bi-heart-fill"></i>
+                                    {% elif material.tipo == 'financiero' %}<i class="bi bi-cash-coin"></i>
+                                    {% elif material.tipo == 'tutorias' %}<i class="bi bi-people-fill"></i>
+                                    {% elif material.tipo == 'tiempo' %}<i class="bi bi-hourglass-split"></i>
+                                    {% else %}<i class="bi bi-tag-fill"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <div class="material-mini-titulo">{{ material.titulo }}</div>
+                                    <div class="material-mini-tipo">{{ material.get_tipo_display }}</div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty state empático -->
+        <div class="reco-seccion">
+            <div class="reco-empty">
+                <div class="reco-empty-icon">
+                    <i class="bi bi-emoji-smile-fill"></i>
+                </div>
+                <h4>¡Vas muy bien! 🎉</h4>
+                <p>
+                    Actualmente no tienes factores de riesgo detectados.
+                    Sigue así y explora la biblioteca para seguir creciendo.
+                </p>
+                <a href="{% url 'biblioteca:lista' %}" class="btn btn-success">
+                    <i class="bi bi-compass"></i> Explorar biblioteca
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- ============================================
+         SECCIÓN 2: MATERIAS CRÍTICAS
+         ============================================ -->
+    {% if materias_criticas %}
+        <div class="reco-seccion">
+            <div class="reco-seccion-titulo">
+                <i class="bi bi-journal-bookmark-fill" style="background:#fef3c7;color:#d97706;"></i>
+                Para tus materias
+            </div>
+            <p class="reco-seccion-sub">
+                Recursos de las materias donde podemos apoyarte
+            </p>
+
+            <div class="row g-3 mb-3">
+                {% for materia in materias_criticas %}
+                    <div class="col-6 col-md-3">
+                        <div class="materia-critica">
+                            <div class="materia-critica-icon">
+                                <i class="bi bi-book-half"></i>
+                            </div>
+                            <div class="materia-critica-nombre">{{ materia.nombre }}</div>
+                            <div class="materia-critica-count">
+                                {{ materia.total_recursos }} recurso{{ materia.total_recursos|pluralize }}
+                            </div>
+                            <a href="{% url 'biblioteca:lista' %}?materia={{ materia.idMateria }}"
+                               class="materia-critica-link">
+                                Ver recursos <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if recursos_academicos %}
+                <div class="row g-3">
+                    {% for r in recursos_academicos %}
+                        <div class="col-md-6 col-lg-3">
+                            <div class="material-card" style="animation:none;">
+                                {% include "biblioteca/partials/_recurso_preview.html" with recurso=r size="card" %}
+                                <div class="material-body" style="padding:0.75rem 1rem;">
+                                    <a href="{% url 'biblioteca:detalle' r.pk %}"
+                                       class="text-decoration-none">
+                                        <div class="recurso-titulo-cell" style="font-size:0.85rem;">
+                                            {{ r.titulo }}
+                                        </div>
+                                    </a>
+                                    <div class="recurso-meta-cell" style="font-size:0.72rem;margin-top:0.3rem;">
+                                        {{ r.get_tipo_display }}
+                                        {% if r.idMateria %} · {{ r.idMateria.nombre|truncatechars:20 }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- ============================================
+         SECCIÓN 3: RECURSOS POPULARES
+         ============================================ -->
+    {% if recursos_populares %}
+        <div class="reco-seccion">
+            <div class="reco-seccion-titulo">
+                <i class="bi bi-fire" style="background:#fee2e2;color:#dc2626;"></i>
+                Populares entre tus compañeros
+            </div>
+            <p class="reco-seccion-sub">
+                Los recursos más consultados de tu universidad
+            </p>
+
+            <div class="row g-3">
+                {% for r in recursos_populares %}
+                    <div class="col-md-6 col-lg-3">
+                        <div class="material-card" style="animation:none;">
+                            {% include "biblioteca/partials/_recurso_preview.html" with recurso=r size="card" %}
+                            <div class="material-body" style="padding:0.75rem 1rem;">
+                                <a href="{% url 'biblioteca:detalle' r.pk %}" class="text-decoration-none">
+                                    <div class="recurso-titulo-cell" style="font-size:0.85rem;">
+                                        {{ r.titulo }}
+                                    </div>
+                                </a>
+                                <div class="d-flex justify-content-between align-items-center mt-2"
+                                     style="font-size:0.7rem;color:#6b7280;">
+                                    <span><i class="bi bi-eye"></i> {{ r.total_vistas }}</span>
+                                    {% if r.promedio_calificacion > 0 %}
+                                        <span class="text-warning">
+                                            <i class="bi bi-star-fill"></i> {{ r.promedio_calificacion|floatformat:1 }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- ============================================
+         CTA FINAL
+         ============================================ -->
+    <div class="reco-cta">
+        <div class="reco-cta-content">
+            <h5><i class="bi bi-compass"></i> ¿Quieres explorar más?</h5>
+            <p>La biblioteca tiene mucho más contenido esperando por ti.</p>
+        </div>
+        <a href="{% url 'biblioteca:lista' %}" class="btn btn-light">
+            <i class="bi bi-arrow-right-circle"></i> Ir al catálogo completo
+        </a>
+    </div>
+
+</div>
+{% endblock %}

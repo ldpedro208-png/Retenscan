@@ -1,0 +1,755 @@
+<!-- templates/layout/tarea/tarea_resultados.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Resultados - {{ tarea.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --results-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --success-gradient: linear-gradient(135deg, #198754 0%, #157347 100%);
+        }
+
+        /* ============================================
+           TARJETA DE RESULTADOS (ESTUDIANTE)
+           ============================================ */
+        .result-card {
+            border: none;
+            border-radius: var(--results-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            overflow: hidden;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .result-card .card-header {
+            border: none;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .result-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           ESTADÍSTICAS DE CALIFICACIÓN
+           ============================================ */
+        .score-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .score-stat {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .score-stat:hover {
+            background: #f0f4ff;
+        }
+
+        .score-stat .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .score-stat .stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-top: 0.1rem;
+        }
+
+        .score-stat .stat-number.success { color: #198754; }
+        .score-stat .stat-number.warning { color: #ffc107; }
+        .score-stat .stat-number.danger { color: #dc3545; }
+        .score-stat .stat-number.primary { color: #0d6efd; }
+
+        /* ============================================
+           RETROALIMENTACIÓN CON CÓDIGO
+           ============================================ */
+        .feedback-code {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .feedback-code pre {
+            background: #1e1e1e;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            margin: 0.5rem 0 0 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .feedback-code pre code {
+            color: #d4d4d4;
+        }
+
+        /* ============================================
+           TABLA DE RESULTADOS (PROFESOR)
+           ============================================ */
+        .table-resultados thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+
+        .table-resultados tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-resultados tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-resultados tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-resultados tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           BADGES DE ESTADO
+           ============================================ */
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .result-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .result-card .card-body {
+                padding: 1rem;
+            }
+
+            .score-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .score-stat .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .table-resultados {
+                font-size: 0.85rem;
+            }
+
+            .table-resultados thead th,
+            .table-resultados tbody td {
+                padding: 0.4rem 0.4rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .score-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.4rem;
+            }
+
+            .score-stat {
+                padding: 0.5rem;
+            }
+
+            .score-stat .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .table-resultados {
+                font-size: 0.75rem;
+            }
+
+            .table-resultados thead th,
+            .table-resultados tbody td {
+                padding: 0.2rem 0.2rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .result-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .result-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .score-stat {
+                background: #252540;
+            }
+
+            .score-stat:hover {
+                background: #2d2d44;
+            }
+
+            .score-stat .stat-label {
+                color: #8a8a9a;
+            }
+
+            .feedback-code {
+                background: #252540;
+                border-left-color: #4dabf7;
+            }
+
+            .table-resultados thead th {
+                background: #1a1a2e;
+                color: #ecf0f1;
+            }
+
+            .table-resultados tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-resultados tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+
+            .alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+                border-color: #0d6efd;
+            }
+
+            .alert-warning {
+                background: #2d241a;
+                color: #ffd970;
+                border-color: #ffc107;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_list' %}" class="text-decoration-none">
+                    <i class="bi bi-list-task" aria-hidden="true"></i> Tareas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_detail' tarea.idTarea %}" class="text-decoration-none">
+                    {{ tarea.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i> Resultados
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-bar-chart" aria-hidden="true"></i> 
+            Resultados: <span class="text-primary">{{ tarea.titulo }}</span>
+        </h1>
+        <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+           class="btn btn-secondary btn-action"
+           aria-label="Volver al detalle de la tarea">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- VISTA DEL ESTUDIANTE                        -->
+    <!-- ============================================ -->
+    {% if user_rol == 'estudiante' %}
+        {% with asignacion=tarea.tareaasignacion_set.all|first %}
+            {% if asignacion %}
+                <section aria-label="Mis resultados">
+                    <!-- Resumen de calificación -->
+                    <article class="card result-card mb-4">
+                        <header class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-trophy" aria-hidden="true"></i> 
+                                Mi Resultado
+                            </h5>
+                        </header>
+                        <div class="card-body">
+                            <div class="score-stats">
+                                <div class="score-stat">
+                                    <div class="stat-number primary">{{ asignacion.puntaje_obtenido|default:"0" }}</div>
+                                    <div class="stat-label">
+                                        <i class="bi bi-star" aria-hidden="true"></i> Puntaje obtenido
+                                    </div>
+                                </div>
+                                <div class="score-stat">
+                                    <div class="stat-number">{{ tarea.puntaje_maximo }}</div>
+                                    <div class="stat-label">
+                                        <i class="bi bi-trophy" aria-hidden="true"></i> Puntaje máximo
+                                    </div>
+                                </div>
+                                <div class="score-stat">
+                                    <div class="stat-number 
+                                        {% if asignacion.puntaje_obtenido and tarea.puntaje_maximo %}
+                                            {% widthratio asignacion.puntaje_obtenido tarea.puntaje_maximo 100 as porcentaje %}
+                                            {% if porcentaje >= 70 %}success
+                                            {% elif porcentaje >= 50 %}warning
+                                            {% else %}danger{% endif %}
+                                        {% else %}
+                                            secondary
+                                        {% endif %}">
+                                        {% if asignacion.puntaje_obtenido and tarea.puntaje_maximo %}
+                                            {% widthratio asignacion.puntaje_obtenido tarea.puntaje_maximo 100 %}%
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">
+                                        <i class="bi bi-graph-up" aria-hidden="true"></i> Porcentaje
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Detalle por pregunta -->
+                    <section aria-label="Detalle por pregunta">
+                        <h4 class="mb-3">
+                            <i class="bi bi-question-circle" aria-hidden="true"></i> 
+                            Detalle por Pregunta
+                            <span class="badge bg-secondary ms-2">{{ asignacion.respuestas.all|length }}</span>
+                        </h4>
+
+                        {% with respuestas=asignacion.respuestas.all %}
+                            {% if respuestas %}
+                                {% for respuesta in respuestas %}
+                                    <article class="card result-card mb-4">
+                                        <header class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center">
+                                            <h6 class="mb-0">
+                                                <strong>Pregunta {{ forloop.counter }}:</strong>
+                                                <span class="text-muted">{{ respuesta.pregunta.pregunta|truncatechars:60 }}</span>
+                                            </h6>
+                                            <span class="badge bg-primary" style="font-size: 1rem;">
+                                                <i class="bi bi-star" aria-hidden="true"></i>
+                                                {{ respuesta.calificacion|default:"0" }} / {{ respuesta.pregunta.puntaje }} pts
+                                            </span>
+                                        </header>
+                                        <div class="card-body">
+                                            <!-- Respuesta del estudiante -->
+                                            <div class="row mb-2">
+                                                <div class="col-12">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                                        <strong>Tu respuesta:</strong>
+                                                    </small>
+                                                    <div class="p-2 bg-light rounded mt-1">
+                                                        {% if respuesta.opcion %}
+                                                            {{ respuesta.opcion.texto }}
+                                                        {% elif respuesta.respuesta_texto %}
+                                                            {{ respuesta.respuesta_texto|linebreaks }}
+                                                        {% else %}
+                                                            <span class="text-muted">Sin respuesta</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Retroalimentación individual -->
+                                            {% if respuesta.retroalimentacion_pregunta %}
+                                                <div class="mt-2 p-3 bg-info bg-opacity-10 rounded border-start border-info border-4">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-chat-dots text-info" aria-hidden="true"></i>
+                                                        <strong>Retroalimentación:</strong>
+                                                    </small>
+                                                    <div class="feedback-code mt-1">
+                                                        {{ respuesta.retroalimentacion_pregunta|highlight_code|safe }}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                    No hay respuestas registradas para esta tarea.
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </section>
+
+                    <!-- Retroalimentación general -->
+                    <section aria-label="Retroalimentación general" class="mt-4">
+                        {% if asignacion.retroalimentacion %}
+                            <article class="card result-card border-success">
+                                <header class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-chat-square-text" aria-hidden="true"></i> 
+                                        Retroalimentación General
+                                    </h6>
+                                </header>
+                                <div class="card-body feedback-code">
+                                    {{ asignacion.retroalimentacion|highlight_code|safe }}
+                                </div>
+                            </article>
+                        {% else %}
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                No hay retroalimentación general para esta tarea.
+                            </div>
+                        {% endif %}
+                    </section>
+                </section>
+            {% else %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                    No tienes una asignación para esta tarea.
+                </div>
+            {% endif %}
+        {% endwith %}
+
+    <!-- ============================================ -->
+    <!-- VISTA DEL PROFESOR/ADMIN                    -->
+    <!-- ============================================ -->
+    {% elif user_rol == 'profesor' or user_rol == 'admin' %}
+        <section aria-label="Resultados de estudiantes">
+            <article class="card result-card">
+                <header class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people" aria-hidden="true"></i> 
+                        Resultados de Estudiantes
+                        <span class="badge bg-secondary ms-2">{{ tarea.tareaasignacion_set.all|length }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="exportTableToCSV('resultados_{{ tarea.titulo|slugify }}.csv')"
+                                aria-label="Exportar a CSV">
+                            <i class="bi bi-download" aria-hidden="true"></i> Exportar
+                        </button>
+                    </div>
+                </header>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-resultados" aria-label="Tabla de resultados de estudiantes">
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <i class="bi bi-person" aria-hidden="true"></i> Estudiante
+                                    </th>
+                                    <th scope="col">
+                                        <i class="bi bi-card-text" aria-hidden="true"></i> Carnet
+                                    </th>
+                                    <th scope="col">
+                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Entregado
+                                    </th>
+                                    <th scope="col">
+                                        <i class="bi bi-star" aria-hidden="true"></i> Puntaje
+                                    </th>
+                                    <th scope="col">
+                                        <i class="bi bi-check2-square" aria-hidden="true"></i> Calificado
+                                    </th>
+                                    <th scope="col" class="text-center">
+                                        <i class="bi bi-tools" aria-hidden="true"></i> Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asignacion in tarea.tareaasignacion_set.all %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ asignacion.estudiante.nombre }} {{ asignacion.estudiante.apellido_paterno }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ asignacion.estudiante.email|default:"Sin email" }}</small>
+                                        </td>
+                                        <td>{{ asignacion.estudiante.carnet|default:"-" }}</td>
+                                        <td>
+                                            {% if asignacion.entregada %}
+                                                <span class="badge bg-success badge-status">
+                                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Sí
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger badge-status">
+                                                    <i class="bi bi-x-circle" aria-hidden="true"></i> No
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if asignacion.calificada %}
+                                                <strong>{{ asignacion.puntaje_obtenido|default:"0" }}</strong>
+                                                <span class="text-muted">/ {{ tarea.puntaje_maximo }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if asignacion.calificada %}
+                                                <span class="badge bg-success badge-status">
+                                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Sí
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark badge-status">
+                                                    <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <a href="{% url 'estudiante_detail' asignacion.estudiante.idEstudiante %}" 
+                                                   class="btn btn-sm btn-outline-info"
+                                                   title="Ver perfil del estudiante"
+                                                   aria-label="Ver perfil de {{ asignacion.estudiante.nombre }}">
+                                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                                </a>
+                                                {% if not asignacion.calificada and asignacion.entregada %}
+                                                    <a href="{% url 'tarea_calificar' tarea.idTarea %}" 
+                                                       class="btn btn-sm btn-outline-primary"
+                                                       title="Calificar tarea"
+                                                       aria-label="Calificar tarea de {{ asignacion.estudiante.nombre }}">
+                                                        <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                                    </a>
+                                                {% endif %}
+                                                {% if asignacion.calificada %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-success"
+                                                       title="Ver retroalimentación"
+                                                       aria-label="Ver retroalimentación de {{ asignacion.estudiante.nombre }}">
+                                                        <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <div class="empty-icon" aria-hidden="true">
+                                                    <i class="bi bi-inbox"></i>
+                                                </div>
+                                                <p class="empty-title">No hay asignaciones</p>
+                                                <p class="empty-description">
+                                                    Esta tarea no tiene estudiantes asignados.
+                                                </p>
+                                                <a href="{% url 'tarea_asignar' tarea.idTarea %}" 
+                                                   class="btn btn-primary btn-sm mt-2"
+                                                   aria-label="Asignar tarea a estudiantes">
+                                                    <i class="bi bi-person-plus" aria-hidden="true"></i> 
+                                                    Asignar estudiantes
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer con estadísticas -->
+                <footer class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                            Entregadas: {{ tarea.tareaasignacion_set.all|length|add:0 }}
+                        </span>
+                        <span class="badge bg-warning text-dark ms-2">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            Pendientes: {{ tarea.tareaasignacion_set.all|length|add:0 }}
+                        </span>
+                        <span class="badge bg-primary ms-2">
+                            <i class="bi bi-star" aria-hidden="true"></i>
+                            Calificadas: {{ tarea.tareaasignacion_set.all|length|add:0 }}
+                        </span>
+                    </div>
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        Última actualización: {% now "d/m/Y H:i" %}
+                    </small>
+                </footer>
+            </article>
+        </section>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. EXPORTAR TABLA A CSV
+            // ============================================
+            window.exportTableToCSV = function(filename) {
+                const table = document.querySelector('.table-resultados');
+                if (!table) return;
+
+                const rows = table.querySelectorAll('tr');
+                let csvContent = '';
+
+                // Encabezados
+                const headers = ['Estudiante', 'Carnet', 'Entregado', 'Puntaje', 'Calificado'];
+                csvContent += headers.join(',') + '\n';
+
+                // Datos
+                rows.forEach(function(row) {
+                    const cols = row.querySelectorAll('td');
+                    if (cols.length > 0) {
+                        const rowData = [];
+                        // Tomar solo las primeras 5 columnas
+                        for (let i = 0; i < Math.min(cols.length - 1, 5); i++) {
+                            let text = cols[i].textContent.trim();
+                            text = text.replace(/,/g, ';').replace(/\n/g, ' ');
+                            rowData.push(text);
+                        }
+                        csvContent += rowData.join(',') + '\n';
+                    }
+                });
+
+                // Descargar archivo
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            // ============================================
+            // 2. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action, .btn-outline-info, .btn-outline-primary, .btn-outline-success').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 3. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de resultados de tarea cargada');
+            {% if user_rol == 'estudiante' %}
+                console.log('ℹ️ Vista de estudiante');
+            {% else %}
+                console.log('ℹ️ Vista de profesor/admin');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-building"></i> Aulas</h1>
+    <a href="{% url 'aula_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nueva Aula
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Capacidad</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aula in aulas %}
+                <tr>
+                    <td>{{ aula.codigo }}</td>
+                    <td>{{ aula.nombre }}</td>
+                    <td>{{ aula.capacidad }}</td>
+                    <td>{{ aula.get_tipo_display }}</td>
+                    <td>
+                        <a href="{% url 'aula_edit' aula.idAula %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'aula_delete' aula.idAula %}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

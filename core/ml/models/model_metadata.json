@@ -1,0 +1,59 @@
+{
+  "fecha_entrenamiento": "2026-08-05T00:17:18.398708+00:00",
+  "mejor_modelo": "random_forest",
+  "metricas": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+      [
+        15,
+        0
+      ],
+      [
+        0,
+        15
+      ]
+    ],
+    "n_features": 29,
+    "n_samples": 150,
+    "n_abandonos": 24,
+    "total_estudiantes": 99,
+    "auc_roc": 1.0,
+    "feature_importance": {
+      "edad": 0.002110650403966261,
+      "semestre_actual": 0.03545310690261263,
+      "ano_ingreso": 0.16558985541918997,
+      "promedio_general": 0.03424665911171528,
+      "materias_aprobadas": 0.006204819933564348,
+      "materias_reprobadas": 0.005526641022238388,
+      "materias_cursando": 0.002506634852805906,
+      "total_materias": 0.005794778553248247,
+      "tendencia_notas": 0.017343923511220376,
+      "tendencia_descendente": 0.0047581657825579585,
+      "porcentaje_asistencia": 0.12771571918744481,
+      "faltas": 0.024083959421634365,
+      "porcentaje_faltas": 0.11723828332891333,
+      "porcentaje_entregas": 0.0,
+      "promedio_calificaciones": 0.0,
+      "riesgos_activos": 0.010887414304028946,
+      "riesgos_totales": 0.1567139922600871,
+      "sentimiento_promedio": 0.0,
+      "factor_25": 0.0014533097146253514,
+      "factor_26": 6.4190002407125e-05,
+      "factor_27": 0.0018585070915140762,
+      "factor_28": 0.0018415743525277719,
+      "factor_29": 0.001163905683249621,
+      "factor_30": 0.00012923131959039475,
+      "indice_academico": 0.0,
+      "indice_compromiso": 0.16991516371392595,
+      "indice_bienestar": 0.04028307253315059,
+      "horas_estudio": 0.026963467264104254,
+      "riesgo_combinado": 0.04015297432967683
+    }
+  },
+  "test_size": 0.2,
+  "random_state": 42,
+  "model_type": "all"
+}

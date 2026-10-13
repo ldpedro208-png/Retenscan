@@ -1,0 +1,519 @@
+<!-- templates/usuarios/usuario_confirm_delete.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Usuario - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           ESTILOS DE CONFIRMACIÓN DE ELIMINACIÓN
+           ============================================ */
+        .delete-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+
+        .delete-header {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: white;
+            padding: 20px 30px;
+            border-bottom: 4px solid #f39c12;
+        }
+
+        .delete-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .delete-header small {
+            opacity: 0.9;
+        }
+
+        .delete-body {
+            padding: 30px;
+            background: #fafbfc;
+            text-align: center;
+        }
+
+        /* ============================================
+           ICONO DE ADVERTENCIA
+           ============================================ */
+        .warning-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #fff3cd;
+            border: 4px solid #ffc107;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulseWarning 2s ease-in-out infinite;
+        }
+
+        .warning-icon i {
+            font-size: 3rem;
+            color: #dc3545;
+        }
+
+        @keyframes pulseWarning {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
+            }
+        }
+
+        /* ============================================
+           MENSAJE DE ADVERTENCIA
+           ============================================ */
+        .delete-message {
+            font-size: 1.1rem;
+            color: #495057;
+            margin-bottom: 25px;
+        }
+
+        .delete-message strong {
+            color: #dc3545;
+        }
+
+        /* ============================================
+           INFORMACIÓN DEL USUARIO
+           ============================================ */
+        .user-info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: left;
+        }
+
+        .user-info-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .user-info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .user-info-row:first-child {
+            padding-top: 0;
+        }
+
+        .user-info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e7f3ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .user-info-icon i {
+            color: #2a5f8f;
+            font-size: 1.2rem;
+        }
+
+        .user-info-content {
+            flex: 1;
+        }
+
+        .user-info-label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .user-info-value {
+            font-size: 0.95rem;
+            color: #212529;
+            font-weight: 500;
+        }
+
+        /* Foto del usuario */
+        .user-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e9ecef;
+        }
+
+        .user-photo-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #f1f3f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #e9ecef;
+        }
+
+        .user-photo-placeholder i {
+            font-size: 2rem;
+            color: #adb5bd;
+        }
+
+        /* ============================================
+           ADVERTENCIA DE ACCIÓN IRREVERSIBLE
+           ============================================ */
+        .alert-irreversible {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .alert-irreversible i {
+            color: #dc3545;
+            margin-right: 8px;
+        }
+
+        .alert-irreversible strong {
+            color: #721c24;
+        }
+
+        .alert-irreversible ul {
+            margin: 10px 0 0 25px;
+            padding: 0;
+            color: #721c24;
+        }
+
+        .alert-irreversible li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-delete-confirm {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-delete-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
+        .btn-delete-cancel {
+            background: white;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-delete-cancel:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            color: #495057;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .delete-body {
+                padding: 20px;
+            }
+
+            .warning-icon {
+                width: 80px;
+                height: 80px;
+            }
+
+            .warning-icon i {
+                font-size: 2.5rem;
+            }
+
+            .delete-message {
+                font-size: 1rem;
+            }
+
+            .btn-delete-confirm,
+            .btn-delete-cancel {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .delete-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .delete-body {
+                background-color: #252540;
+            }
+
+            .user-info-card {
+                background-color: #2d2d2d;
+                border-color: #3d3d4d;
+            }
+
+            .user-info-row {
+                border-bottom-color: #3d3d4d;
+            }
+
+            .user-info-value {
+                color: #e0e0e0;
+            }
+
+            .user-info-label {
+                color: #8a8a9a;
+            }
+
+            .user-info-icon {
+                background: #1a2a3a;
+            }
+
+            .user-photo-placeholder {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+            }
+
+            .delete-message {
+                color: #c8d6e5;
+            }
+
+            .btn-delete-cancel {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-delete-cancel:hover {
+                background: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .warning-icon {
+                background: #4a3a1a;
+                border-color: #ffc107;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="delete-card">
+                <!-- HEADER -->
+                <div class="delete-header">
+                    <h4><i class="bi bi-exclamation-triangle-fill"></i> Eliminar Usuario</h4>
+                    <small>Esta acción requiere confirmación</small>
+                </div>
+                
+                <!-- BODY -->
+                <div class="delete-body">
+                    <!-- Icono de advertencia -->
+                    <div class="warning-icon">
+                        <i class="bi bi-trash-fill"></i>
+                    </div>
+                    
+                    <!-- Mensaje principal -->
+                    <div class="delete-message">
+                        ¿Estás seguro de que deseas eliminar al usuario<br>
+                        <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>?
+                    </div>
+                    
+                    <!-- Información del usuario a eliminar -->
+                    <div class="user-info-card">
+                        <!-- Foto y nombre -->
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                {% if usuario.foto %}
+                                    <img src="{{ usuario.foto.url }}" 
+                                         alt="{{ usuario.username }}" 
+                                         class="user-photo">
+                                {% else %}
+                                    <div class="user-photo-placeholder">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Usuario</div>
+                                <div class="user-info-value">
+                                    {{ usuario.get_full_name|default:usuario.username }}
+                                    <span class="badge bg-secondary ms-1">{{ usuario.get_rol_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Username -->
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Nombre de usuario</div>
+                                <div class="user-info-value">@{{ usuario.username }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                <i class="bi bi-envelope"></i>
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Email</div>
+                                <div class="user-info-value">{{ usuario.email }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Carnet (si existe) -->
+                        {% if usuario.carnet %}
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                <i class="bi bi-card-text"></i>
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Carnet</div>
+                                <div class="user-info-value">{{ usuario.carnet }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Universidad -->
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Universidad</div>
+                                <div class="user-info-value">
+                                    {{ usuario.idUniversidad.nombre|default:"Sin universidad" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Estado -->
+                        <div class="user-info-row">
+                            <div class="user-info-icon">
+                                <i class="bi bi-toggle-{% if usuario.is_active %}on{% else %}off{% endif %}"></i>
+                            </div>
+                            <div class="user-info-content">
+                                <div class="user-info-label">Estado actual</div>
+                                <div class="user-info-value">
+                                    {% if usuario.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advertencia de acción irreversible -->
+                    <div class="alert-irreversible">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                        <strong>Esta acción es irreversible</strong>
+                        <ul>
+                            <li>Se eliminará permanentemente el usuario y todos sus datos</li>
+                            <li>Se eliminarán las asignaciones de estudiantes (si es tutor)</li>
+                            <li>Se eliminará la foto de perfil y archivos asociados</li>
+                            <li>No podrás recuperar esta información después</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Formulario de confirmación -->
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <a href="{% url 'usuario_list' %}" class="btn-delete-cancel">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn-delete-confirm" id="btnConfirmDelete">
+                                <i class="bi bi-trash-fill"></i> Sí, eliminar usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCRIPT DE CONFIRMACIÓN ADICIONAL -->
+<!-- ============================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+    const usuarioNombre = "{{ usuario.get_full_name|default:usuario.username|escapejs }}";
+    
+    if (deleteForm && btnConfirmDelete) {
+        deleteForm.addEventListener('submit', function(e) {
+            // Doble confirmación para evitar eliminaciones accidentales
+            const confirmacion = confirm(
+                '⚠️ ÚLTIMA CONFIRMACIÓN\n\n' +
+                '¿Estás completamente seguro de eliminar al usuario:\n' +
+                '"' + usuarioNombre + '"?\n\n' +
+                'Esta acción NO se puede deshacer.'
+            );
+            
+            if (!confirmacion) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Deshabilitar botón para evitar doble envío
+            btnConfirmDelete.disabled = true;
+            btnConfirmDelete.innerHTML = '<i class="bi bi-hourglass-split"></i> Eliminando...';
+        });
+    }
+});
+</script>
+{% endblock %}

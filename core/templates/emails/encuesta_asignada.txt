@@ -1,0 +1,19 @@
+NUEVA ENCUESTA ASIGNADA
+
+Hola {{ estudiante.nombre }},
+
+Se te ha asignado una nueva encuesta:
+
+Título: {{ encuesta.titulo }}
+Descripción: {{ encuesta.descripcion|default:"Sin descripción" }}
+Fecha de inicio: {{ encuesta.fecha_inicio|date:"d/m/Y H:i" }}
+Fecha de fin: {{ encuesta.fecha_fin|date:"d/m/Y H:i" }}
+{% if encuesta.es_obligatoria %}⚠️ Esta encuesta es obligatoria.{% endif %}
+
+Para responder la encuesta, visita:
+{{ url_encuesta }}
+
+¡No olvides responder antes de la fecha límite!
+
+Saludos,
+{{ site_name }}

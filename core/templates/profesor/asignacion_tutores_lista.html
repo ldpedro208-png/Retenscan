@@ -1,0 +1,776 @@
+<!-- templates/profesor/asignacion_tutores_lista.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}{{ titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .estudiante-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #ffffff;
+        }
+        
+        .estudiante-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #2a5f8f;
+        }
+        
+        .estudiante-card.seleccionado {
+            background: #e3f2fd;
+            border-color: #2a5f8f;
+            border-width: 2px;
+        }
+        
+        .estudiante-card .avatar-mini {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+        
+        .estudiante-card .avatar-mini-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+        }
+        
+        .badge-estado {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+        }
+        
+        .tutor-select {
+            max-width: 300px;
+        }
+        
+        .acciones-masivas {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        .seleccion-info {
+            background: #e3f2fd;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #2a5f8f;
+        }
+        
+        /* ============================================
+           NUEVOS ESTILOS PARA TUTORES DE LA UNIVERSIDAD
+           ============================================ */
+        .tutores-universidad-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #2a5f8f;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tutores-universidad-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2a5f8f, #4a9eff);
+        }
+        
+        .tutores-universidad-card .badge-universidad {
+            background: #2a5f8f;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .tutor-disponible {
+            transition: all 0.2s ease;
+        }
+        
+        .tutor-disponible:hover {
+            transform: translateX(5px);
+            background: #f8f9fa;
+        }
+        
+        .tutor-disponible .badge-cupo {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 50px;
+        }
+        
+        .sin-tutores-mensaje {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .sin-tutores-mensaje i {
+            font-size: 3rem;
+            color: #ffc107;
+        }
+        
+        @media (max-width: 768px) {
+            .tutor-select {
+                max-width: 100%;
+            }
+            
+            .estudiante-card .d-flex {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard_profesor' %}" class="text-decoration-none">
+                    <i class="bi bi-person-badge" aria-hidden="true"></i> Profesor
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                {{ titulo }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h3>
+            <i class="bi bi-people" aria-hidden="true"></i>
+            {{ titulo }}
+            <span class="badge bg-secondary ms-2">{{ total_estudiantes }} estudiantes</span>
+        </h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'asignacion_tutores_masiva' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                Asignación Masiva
+            </a>
+            <a href="{% url 'asignacion_tutores_estadisticas' %}" class="btn btn-info">
+                <i class="bi bi-graph-up" aria-hidden="true"></i>
+                Estadísticas
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================
+    🔴 NUEVO: PANEL DE TUTORES DE LA UNIVERSIDAD
+    ============================================ -->
+    <div class="tutores-universidad-card">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="font-size: 2.5rem; color: #2a5f8f;">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="bi bi-building me-1"></i>
+                            Tutores de <strong>{{ universidad_nombre }}</strong>
+                            <span class="badge-universidad ms-2">
+                                <i class="bi bi-people-fill me-1"></i>
+                                {{ total_tutores_universidad|default:"0" }} tutores activos
+                            </span>
+                        </h5>
+                        <p class="text-muted small mb-0 mt-1">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Solo se muestran tutores de tu universidad
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <span class="d-block h4 mb-0 text-primary">{{ total_tutores_universidad|default:"0" }}</span>
+                            <small class="text-muted">Totales</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <span class="d-block h4 mb-0 text-success">{{ tutores_con_estudiantes|default:"0" }}</span>
+                            <small class="text-muted">Con estudiantes</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div>
+                            <span class="d-block h4 mb-0 text-warning">{{ tutores_disponibles|default:"0" }}</span>
+                            <small class="text-muted">Con cupo</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lista rápida de tutores -->
+        {% if tutores %}
+        <div class="mt-2 pt-2 border-top">
+            <div class="d-flex flex-wrap gap-2">
+                {% for tutor in tutores|slice:":5" %}
+                    <span class="tutor-disponible badge bg-light text-dark border px-3 py-2">
+                        <i class="bi bi-person-circle me-1"></i>
+                        {{ tutor.usuario.get_full_name }}
+                        <span class="badge-cupo {% if tutor.cupos_disponibles > 0 %}bg-success text-white{% else %}bg-danger text-white{% endif %} ms-1">
+                            {{ tutor.cupos_disponibles }} cupos
+                        </span>
+                    </span>
+                {% endfor %}
+                {% if tutores.count > 5 %}
+                    <span class="badge bg-secondary px-3 py-2">
+                        +{{ tutores.count|add:"-5" }} más
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================
+    MENSAJE SI NO HAY TUTORES DISPONIBLES
+    ============================================ -->
+    {% if not tutores %}
+    <div class="sin-tutores-mensaje mb-3">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <h5 class="mt-2">No hay tutores disponibles en tu universidad</h5>
+        <p class="text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Para poder asignar estudiantes, primero debes registrar tutores en 
+            <strong>{{ universidad_nombre }}</strong>.
+        </p>
+        <small class="text-muted d-block mt-2">
+            Los tutores se registran desde el panel de administración.
+        </small>
+    </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Buscar estudiante</label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="search" 
+                           placeholder="Nombre, carnet, email..." 
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Carrera</label>
+                    <select name="carrera" class="form-select">
+                        <option value="">Todas las carreras</option>
+                        {% for carrera in carreras %}
+                            <option value="{{ carrera.idCarrera }}" 
+                                    {% if carrera_selected == carrera.idCarrera|stringformat:"s" %}selected{% endif %}>
+                                {{ carrera.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Estado de asignación</label>
+                    <select name="estado_asignacion" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="asignados" {% if estado_asignacion == 'asignados' %}selected{% endif %}>
+                            Con tutor asignado
+                        </option>
+                        <option value="no_asignados" {% if estado_asignacion == 'no_asignados' %}selected{% endif %}>
+                            Sin tutor asignado
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Acciones Masivas -->
+    <div class="acciones-masivas">
+        <form method="post" action="{% url 'asignacion_tutores_crear' %}" id="formAsignacionMasiva">
+            {% csrf_token %}
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="seleccionarTodos">
+                        <label class="form-check-label" for="seleccionarTodos">
+                            <strong>Seleccionar todos</strong>
+                            <span class="text-muted" id="contadorSeleccionados">(0 seleccionados)</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select name="tutor_id" class="form-select tutor-select" required>
+                        <option value="">Seleccionar tutor...</option>
+                        {% for tutor in tutores %}
+                            <option value="{{ tutor.id }}">
+                                {{ tutor.usuario.get_full_name }} 
+                                ({{ tutor.estudiantes_asignados }}/{{ tutor.max_estudiantes }}) 
+                                - {{ tutor.cupos_disponibles }} cupos
+                            </option>
+                        {% empty %}
+                            <option value="" disabled>No hay tutores disponibles</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        <i class="bi bi-building me-1"></i>
+                        Tutores de {{ universidad_nombre }}
+                    </small>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success w-100" id="btnAsignar" 
+                            {% if not tutores %}disabled{% endif %}>
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
+                        Asignar seleccionados
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger w-100" id="btnRemover" 
+                            onclick="removerSeleccionados()">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i>
+                        Remover
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" name="accion" value="asignar" id="accionInput">
+            <div id="estudiantesSeleccionados"></div>
+        </form>
+    </div>
+
+    <!-- Información de selección -->
+    <div class="seleccion-info" id="seleccionInfo" style="display: none;">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        <span id="mensajeSeleccion">0 estudiantes seleccionados</span>
+    </div>
+
+    <!-- Lista de estudiantes -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="seleccionarTodosTabla">
+                            </th>
+                            <th>Estudiante</th>
+                            <th>Carnet</th>
+                            <th>Carrera</th>
+                            <th>Tutor Asignado</th>
+                            <th>Estado</th>
+                            <th style="width: 180px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estudiante in estudiantes %}
+                            <tr class="estudiante-row" data-id="{{ estudiante.idEstudiante }}">
+                                <td>
+                                    <input type="checkbox" 
+                                           class="form-check-input estudiante-checkbox" 
+                                           value="{{ estudiante.idEstudiante }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if estudiante.idUsuario.foto %}
+                                            <img src="{{ estudiante.idUsuario.foto.url }}" 
+                                                 alt="Foto" class="avatar-mini">
+                                        {% else %}
+                                            <div class="avatar-mini-placeholder">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ estudiante.nombre_completo }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ estudiante.idUsuario.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><code>{{ estudiante.carnet }}</code></td>
+                                <td>{{ estudiante.idCarrera.nombre|default:"-" }}</td>
+                                <td>
+                                    {% with asignaciones=asignaciones_map|get_item:estudiante.idEstudiante %}
+                                        {% if asignaciones %}
+                                            {% for asig in asignaciones %}
+                                                <span class="badge bg-info">
+                                                    {{ asig.tutor_nombre }}
+                                                    {% if asig.estado == 'confirmada' %}
+                                                        <span class="badge bg-success">✓</span>
+                                                    {% elif asig.estado == 'pendiente' %}
+                                                        <span class="badge bg-warning text-dark">⏳</span>
+                                                    {% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">Sin tutor</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with asignaciones=asignaciones_map|get_item:estudiante.idEstudiante %}
+                                        {% if asignaciones %}
+                                            {% for asig in asignaciones %}
+                                                <span class="badge badge-estado 
+                                                    {% if asig.estado == 'confirmada' %}bg-success
+                                                    {% elif asig.estado == 'pendiente' %}bg-warning text-dark
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ asig.estado|title }}
+                                                </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="badge badge-estado bg-secondary">Sin asignar</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" 
+                                                class="btn btn-outline-primary btn-asignar-individual"
+                                                data-id="{{ estudiante.idEstudiante }}"
+                                                data-nombre="{{ estudiante.nombre_completo }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalAsignarIndividual"
+                                                {% if not tutores %}disabled{% endif %}>
+                                            <i class="bi bi-person-plus"></i>
+                                            Asignar
+                                        </button>
+                                        {% with asignaciones=asignaciones_map|get_item:estudiante.idEstudiante %}
+                                            {% if asignaciones %}
+                                                {% for asig in asignaciones %}
+                                                    {% if asig.estado == 'pendiente' %}
+                                                        <a href="{% url 'asignacion_tutores_confirmar' asig.asignacion_id %}" 
+                                                           class="btn btn-outline-success"
+                                                           onclick="return confirm('¿Confirmar esta asignación?')">
+                                                            <i class="bi bi-check"></i>
+                                                        </a>
+                                                        <a href="{% url 'asignacion_tutores_cancelar' asig.asignacion_id %}" 
+                                                           class="btn btn-outline-danger"
+                                                           onclick="return confirm('¿Cancelar esta asignación?')">
+                                                            <i class="bi bi-x"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2" aria-hidden="true"></i>
+                                    No hay estudiantes para asignar.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if estudiantes.paginator.num_pages > 1 %}
+        <nav aria-label="Navegación de páginas" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if estudiantes.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if carrera_selected %}&carrera={{ carrera_selected }}{% endif %}{% if estado_asignacion %}&estado_asignacion={{ estado_asignacion }}{% endif %}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ estudiantes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if carrera_selected %}&carrera={{ carrera_selected }}{% endif %}{% if estado_asignacion %}&estado_asignacion={{ estado_asignacion }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        {{ estudiantes.number }} / {{ estudiantes.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if estudiantes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ estudiantes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if carrera_selected %}&carrera={{ carrera_selected }}{% endif %}{% if estado_asignacion %}&estado_asignacion={{ estado_asignacion }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ estudiantes.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if carrera_selected %}&carrera={{ carrera_selected }}{% endif %}{% if estado_asignacion %}&estado_asignacion={{ estado_asignacion }}{% endif %}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ============================================
+        // SELECCIÓN DE ESTUDIANTES
+        // ============================================
+        
+        // Seleccionar todos
+        document.getElementById('seleccionarTodos').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.estudiante-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            actualizarContador();
+        });
+        
+        // Seleccionar todos en tabla
+        document.getElementById('seleccionarTodosTabla').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.estudiante-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            document.getElementById('seleccionarTodos').checked = this.checked;
+            actualizarContador();
+        });
+        
+        // Cambio individual
+        document.querySelectorAll('.estudiante-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                actualizarContador();
+                // Actualizar "seleccionar todos"
+                const checkboxes = document.querySelectorAll('.estudiante-checkbox');
+                const todosChecked = Array.from(checkboxes).every(c => c.checked);
+                document.getElementById('seleccionarTodos').checked = todosChecked;
+                document.getElementById('seleccionarTodosTabla').checked = todosChecked;
+            });
+        });
+        
+        function actualizarContador() {
+            const checkboxes = document.querySelectorAll('.estudiante-checkbox:checked');
+            const count = checkboxes.length;
+            document.getElementById('contadorSeleccionados').textContent = `(${count} seleccionados)`;
+            document.getElementById('mensajeSeleccion').textContent = `${count} estudiantes seleccionados`;
+            document.getElementById('seleccionInfo').style.display = count > 0 ? 'block' : 'none';
+            
+            // Actualizar estudiantes seleccionados en el formulario
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'estudiantes_seleccionados';
+            hiddenInput.value = ids.join(',');
+            
+            // Remover inputs anteriores
+            document.querySelectorAll('input[name="estudiantes_seleccionados"]').forEach(el => el.remove());
+            
+            if (ids.length > 0) {
+                document.getElementById('estudiantesSeleccionados').appendChild(hiddenInput);
+            }
+        }
+        
+        // ============================================
+        // ASIGNACIÓN MASIVA
+        // ============================================
+        
+        document.getElementById('formAsignacionMasiva').addEventListener('submit', function(e) {
+            const checkboxes = document.querySelectorAll('.estudiante-checkbox:checked');
+            if (checkboxes.length === 0) {
+                e.preventDefault();
+                alert('Debes seleccionar al menos un estudiante.');
+                return false;
+            }
+            
+            const tutorSelect = document.querySelector('select[name="tutor_id"]');
+            if (!tutorSelect.value) {
+                e.preventDefault();
+                alert('Debes seleccionar un tutor.');
+                return false;
+            }
+            
+            const confirmMsg = `¿Asignar ${checkboxes.length} estudiantes al tutor seleccionado?`;
+            return confirm(confirmMsg);
+        });
+        
+        // ============================================
+        // REMOVER SELECCIONADOS
+        // ============================================
+        
+        window.removerSeleccionados = function() {
+            const checkboxes = document.querySelectorAll('.estudiante-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Debes seleccionar al menos un estudiante.');
+                return;
+            }
+            
+            if (!confirm(`¿Remover las asignaciones de ${checkboxes.length} estudiantes?`)) {
+                return;
+            }
+            
+            // Crear formulario para remover
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{% url 'asignacion_tutores_crear' %}";
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+            form.appendChild(csrfInput);
+            
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            const idsInput = document.createElement('input');
+            idsInput.type = 'hidden';
+            idsInput.name = 'estudiantes_seleccionados';
+            idsInput.value = ids.join(',');
+            form.appendChild(idsInput);
+            
+            const accionInput = document.createElement('input');
+            accionInput.type = 'hidden';
+            accionInput.name = 'accion';
+            accionInput.value = 'remover';
+            form.appendChild(accionInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        };
+        
+        // ============================================
+        // ASIGNACIÓN INDIVIDUAL (Modal)
+        // ============================================
+        
+        let estudianteIdActual = null;
+        
+        document.querySelectorAll('.btn-asignar-individual').forEach(btn => {
+            btn.addEventListener('click', function() {
+                estudianteIdActual = this.dataset.id;
+                document.getElementById('estudianteNombreIndividual').textContent = this.dataset.nombre;
+            });
+        });
+        
+        document.getElementById('btnAsignarIndividual').addEventListener('click', function() {
+            const tutorSelect = document.getElementById('tutorIndividual');
+            const tutorId = tutorSelect.value;
+            
+            if (!tutorId) {
+                alert('Debes seleccionar un tutor.');
+                return;
+            }
+            
+            // Enviar petición AJAX
+            fetch("{% url 'asignacion_tutores_individual' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+                },
+                body: `estudiante_id=${estudianteIdActual}&tutor_id=${tutorId}&accion=asignar`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error al asignar: ' + error);
+            });
+        });
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        actualizarContador();
+    });
+</script>
+
+<!-- Modal Asignación Individual -->
+<div class="modal fade" id="modalAsignarIndividual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i>
+                    Asignar Tutor Individual
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-building me-1"></i>
+                    <strong>{{ universidad_nombre }}</strong>
+                    <span class="badge bg-primary ms-2">
+                        {{ total_tutores_universidad|default:"0" }} tutores disponibles
+                    </span>
+                </div>
+                <p>
+                    <strong>Estudiante:</strong> 
+                    <span id="estudianteNombreIndividual"></span>
+                </p>
+                <div class="mb-3">
+                    <label class="form-label">Seleccionar Tutor</label>
+                    <select class="form-select" id="tutorIndividual">
+                        <option value="">Seleccionar tutor...</option>
+                        {% for tutor in tutores %}
+                            <option value="{{ tutor.id }}">
+                                {{ tutor.usuario.get_full_name }} 
+                                ({{ tutor.estudiantes_asignados }}/{{ tutor.max_estudiantes }}) 
+                                - {{ tutor.cupos_disponibles }} cupos
+                            </option>
+                        {% empty %}
+                            <option value="" disabled>No hay tutores disponibles en tu universidad</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        <i class="bi bi-building me-1"></i>
+                        Tutores de {{ universidad_nombre }}
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnAsignarIndividual"
+                        {% if not tutores %}disabled{% endif %}>
+                    <i class="bi bi-check2" aria-hidden="true"></i>
+                    Asignar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

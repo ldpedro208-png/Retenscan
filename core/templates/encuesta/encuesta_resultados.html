@@ -1,0 +1,858 @@
+<!-- templates/layout/encuesta/encuesta_resultados.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Resultados - {{ encuesta.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --result-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --chart-colors: #4e73df, #1cc88a, #36b9cc, #f6c23e, #e74a3b, #858796, #6f42c1;
+        }
+
+        /* Tarjeta de resultados */
+        .result-card {
+            border: none;
+            border-radius: var(--result-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            overflow: hidden;
+        }
+        
+        .result-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+        
+        .result-card .card-header {
+            background: #f8f9fa;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .result-card .card-header .question-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
+        }
+        
+        .result-card .card-header .question-type {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        .result-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Estadísticas en tarjetas */
+        .stats-card {
+            border: none;
+            border-radius: var(--result-card-radius);
+            background: #f8f9fa;
+            transition: all var(--transition-speed) ease;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .stats-card:hover {
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+        
+        .stats-card .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0d6efd;
+            line-height: 1.2;
+        }
+        
+        .stats-card .stats-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        
+        .stats-card .stats-icon {
+            font-size: 2rem;
+            opacity: 0.3;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tabla de opciones */
+        .options-table {
+            margin-bottom: 0;
+        }
+        
+        .options-table thead th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #6c757d;
+            border-bottom-width: 2px;
+        }
+        
+        .options-table tbody td {
+            vertical-align: middle;
+            padding: 0.6rem 0.75rem;
+        }
+        
+        .options-table .option-text {
+            font-weight: 500;
+            color: #2d3748;
+        }
+        
+        .options-table .option-count {
+            font-weight: 600;
+            color: #0d6efd;
+            text-align: center;
+        }
+        
+        .options-table .option-percent {
+            font-weight: 600;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        /* Barra de progreso mejorada */
+        .progress-custom {
+            height: 0.6rem;
+            border-radius: 0.25rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+            min-width: 100px;
+        }
+        
+        .progress-custom .progress-bar {
+            height: 100%;
+            border-radius: 0.25rem;
+            transition: width 0.8s ease;
+            position: relative;
+        }
+        
+        .progress-custom .progress-bar .progress-label {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.65rem;
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Colores para barras */
+        .progress-bar.color-0 { background: #4e73df; }
+        .progress-bar.color-1 { background: #1cc88a; }
+        .progress-bar.color-2 { background: #36b9cc; }
+        .progress-bar.color-3 { background: #f6c23e; }
+        .progress-bar.color-4 { background: #e74a3b; }
+        .progress-bar.color-5 { background: #858796; }
+        .progress-bar.color-6 { background: #6f42c1; }
+        .progress-bar.color-7 { background: #fd7e14; }
+        .progress-bar.color-8 { background: #20c997; }
+        .progress-bar.color-9 { background: #d63384; }
+
+        /* Escala promedio */
+        .scale-average {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .scale-average .average-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #0d6efd;
+            line-height: 1;
+        }
+        
+        .scale-average .average-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .scale-average .average-stars {
+            font-size: 1.5rem;
+            color: #ffc107;
+            margin-top: 0.5rem;
+        }
+        
+        .scale-average .average-detail {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .stats-number {
+            animation: countUp 0.6s ease forwards;
+        }
+
+        .result-card:nth-child(1) { animation-delay: 0.05s; }
+        .result-card:nth-child(2) { animation-delay: 0.10s; }
+        .result-card:nth-child(3) { animation-delay: 0.15s; }
+        .result-card:nth-child(4) { animation-delay: 0.20s; }
+        .result-card:nth-child(5) { animation-delay: 0.25s; }
+
+        /* Accesibilidad */
+        .result-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+        
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-card .stats-number {
+                font-size: 2rem;
+            }
+            
+            .result-card .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .result-card .card-header .question-title {
+                font-size: 0.95rem;
+            }
+            
+            .options-table thead th {
+                font-size: 0.7rem;
+            }
+            
+            .options-table tbody td {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .scale-average .average-number {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .result-card .card-body {
+                padding: 0.75rem;
+            }
+            
+            .stats-card .stats-number {
+                font-size: 1.75rem;
+            }
+            
+            .options-table {
+                font-size: 0.8rem;
+            }
+            
+            .progress-custom {
+                height: 0.5rem;
+                min-width: 50px;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .result-card {
+                background-color: #2d2d2d;
+            }
+            
+            .result-card .card-header {
+                background: #252540;
+            }
+            
+            .result-card .card-header .question-title {
+                color: #ecf0f1;
+            }
+            
+            .result-card .card-header .question-type {
+                color: #8a8a9a;
+            }
+            
+            .stats-card {
+                background: #252540;
+            }
+            
+            .stats-card:hover {
+                background: #2d2d44;
+            }
+            
+            .stats-card .stats-number {
+                color: #4dabf7;
+            }
+            
+            .stats-card .stats-label {
+                color: #8a8a9a;
+            }
+            
+            .options-table .option-text {
+                color: #c8d6e5;
+            }
+            
+            .options-table .option-count {
+                color: #4dabf7;
+            }
+            
+            .progress-custom {
+                background-color: #2d2d44;
+            }
+            
+            .scale-average .average-number {
+                color: #4dabf7;
+            }
+            
+            .scale-average .average-label {
+                color: #8a8a9a;
+            }
+            
+            .scale-average .average-detail {
+                color: #8a8a9a;
+            }
+        }
+
+        /* Sin respuestas */
+        .no-responses {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        
+        .no-responses .no-responses-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        
+        .no-responses .no-responses-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .no-responses .no-responses-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Export button */
+        .btn-export {
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-export i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" class="text-decoration-none">
+                    {{ encuesta.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i> Resultados
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-bar-chart" aria-hidden="true"></i> 
+            Resultados: <span class="text-primary">{{ encuesta.titulo }}</span>
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-primary btn-export" id="exportBtn">
+                <i class="bi bi-download" aria-hidden="true"></i> Exportar
+            </button>
+            <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" 
+               class="btn btn-secondary btn-action"
+               aria-label="Volver al detalle de la encuesta">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- ESTADÍSTICAS GENERALES                      -->
+    <!-- ============================================ -->
+    <section aria-label="Estadísticas generales" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="stats-card">
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stats-number" id="totalRespuestas">{{ total_respuestas|default:0 }}</div>
+                <div class="stats-label">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i> Respuestas totales
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="stats-card">
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stats-number">{{ encuesta.encuestaasignacion_set.count|default:0 }}</div>
+                <div class="stats-label">
+                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes asignados
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="stats-card">
+                <div class="stats-icon" aria-hidden="true">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stats-number">{{ encuesta.get_progreso|default:0 }}%</div>
+                <div class="stats-label">
+                    <i class="bi bi-graph-up" aria-hidden="true"></i> Tasa de respuesta
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- RESULTADOS POR PREGUNTA                     -->
+    <!-- ============================================ -->
+    {% if encuesta.preguntas.all %}
+        <section aria-label="Resultados por pregunta">
+            {% for pregunta in encuesta.preguntas.all %}
+                {% with stats=estadisticas|get_item:pregunta.idPreguntaEncuesta %}
+                    <article class="card result-card mb-4" tabindex="0">
+                        <!-- Header -->
+                        <header class="card-header">
+                            <span class="question-title">
+                                <span class="fw-bold">{{ forloop.counter }}.</span> 
+                                {{ pregunta.pregunta }}
+                                {% if pregunta.es_obligatoria %}
+                                    <span class="badge bg-danger ms-1">
+                                        <i class="bi bi-exclamation-circle" aria-hidden="true"></i> Obligatoria
+                                    </span>
+                                {% endif %}
+                            </span>
+                            <span class="question-type">
+                                <i class="bi bi-tag" aria-hidden="true"></i>
+                                {{ pregunta.get_tipo_display }}
+                            </span>
+                        </header>
+
+                        <!-- Body -->
+                        <div class="card-body">
+                            {% if stats %}
+                                <!-- Opción Única o Múltiple -->
+                                {% if pregunta.tipo == 'opcion_unica' or pregunta.tipo == 'opcion_multiple' %}
+                                    <div class="table-responsive">
+                                        <table class="table options-table" aria-label="Resultados de opciones">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Opción</th>
+                                                    <th scope="col" class="text-center">Respuestas</th>
+                                                    <th scope="col" class="text-center">Porcentaje</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for opcion_texto, count in stats.items %}
+                                                    {% if opcion_texto != 'total_respuestas' %}
+                                                        {% with porcentaje=count|floatformat:0 %}
+                                                            <tr>
+                                                                <td class="option-text">
+                                                                    <i class="bi bi-circle-fill" style="color: #0d6efd; font-size: 0.6rem;" aria-hidden="true"></i>
+                                                                    {{ opcion_texto }}
+                                                                </td>
+                                                                <td class="option-count">{{ count }}</td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <div class="progress-custom flex-grow-1">
+                                                                            <div class="progress-bar color-{{ forloop.counter0|divisibleby:10 }}" 
+                                                                                 role="progressbar" 
+                                                                                 style="width: {% if total_respuestas > 0 %}{{ count|floatformat:0 }}{% else %}0{% endif %}%;"
+                                                                                 aria-valuenow="{{ count }}" 
+                                                                                 aria-valuemin="0" 
+                                                                                 aria-valuemax="{{ total_respuestas }}">
+                                                                            </div>
+                                                                        </div>
+                                                                        <span class="option-percent" style="min-width: 50px;">
+                                                                            {% if total_respuestas > 0 %}
+                                                                                {{ count|floatformat:0 }}%
+                                                                            {% else %}
+                                                                                0%
+                                                                            {% endif %}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        {% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <tr class="table-light">
+                                                    <td>
+                                                        <strong>
+                                                            <i class="bi bi-people" aria-hidden="true"></i> Total respuestas
+                                                        </strong>
+                                                    </td>
+                                                    <td class="text-center fw-bold">{{ stats.total_respuestas|default:0 }}</td>
+                                                    <td class="text-center fw-bold">100%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                <!-- Escala (1-5) -->
+                                {% elif pregunta.tipo == 'escala' %}
+                                    <div class="scale-average">
+                                        <div class="average-number">{{ stats.promedio|default:"-" }}</div>
+                                        <div class="average-label">
+                                            <i class="bi bi-star-fill" style="color: #ffc107;" aria-hidden="true"></i>
+                                            Promedio
+                                        </div>
+                                        <div class="average-stars">
+                                            {% with promedio=stats.promedio|default:0 %}
+                                                {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= promedio %}
+                                                        <i class="bi bi-star-fill" aria-hidden="true"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-star" aria-hidden="true"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                        </div>
+                                        <div class="average-detail">
+                                            <i class="bi bi-people" aria-hidden="true"></i>
+                                            Basado en {{ stats.total_respuestas|default:0 }} respuestas
+                                        </div>
+                                        <!-- Distribución de escala -->
+                                        <div class="row mt-3">
+                                            {% for i in "12345"|make_list %}
+                                                <div class="col">
+                                                    <div class="small text-muted">{{ i }}</div>
+                                                    <div class="progress-custom" style="height: 0.8rem;">
+                                                        <div class="progress-bar 
+                                                            {% if forloop.counter <= 2 %}bg-danger
+                                                            {% elif forloop.counter == 3 %}bg-warning
+                                                            {% else %}bg-success{% endif %}" 
+                                                             role="progressbar" 
+                                                             style="width: {% if stats.total_respuestas > 0 %}{{ stats|get_item:i|default:0|floatformat:0 }}{% else %}0{% endif %}%;"
+                                                             aria-valuenow="{{ stats|get_item:i|default:0 }}" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="{{ stats.total_respuestas }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="small text-muted mt-1">{{ stats|get_item:i|default:0 }}</div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                <!-- Sí/No -->
+                                {% elif pregunta.tipo == 'si_no' %}
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
+                                                <h2 class="text-success">{{ stats.Si|default:0 }}</h2>
+                                                <span class="text-muted">Sí</span>
+                                                <div class="progress-custom mt-2">
+                                                    <div class="progress-bar bg-success" 
+                                                         role="progressbar" 
+                                                         style="width: {% if stats.total_respuestas > 0 %}{{ stats.Si|floatformat:0 }}{% else %}0{% endif %}%;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-center p-3 bg-danger bg-opacity-10 rounded-3">
+                                                <h2 class="text-danger">{{ stats.No|default:0 }}</h2>
+                                                <span class="text-muted">No</span>
+                                                <div class="progress-custom mt-2">
+                                                    <div class="progress-bar bg-danger" 
+                                                         role="progressbar" 
+                                                         style="width: {% if stats.total_respuestas > 0 %}{{ stats.No|floatformat:0 }}{% else %}0{% endif %}%;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                <!-- Texto Libre -->
+                                {% elif pregunta.tipo == 'texto' %}
+                                    <div class="text-center p-3">
+                                        <i class="bi bi-pencil" style="font-size: 2rem; color: #6c757d;" aria-hidden="true"></i>
+                                        <p class="text-muted mt-2">
+                                            {{ stats.total_respuestas|default:0 }} respuestas de texto
+                                        </p>
+                                        <div class="alert alert-light text-start">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Las respuestas de texto se pueden visualizar en el detalle de cada estudiante.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="no-responses">
+                                    <div class="no-responses-icon" aria-hidden="true">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
+                                    <p class="no-responses-title">No hay respuestas para esta pregunta</p>
+                                    <p class="no-responses-description">
+                                        Aún no se han registrado respuestas para esta pregunta.
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endwith %}
+            {% endfor %}
+        </section>
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            Esta encuesta no tiene preguntas.
+        </div>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- PIE DE PÁGINA                               -->
+    <!-- ============================================ -->
+    <footer class="text-center text-muted small mt-4 pt-3 border-top">
+        <i class="bi bi-clock-history" aria-hidden="true"></i>
+        Resultados actualizados al {% now "d/m/Y H:i" %}
+        <span class="mx-2">|</span>
+        <i class="bi bi-people" aria-hidden="true"></i>
+        {{ total_respuestas|default:0 }} respuestas de {{ encuesta.encuestaasignacion_set.count|default:0 }} estudiantes
+    </footer>
+
+    <!-- Modal de exportación -->
+    <div class="modal fade" id="exportModal" tabindex="-1" 
+         aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">
+                        <i class="bi bi-download" aria-hidden="true"></i> 
+                        Exportar Resultados
+                    </h5>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <p>Selecciona el formato de exportación:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" id="exportCSV">
+                            <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> 
+                            Exportar como CSV
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="exportPDF">
+                            <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> 
+                            Exportar como PDF
+                        </button>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. EXPORTAR DATOS
+            // ============================================
+            const exportBtn = document.getElementById('exportBtn');
+            const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+            
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    exportModal.show();
+                });
+            }
+
+            // Exportar CSV
+            const exportCSV = document.getElementById('exportCSV');
+            if (exportCSV) {
+                exportCSV.addEventListener('click', function() {
+                    // Recopilar datos de la tabla
+                    const rows = document.querySelectorAll('.options-table tbody tr:not(.table-light)');
+                    let csv = 'Pregunta,Opción,Respuestas,Porcentaje\n';
+                    
+                    document.querySelectorAll('.result-card').forEach(function(card) {
+                        const pregunta = card.querySelector('.question-title')?.textContent?.trim() || '';
+                        const table = card.querySelector('.options-table');
+                        
+                        if (table) {
+                            const tbody = table.querySelector('tbody');
+                            if (tbody) {
+                                const items = tbody.querySelectorAll('tr:not(.table-light)');
+                                items.forEach(function(item) {
+                                    const cells = item.querySelectorAll('td');
+                                    if (cells.length >= 3) {
+                                        const opcion = cells[0]?.textContent?.trim() || '';
+                                        const respuestas = cells[1]?.textContent?.trim() || '0';
+                                        const porcentaje = cells[2]?.textContent?.trim() || '0%';
+                                        csv += `"${pregunta}","${opcion}","${respuestas}","${porcentaje}"\n`;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Descargar archivo
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `resultados_encuesta_${Date.now()}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    
+                    exportModal.hide();
+                });
+            }
+
+            // ============================================
+            // 2. ANIMACIÓN DE CONTADORES
+            // ============================================
+            function animateNumbers() {
+                const statElements = document.querySelectorAll('.stats-number');
+                
+                statElements.forEach(function(element) {
+                    const text = element.textContent;
+                    const num = parseFloat(text.replace(/,/g, ''));
+                    
+                    if (!isNaN(num) && num > 0) {
+                        const observer = new IntersectionObserver(function(entries) {
+                            entries.forEach(function(entry) {
+                                if (entry.isIntersecting) {
+                                    let current = 0;
+                                    const increment = Math.ceil(num / 30);
+                                    const interval = setInterval(function() {
+                                        current += increment;
+                                        if (current >= num) {
+                                            current = num;
+                                            clearInterval(interval);
+                                        }
+                                        element.textContent = Math.round(current);
+                                    }, 30);
+                                    observer.unobserve(element);
+                                }
+                            });
+                        });
+                        observer.observe(element);
+                    }
+                });
+            }
+
+            // ============================================
+            // 3. ANIMACIÓN DE BARRAS DE PROGRESO
+            // ============================================
+            function animateProgressBars() {
+                const progressBars = document.querySelectorAll('.progress-bar');
+                
+                progressBars.forEach(function(bar) {
+                    const targetWidth = bar.style.width;
+                    bar.style.width = '0%';
+                    
+                    setTimeout(function() {
+                        bar.style.width = targetWidth;
+                    }, 300);
+                });
+            }
+
+            // ============================================
+            // 4. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.result-card').forEach(function(card) {
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        // Expandir/colapsar si hay contenido adicional
+                        const body = this.querySelector('.card-body');
+                        if (body) {
+                            if (body.style.display === 'none') {
+                                body.style.display = 'block';
+                            } else {
+                                body.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 5. INICIALIZAR
+            // ============================================
+            setTimeout(function() {
+                animateNumbers();
+                animateProgressBars();
+            }, 300);
+
+            // ============================================
+            // 6. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de resultados de encuesta cargada');
+        });
+    </script>
+{% endblock %}

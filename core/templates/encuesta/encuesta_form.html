@@ -1,0 +1,1538 @@
+<!-- templates/layout/encuesta/encuesta_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if encuesta %}
+        Editar Encuesta - {{ encuesta.titulo }}
+    {% else %}
+        Crear Encuesta - RetenScan
+    {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --question-border-color: #0d6efd;
+            --danger-color: #dc3545;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           SECCIONES DEL FORMULARIO
+           ============================================ */
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section-title i {
+            font-size: 1.1rem;
+        }
+
+        .form-section-divider {
+            border: 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.05);
+            margin: 0 0 1rem 0;
+        }
+
+        /* ============================================
+           PREGUNTA ITEM
+           ============================================ */
+        .question-item {
+            background: #f8f9fa;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--question-border-color);
+            transition: all var(--transition-speed) ease;
+            animation: slideIn 0.3s ease forwards;
+            position: relative;
+        }
+
+        .question-item:hover {
+            background: #f0f4ff;
+            border-left-color: #0a58ca;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .question-item .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .question-item .question-number {
+            font-weight: 700;
+            color: #0d6efd;
+            font-size: 0.9rem;
+            min-width: 2rem;
+        }
+
+        .question-item .question-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .question-item .btn-remove {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        .question-item .btn-remove:hover {
+            color: #a71d2a;
+            transform: scale(1.15);
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+        .question-item .btn-remove:focus-visible {
+            outline: 2px solid var(--danger-color);
+            outline-offset: 2px;
+        }
+
+        /* Drag handle */
+        .drag-handle {
+            cursor: move;
+            color: #6c757d;
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+
+        .drag-handle:hover {
+            color: #0d6efd;
+        }
+
+        /* ============================================
+           OPCIONES DE PREGUNTA
+           ============================================ */
+        .options-container {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .options-container .option-item {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.35rem;
+        }
+
+        .options-container .option-item .form-control {
+            flex: 1;
+        }
+
+        .options-container .option-item .btn-remove-option {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .options-container .option-item .btn-remove-option:hover {
+            color: #a71d2a;
+            transform: scale(1.1);
+        }
+
+        /* ============================================
+           CATÁLOGO DE PREGUNTAS
+           ============================================ */
+        .catalog-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #e2e8f0;
+            transition: all var(--transition-speed) ease;
+            margin-bottom: 0.5rem;
+            background: #ffffff;
+        }
+
+        .catalog-item:hover {
+            border-color: var(--question-border-color);
+            background: #f0f4ff;
+            transform: translateX(4px);
+        }
+
+        .catalog-item.selected {
+            border-color: var(--question-border-color);
+            background: #cfe2ff;
+            cursor: default;
+        }
+
+        .catalog-item.selected .btn-add-catalog {
+            display: none;
+        }
+
+        .catalog-item.selected .btn-remove-catalog {
+            display: inline-block;
+        }
+
+        .catalog-item .btn-add-catalog {
+            display: inline-block;
+        }
+
+        .catalog-item .btn-remove-catalog {
+            display: none;
+        }
+
+        /* ============================================
+           ALERTA DE EDICIÓN ACTIVA
+           ============================================ */
+        .alert-editing-active {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-editing-active .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+
+        .alert-editing-active .alert-title {
+            font-weight: 600;
+            color: #856404;
+        }
+
+        .alert-editing-active .alert-description {
+            color: #856404;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .alert-editing-active .restriction-list {
+            margin-top: 0.5rem;
+            padding-left: 1.25rem;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        .alert-editing-active .restriction-list li {
+            padding: 0.15rem 0;
+        }
+
+        /* Campos deshabilitados en edición activa */
+        .field-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .field-disabled .form-control,
+        .field-disabled .form-select,
+        .field-disabled .form-check-input {
+            background-color: #e9ecef !important;
+            cursor: not-allowed !important;
+        }
+
+        .field-disabled .form-check-input {
+            opacity: 0.5;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible,
+        .catalog-item:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-catalog {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .empty-catalog .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-catalog .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .empty-catalog .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .question-item {
+                padding: 0.75rem 1rem;
+            }
+
+            .question-item .question-header {
+                flex-direction: column;
+            }
+
+            .question-item .question-badges {
+                margin-top: 0.5rem;
+            }
+
+            .options-container .option-item {
+                flex-wrap: wrap;
+            }
+
+            .btn-action {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .catalog-item {
+                padding: 0.6rem 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .question-item {
+                background: #252540;
+                border-left-color: #4d6a9a;
+            }
+
+            .question-item:hover {
+                background: #2d2d44;
+                border-left-color: #4dabf7;
+            }
+
+            .question-item .question-number {
+                color: #4dabf7;
+            }
+
+            .catalog-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .catalog-item:hover {
+                background: #2d2d44;
+                border-color: #4d6a9a;
+            }
+
+            .catalog-item.selected {
+                background: #1a2a3a;
+                border-color: #4dabf7;
+            }
+
+            .form-section-title {
+                color: #8a8a9a;
+            }
+
+            .form-section-divider {
+                border-top-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .options-container {
+                border-top-color: #2d2d44;
+            }
+
+            .form-control {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-control:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+            }
+
+            .form-control::placeholder {
+                color: #8a8a9a;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB                                  -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            {% if encuesta %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" class="text-decoration-none">
+                        {{ encuesta.titulo|truncatechars:30 }}
+                    </a>
+                </li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi {% if encuesta %}bi-pencil{% else %}bi-plus-circle{% endif %}" aria-hidden="true"></i>
+                {% if encuesta %}Editar{% else %}Crear{% endif %} Encuesta
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {% if encuesta %}bi-pencil-square{% else %}bi-plus-circle{% endif %} fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">
+                                {% if encuesta %}
+                                    Editar Encuesta
+                                {% else %}
+                                    Crear Nueva Encuesta
+                                {% endif %}
+                            </h4>
+                            <small class="opacity-75">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                {% if encuesta %}
+                                    Modifica los campos y preguntas de la encuesta
+                                {% else %}
+                                    Completa todos los campos obligatorios (*)
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Alerta de edición activa -->
+                    {% if editando_activa %}
+                        <div class="alert-editing-active" role="alert">
+                            <div class="d-flex align-items-start">
+                                <span class="alert-icon" aria-hidden="true">⚠️</span>
+                                <div>
+                                    <div class="alert-title">Editando Encuesta Activa</div>
+                                    <div class="alert-description">
+                                        Esta encuesta ya está publicada y visible para los estudiantes.
+                                        Solo puedes realizar cambios limitados para no afectar las respuestas existentes.
+                                    </div>
+                                    <ul class="restriction-list">
+                                        <li>✅ Puedes agregar <strong>nuevas preguntas</strong></li>
+                                        <li>✅ Puedes modificar la <strong>descripción</strong></li>
+                                        {% if not tiene_respuestas %}
+                                            <li>✅ Puedes cambiar las <strong>fechas</strong> (sin respuestas aún)</li>
+                                        {% else %}
+                                            <li>❌ No puedes cambiar las <strong>fechas</strong> (ya hay respuestas)</li>
+                                        {% endif %}
+                                        <li>❌ No puedes cambiar el <strong>título</strong></li>
+                                        <li>❌ No puedes cambiar si es <strong>obligatoria</strong> o <strong>anónima</strong></li>
+                                        <li>❌ No puedes <strong>eliminar</strong> preguntas existentes</li>
+                                        <li>❌ No puedes modificar <strong>preguntas</strong> existentes</li>
+                                        <li>❌ No puedes cambiar el <strong>tiempo estimado</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Alerta de encuesta en borrador -->
+                    {% if encuesta and encuesta.estado == 'borrador' %}
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>Encuesta en estado "Borrador":</strong> 
+                            Puedes editar libremente el contenido. Cuando esté lista, 
+                            <a href="#" class="alert-link" onclick="cambiarEstado('{{ encuesta.idEncuesta }}', 'activa')">cambia el estado a "Activa"</a> para publicarla.
+                        </div>
+                    {% endif %}
+
+                    <form method="post" id="encuestaForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ============================================ -->
+                        <!-- SECCIÓN: INFORMACIÓN GENERAL                 -->
+                        <!-- ============================================ -->
+                        <section class="form-section">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Información General
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            <div class="row g-3">
+                                <!-- Título -->
+                                <div class="col-12">
+                                    <div class="form-floating-custom {% if editando_activa %}field-disabled{% endif %}">
+                                        <label for="titulo" class="form-label fw-semibold">
+                                            <i class="bi bi-tag" aria-hidden="true"></i>
+                                            Título de la Encuesta
+                                            <span class="text-danger">*</span>
+                                            {% if editando_activa %}
+                                                <span class="badge bg-warning ms-1">Bloqueado</span>
+                                            {% endif %}
+                                        </label>
+                                        <input type="text" 
+                                               id="titulo" 
+                                               name="titulo" 
+                                               class="form-control" 
+                                               value="{{ titulo_form|default:'' }}" 
+                                               placeholder="Ej: Encuesta de Satisfacción Académica" 
+                                               required
+                                               maxlength="200"
+                                               aria-describedby="tituloHelp"
+                                               {% if editando_activa %}readonly disabled{% endif %}>
+                                        <div id="tituloHelp" class="form-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            {% if editando_activa %}
+                                                <strong>No se puede modificar en encuestas activas.</strong>
+                                            {% else %}
+                                                Un título descriptivo para la encuesta (máx. 200 caracteres)
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="col-12">
+                                    <div class="form-floating-custom">
+                                        <label for="descripcion" class="form-label fw-semibold">
+                                            <i class="bi bi-card-text" aria-hidden="true"></i>
+                                            Descripción
+                                            {% if editando_activa %}
+                                                <span class="badge bg-success ms-1">Modificable</span>
+                                            {% endif %}
+                                        </label>
+                                        <textarea id="descripcion" 
+                                                  name="descripcion" 
+                                                  class="form-control" 
+                                                  rows="3" 
+                                                  placeholder="Describe el propósito de esta encuesta"
+                                                  maxlength="1000">{{ descripcion_form|default:'' }}</textarea>
+                                        <div id="descripcionHelp" class="form-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            Explica el objetivo de la encuesta (máx. 1000 caracteres)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Fechas -->
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom {% if editando_activa and tiene_respuestas %}field-disabled{% endif %}">
+                                        <label for="fecha_inicio" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                                            Fecha de Inicio
+                                            <span class="text-danger">*</span>
+                                            {% if editando_activa and tiene_respuestas %}
+                                                <span class="badge bg-warning ms-1">Bloqueado</span>
+                                            {% elif editando_activa %}
+                                                <span class="badge bg-success ms-1">Modificable</span>
+                                            {% endif %}
+                                        </label>
+                                        <input type="datetime-local" 
+                                               id="fecha_inicio" 
+                                               name="fecha_inicio" 
+                                               class="form-control" 
+                                               value="{{ fecha_inicio_form|default:'' }}" 
+                                               required
+                                               aria-describedby="fechaInicioHelp"
+                                               {% if editando_activa and tiene_respuestas %}readonly disabled{% endif %}>
+                                        <div id="fechaInicioHelp" class="form-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            {% if editando_activa and tiene_respuestas %}
+                                                <strong>No se puede modificar porque ya hay respuestas.</strong>
+                                            {% else %}
+                                                Fecha y hora en que la encuesta estará disponible
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom {% if editando_activa and tiene_respuestas %}field-disabled{% endif %}">
+                                        <label for="fecha_fin" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                            Fecha de Fin
+                                            <span class="text-danger">*</span>
+                                            {% if editando_activa and tiene_respuestas %}
+                                                <span class="badge bg-warning ms-1">Bloqueado</span>
+                                            {% elif editando_activa %}
+                                                <span class="badge bg-success ms-1">Modificable</span>
+                                            {% endif %}
+                                        </label>
+                                        <input type="datetime-local" 
+                                               id="fecha_fin" 
+                                               name="fecha_fin" 
+                                               class="form-control" 
+                                               value="{{ fecha_fin_form|default:'' }}" 
+                                               required
+                                               aria-describedby="fechaFinHelp"
+                                               {% if editando_activa and tiene_respuestas %}readonly disabled{% endif %}>
+                                        <div id="fechaFinHelp" class="form-text">
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            {% if editando_activa and tiene_respuestas %}
+                                                <strong>No se puede modificar porque ya hay respuestas.</strong>
+                                            {% else %}
+                                                Fecha y hora límite para responder la encuesta
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Opciones adicionales -->
+                                <div class="col-12">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch {% if editando_activa %}field-disabled{% endif %}">
+                                                <input type="checkbox" 
+                                                       name="es_obligatoria" 
+                                                       class="form-check-input" 
+                                                       id="es_obligatoria"
+                                                       {% if es_obligatoria_form %}checked{% endif %}
+                                                       {% if editando_activa %}disabled{% endif %}>
+                                                <label class="form-check-label" for="es_obligatoria">
+                                                    <i class="bi bi-exclamation-circle text-danger" aria-hidden="true"></i>
+                                                    Encuesta Obligatoria
+                                                    {% if editando_activa %}
+                                                        <span class="badge bg-warning ms-1">Bloqueado</span>
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch {% if editando_activa %}field-disabled{% endif %}">
+                                                <input type="checkbox" 
+                                                       name="anonima" 
+                                                       class="form-check-input" 
+                                                       id="anonima"
+                                                       {% if anonima_form %}checked{% endif %}
+                                                       {% if editando_activa %}disabled{% endif %}>
+                                                <label class="form-check-label" for="anonima">
+                                                    <i class="bi bi-incognito" aria-hidden="true"></i>
+                                                    Encuesta Anónima
+                                                    {% if editando_activa %}
+                                                        <span class="badge bg-warning ms-1">Bloqueado</span>
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-floating-custom {% if editando_activa %}field-disabled{% endif %}">
+                                                <label for="tiempo_estimado" class="form-label fw-semibold">
+                                                    <i class="bi bi-clock" aria-hidden="true"></i>
+                                                    Tiempo Estimado (min)
+                                                    {% if editando_activa %}
+                                                        <span class="badge bg-warning ms-1">Bloqueado</span>
+                                                    {% endif %}
+                                                </label>
+                                                <input type="number" 
+                                                       id="tiempo_estimado" 
+                                                       name="tiempo_estimado" 
+                                                       class="form-control" 
+                                                       value="{{ tiempo_estimado_form|default:5 }}" 
+                                                       min="1" 
+                                                       max="120"
+                                                       aria-describedby="tiempoHelp"
+                                                       {% if editando_activa %}readonly disabled{% endif %}>
+                                                <div id="tiempoHelp" class="form-text">
+                                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                    {% if editando_activa %}
+                                                        <strong>No se puede modificar en encuestas activas.</strong>
+                                                    {% else %}
+                                                        Tiempo estimado para completar la encuesta
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- SECCIÓN: CATÁLOGO DE PREGUNTAS              -->
+                        <!-- ============================================ -->
+                        <section class="form-section mt-4">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-book" aria-hidden="true"></i>
+                                Preguntas del Catálogo
+                                <span class="badge bg-secondary ms-2">{{ preguntas_catalogo|length }}</span>
+                                {% if editando_activa %}
+                                    <span class="badge bg-success ms-1">Agregar nuevas</span>
+                                {% endif %}
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            {% if editando_activa %}
+                                <div class="alert alert-info" role="alert">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <strong>Modo de edición activa:</strong> 
+                                    Solo puedes <strong>agregar</strong> nuevas preguntas del catálogo. 
+                                    Las preguntas existentes no se pueden eliminar ni modificar.
+                                </div>
+                            {% endif %}
+
+                            <div class="catalog-container">
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    Haz clic en "Agregar" para incluir preguntas del catálogo en tu encuesta
+                                </p>
+
+                                <div class="row g-2" id="catalogList">
+                                    {% for pregunta in preguntas_catalogo %}
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="catalog-item {% if pregunta.idPregunta in preguntas_catalogo_seleccionadas %}selected{% endif %}" 
+                                                 data-pregunta-id="{{ pregunta.idPregunta }}"
+                                                 tabindex="0"
+                                                 role="button"
+                                                 aria-label="Agregar pregunta: {{ pregunta.pregunta|truncatechars:50 }}">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <strong class="d-block mb-1">{{ pregunta.pregunta|truncatechars:50 }}</strong>
+                                                        <div class="d-flex flex-wrap gap-1">
+                                                            <span class="badge bg-info">{{ pregunta.get_categoria_display }}</span>
+                                                            <span class="badge bg-secondary">{{ pregunta.get_tipo_respuesta_display }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ms-2 flex-shrink-0">
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-outline-primary btn-add-catalog"
+                                                                aria-label="Agregar pregunta al catálogo"
+                                                                {% if editando_activa and pregunta.idPregunta in preguntas_catalogo_seleccionadas %}disabled{% endif %}>
+                                                            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-outline-danger btn-remove-catalog"
+                                                                aria-label="Quitar pregunta del catálogo"
+                                                                style="display: {% if pregunta.idPregunta in preguntas_catalogo_seleccionadas %}inline-block{% else %}none{% endif %};"
+                                                                {% if editando_activa %}disabled{% endif %}>
+                                                            <i class="bi bi-dash-circle" aria-hidden="true"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% if editando_activa and pregunta.idPregunta in preguntas_catalogo_seleccionadas %}
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="bi bi-lock" aria-hidden="true"></i> No se puede eliminar en modo activo
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="col-12">
+                                            <div class="empty-catalog">
+                                                <div class="empty-icon" aria-hidden="true">
+                                                    <i class="bi bi-book"></i>
+                                                </div>
+                                                <p class="empty-title">No hay preguntas en el catálogo</p>
+                                                <p class="empty-description">
+                                                    No hay preguntas disponibles en el catálogo para esta universidad.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <input type="hidden" 
+                                       name="preguntas_catalogo_ids" 
+                                       id="preguntas_catalogo_ids" 
+                                       value="{{ preguntas_catalogo_seleccionadas|join:',' }}">
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- SECCIÓN: PREGUNTAS PERSONALIZADAS            -->
+                        <!-- ============================================ -->
+                        <section class="form-section mt-4">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                Preguntas Personalizadas
+                                <span class="badge bg-secondary ms-2" id="preguntasCount">0</span>
+                                {% if editando_activa %}
+                                    <span class="badge bg-success ms-1">Agregar nuevas</span>
+                                {% endif %}
+                            </h6>
+                            <hr class="form-section-divider">
+
+                            {% if editando_activa %}
+                                <div class="alert alert-info" role="alert">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <strong>Modo de edición activa:</strong> 
+                                    Solo puedes <strong>agregar</strong> nuevas preguntas personalizadas. 
+                                    Las preguntas existentes no se pueden eliminar ni modificar.
+                                </div>
+                            {% endif %}
+
+                            <div id="preguntas-container">
+                                <!-- Preguntas existentes -->
+                                {% if encuesta %}
+                                    {% for pregunta in encuesta.preguntas.all %}
+                                        <div class="question-item {% if pregunta.idPreguntaEncuesta in preguntas_catalogo_seleccionadas %}pregunta-catalogo{% endif %} {% if editando_activa %}question-item-readonly{% endif %}" 
+                                             data-index="{{ forloop.counter0 }}"
+                                             {% if pregunta.idPreguntaEncuesta in preguntas_catalogo_seleccionadas %}
+                                                 data-pregunta-id="{{ pregunta.idPreguntaEncuesta }}"
+                                             {% endif %}>
+                                            <div class="question-header">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="question-number">#{{ forloop.counter }}</span>
+                                                        <strong>{{ pregunta.pregunta }}</strong>
+                                                        {% if pregunta.idPreguntaEncuesta in preguntas_catalogo_seleccionadas %}
+                                                            <span class="badge bg-primary ms-2">Catálogo</span>
+                                                            <input type="hidden" name="preguntas_catalogo_ids[]" value="{{ pregunta.idPreguntaEncuesta }}">
+                                                        {% else %}
+                                                            <span class="badge bg-secondary ms-2">Personalizada</span>
+                                                        {% endif %}
+                                                        {% if editando_activa %}
+                                                            <span class="badge bg-warning ms-2">
+                                                                <i class="bi bi-lock" aria-hidden="true"></i> Solo lectura
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    {% if not pregunta.idPreguntaEncuesta in preguntas_catalogo_seleccionadas %}
+                                                        <div class="row g-2 mt-2">
+                                                            <div class="col-md-7">
+                                                                <input type="text" 
+                                                                       name="pregunta_texto[]" 
+                                                                       class="form-control" 
+                                                                       value="{{ pregunta.pregunta }}"
+                                                                       {% if editando_activa %}readonly disabled{% endif %}>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <select name="pregunta_tipo[]" class="form-select" {% if editando_activa %}disabled{% endif %}>
+                                                                    <option value="texto" {% if pregunta.tipo == 'texto' %}selected{% endif %}>Texto Libre</option>
+                                                                    <option value="escala" {% if pregunta.tipo == 'escala' %}selected{% endif %}>Escala (1-5)</option>
+                                                                    <option value="si_no" {% if pregunta.tipo == 'si_no' %}selected{% endif %}>Sí/No</option>
+                                                                    <option value="opcion_unica" {% if pregunta.tipo == 'opcion_unica' %}selected{% endif %}>Opción Única</option>
+                                                                    <option value="opcion_multiple" {% if pregunta.tipo == 'opcion_multiple' %}selected{% endif %}>Opción Múltiple</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <div class="form-check mt-1">
+                                                                    <input type="checkbox" 
+                                                                           name="pregunta_obligatoria[]" 
+                                                                           value="{{ forloop.counter0 }}" 
+                                                                           class="form-check-input" 
+                                                                           {% if pregunta.es_obligatoria %}checked{% endif %}
+                                                                           {% if editando_activa %}disabled{% endif %}>
+                                                                    <label class="form-check-label small">Oblig.</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="options-container" style="display: {% if pregunta.tipo in 'opcion_unica,opcion_multiple' %}block{% else %}none{% endif %};">
+                                                            <label class="small text-muted d-block mb-1">Opciones:</label>
+                                                            <div class="options-list">
+                                                                {% for opcion in pregunta.opciones.all %}
+                                                                    <div class="option-item">
+                                                                        <input type="text" name="opciones_{{ forloop.parentloop.counter0 }}[]" 
+                                                                               class="form-control form-control-sm" 
+                                                                               value="{{ opcion.texto }}"
+                                                                               {% if editando_activa %}readonly disabled{% endif %}>
+                                                                        {% if not editando_activa %}
+                                                                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                                                            </button>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% empty %}
+                                                                    <div class="option-item">
+                                                                        <input type="text" name="opciones_{{ forloop.counter0 }}[]" 
+                                                                               class="form-control form-control-sm" placeholder="Opción 1"
+                                                                               {% if editando_activa %}readonly disabled{% endif %}>
+                                                                        {% if not editando_activa %}
+                                                                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                                                            </button>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    <div class="option-item">
+                                                                        <input type="text" name="opciones_{{ forloop.counter0 }}[]" 
+                                                                               class="form-control form-control-sm" placeholder="Opción 2"
+                                                                               {% if editando_activa %}readonly disabled{% endif %}>
+                                                                        {% if not editando_activa %}
+                                                                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                                                            </button>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                            {% if not editando_activa %}
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1 agregar-opcion">
+                                                                    <i class="bi bi-plus" aria-hidden="true"></i> Agregar opción
+                                                                </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% if not editando_activa %}
+                                                    <button type="button" class="btn-remove" title="Eliminar pregunta" aria-label="Eliminar pregunta">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <button type="button" 
+                                        class="btn btn-outline-success" 
+                                        id="agregarPregunta"
+                                        aria-label="Agregar pregunta personalizada">
+                                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                    Agregar Pregunta Simple
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline-primary" 
+                                        id="agregarPreguntaMultiple"
+                                        aria-label="Agregar pregunta con opciones">
+                                    <i class="bi bi-list-check" aria-hidden="true"></i>
+                                    Agregar Pregunta con Opciones
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- ============================================ -->
+                        <!-- BOTONES DE ACCIÓN                            -->
+                        <!-- ============================================ -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% if encuesta %}{% url 'encuesta_detail' encuesta.idEncuesta %}{% else %}{% url 'encuesta_list' %}{% endif %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> 
+                                {% if encuesta %}Actualizar{% else %}Crear{% endif %} Encuesta
+                            </button>
+                        </footer>
+
+                        <!-- ============================================ -->
+                        <!-- ERRORES DEL FORMULARIO                      -->
+                        <!-- ============================================ -->
+                        {% if errores %}
+                            <div class="alert alert-danger mt-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% if not titulo_form %}
+                                        <li>El título es obligatorio.</li>
+                                    {% endif %}
+                                    {% if not fecha_inicio_form or not fecha_fin_form %}
+                                        <li>Las fechas de inicio y fin son obligatorias.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TOAST CONTAINER                             -->
+    <!-- ============================================ -->
+    <div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const container = document.getElementById('preguntas-container');
+            const agregarBtn = document.getElementById('agregarPregunta');
+            const agregarMultipleBtn = document.getElementById('agregarPreguntaMultiple');
+            const form = document.getElementById('encuestaForm');
+            const preguntasCatalogoIds = document.getElementById('preguntas_catalogo_ids');
+            const preguntasCount = document.getElementById('preguntasCount');
+            const toastContainer = document.getElementById('toastContainer');
+            
+            // Contador inicial basado en preguntas existentes
+            let contador = container.querySelectorAll('.question-item:not(.pregunta-catalogo)').length;
+
+            // ============================================
+            // 1. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+                
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+                
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 300);
+                }, 3000);
+            }
+
+            // ============================================
+            // 2. AGREGAR PREGUNTA DEL CATÁLOGO
+            // ============================================
+            document.querySelectorAll('.btn-add-catalog').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const item = this.closest('.catalog-item');
+                    const preguntaId = item.dataset.preguntaId;
+                    const texto = item.querySelector('strong').textContent;
+                    
+                    // Verificar si ya fue agregada
+                    const ids = preguntasCatalogoIds.value.split(',').filter(id => id !== '');
+                    if (ids.includes(preguntaId)) {
+                        showToast('Esta pregunta ya fue agregada.', 'warning');
+                        return;
+                    }
+                    
+                    // Agregar a la lista de IDs
+                    ids.push(preguntaId);
+                    preguntasCatalogoIds.value = ids.join(',');
+                    
+                    // Marcar como seleccionada
+                    item.classList.add('selected');
+                    item.querySelector('.btn-add-catalog').style.display = 'none';
+                    item.querySelector('.btn-remove-catalog').style.display = 'inline-block';
+                    
+                    // Agregar a la lista de preguntas
+                    agregarPreguntaCatalogo(texto, preguntaId);
+                    
+                    showToast('Pregunta agregada exitosamente.', 'success');
+                });
+            });
+
+            // ============================================
+            // 3. QUITAR PREGUNTA DEL CATÁLOGO
+            // ============================================
+            document.querySelectorAll('.btn-remove-catalog').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const item = this.closest('.catalog-item');
+                    const preguntaId = item.dataset.preguntaId;
+                    
+                    // Remover de la lista de IDs
+                    let ids = preguntasCatalogoIds.value.split(',').filter(id => id !== '' && id !== preguntaId);
+                    preguntasCatalogoIds.value = ids.join(',');
+                    
+                    // Desmarcar
+                    item.classList.remove('selected');
+                    item.querySelector('.btn-add-catalog').style.display = 'inline-block';
+                    item.querySelector('.btn-remove-catalog').style.display = 'none';
+                    
+                    // Remover de la lista de preguntas
+                    const preguntaElement = container.querySelector(`.question-item[data-pregunta-id="${preguntaId}"]`);
+                    if (preguntaElement) {
+                        preguntaElement.remove();
+                        updatePreguntasCount();
+                    }
+                    
+                    showToast('Pregunta removida.', 'info');
+                });
+            });
+
+            // ============================================
+            // 4. AGREGAR PREGUNTA PERSONALIZADA
+            // ============================================
+            function agregarPreguntaPersonalizada(tipo = 'texto') {
+                const index = contador++;
+                const html = `
+                    <div class="question-item" data-index="${index}">
+                        <div class="question-header">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center">
+                                    <span class="drag-handle"><i class="bi bi-grip-vertical" aria-hidden="true"></i></span>
+                                    <span class="question-number">#${index + 1}</span>
+                                    <strong>Pregunta Personalizada</strong>
+                                    <span class="badge bg-success ms-2">Nueva</span>
+                                </div>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-md-7">
+                                        <input type="text" 
+                                               name="pregunta_texto[]" 
+                                               class="form-control" 
+                                               placeholder="Escribe tu pregunta..." 
+                                               required
+                                               aria-label="Texto de la pregunta">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="pregunta_tipo[]" class="form-select" aria-label="Tipo de pregunta">
+                                            <option value="texto" ${tipo === 'texto' ? 'selected' : ''}>Texto Libre</option>
+                                            <option value="escala" ${tipo === 'escala' ? 'selected' : ''}>Escala (1-5)</option>
+                                            <option value="si_no" ${tipo === 'si_no' ? 'selected' : ''}>Sí/No</option>
+                                            <option value="opcion_unica" ${tipo === 'opcion_unica' ? 'selected' : ''}>Opción Única</option>
+                                            <option value="opcion_multiple" ${tipo === 'opcion_multiple' ? 'selected' : ''}>Opción Múltiple</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check mt-1">
+                                            <input type="checkbox" 
+                                                   name="pregunta_obligatoria[]" 
+                                                   value="${index}" 
+                                                   class="form-check-input" 
+                                                   checked
+                                                   id="obligatoria_${index}">
+                                            <label class="form-check-label small" for="obligatoria_${index}">
+                                                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                                Oblig.
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="options-container" style="display: none;">
+                                    <label class="small text-muted d-block mb-1">
+                                        <i class="bi bi-list-ul" aria-hidden="true"></i> Opciones:
+                                    </label>
+                                    <div class="options-list">
+                                        <div class="option-item">
+                                            <input type="text" name="opciones_${index}[]" class="form-control form-control-sm" placeholder="Opción 1">
+                                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                        <div class="option-item">
+                                            <input type="text" name="opciones_${index}[]" class="form-control form-control-sm" placeholder="Opción 2">
+                                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1 agregar-opcion">
+                                        <i class="bi bi-plus" aria-hidden="true"></i> Agregar opción
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-remove" title="Eliminar pregunta" aria-label="Eliminar pregunta">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+                
+                // Configurar mostrar/ocultar opciones según tipo
+                const questionDiv = container.lastElementChild;
+                const tipoSelect = questionDiv.querySelector('select[name="pregunta_tipo[]"]');
+                const optionsContainer = questionDiv.querySelector('.options-container');
+                
+                if (tipo === 'opcion_unica' || tipo === 'opcion_multiple') {
+                    optionsContainer.style.display = 'block';
+                }
+                
+                tipoSelect.addEventListener('change', function() {
+                    if (this.value === 'opcion_unica' || this.value === 'opcion_multiple') {
+                        optionsContainer.style.display = 'block';
+                    } else {
+                        optionsContainer.style.display = 'none';
+                    }
+                });
+                
+                updatePreguntasCount();
+                showToast('Pregunta agregada.', 'success');
+            }
+
+            // ============================================
+            // 5. AGREGAR PREGUNTA DEL CATÁLOGO (helper)
+            // ============================================
+            function agregarPreguntaCatalogo(texto, preguntaId) {
+                const index = contador++;
+                const html = `
+                    <div class="question-item pregunta-catalogo" data-pregunta-id="${preguntaId}" data-index="${index}">
+                        <div class="question-header">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center">
+                                    <span class="drag-handle"><i class="bi bi-grip-vertical" aria-hidden="true"></i></span>
+                                    <span class="question-number">#${index + 1}</span>
+                                    <strong>${texto}</strong>
+                                    <span class="badge bg-primary ms-2">Catálogo</span>
+                                </div>
+                                <input type="hidden" name="preguntas_catalogo_ids[]" value="${preguntaId}">
+                            </div>
+                            <button type="button" class="btn-remove" title="Eliminar pregunta" aria-label="Eliminar pregunta del catálogo">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+                updatePreguntasCount();
+            }
+
+            // ============================================
+            // 6. EVENTOS DE BOTONES
+            // ============================================
+            agregarBtn.addEventListener('click', function() {
+                agregarPreguntaPersonalizada('texto');
+            });
+            
+            agregarMultipleBtn.addEventListener('click', function() {
+                agregarPreguntaPersonalizada('opcion_multiple');
+            });
+
+            // ============================================
+            // 7. ELIMINAR PREGUNTA
+            // ============================================
+            container.addEventListener('click', function(e) {
+                const removeBtn = e.target.closest('.btn-remove');
+                if (removeBtn) {
+                    const questionItem = removeBtn.closest('.question-item');
+                    const preguntaId = questionItem.dataset.preguntaId;
+                    
+                    // Si es pregunta del catálogo, remover de la lista
+                    if (preguntaId && questionItem.classList.contains('pregunta-catalogo')) {
+                        let ids = preguntasCatalogoIds.value.split(',').filter(id => id !== '' && id !== preguntaId);
+                        preguntasCatalogoIds.value = ids.join(',');
+                        
+                        // Desmarcar en el catálogo
+                        const catalogItem = document.querySelector(`.catalog-item[data-pregunta-id="${preguntaId}"]`);
+                        if (catalogItem) {
+                            catalogItem.classList.remove('selected');
+                            catalogItem.querySelector('.btn-add-catalog').style.display = 'inline-block';
+                            catalogItem.querySelector('.btn-remove-catalog').style.display = 'none';
+                        }
+                    }
+                    
+                    questionItem.remove();
+                    updatePreguntasCount();
+                    showToast('Pregunta eliminada.', 'info');
+                }
+            });
+
+            // ============================================
+            // 8. AGREGAR/ELIMINAR OPCIONES
+            // ============================================
+            container.addEventListener('click', function(e) {
+                // Agregar opción
+                if (e.target.closest('.agregar-opcion')) {
+                    const btn = e.target.closest('.agregar-opcion');
+                    const optionsContainer = btn.closest('.options-container');
+                    const optionsList = optionsContainer.querySelector('.options-list');
+                    const index = optionsContainer.closest('.question-item').dataset.index;
+                    const optionCount = optionsList.querySelectorAll('.option-item').length + 1;
+                    
+                    const html = `
+                        <div class="option-item">
+                            <input type="text" name="opciones_${index}[]" class="form-control form-control-sm" placeholder="Opción ${optionCount}">
+                            <button type="button" class="btn-remove-option" aria-label="Eliminar opción">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    `;
+                    optionsList.insertAdjacentHTML('beforeend', html);
+                }
+                
+                // Eliminar opción
+                if (e.target.closest('.btn-remove-option')) {
+                    const optionItem = e.target.closest('.option-item');
+                    const optionsList = optionItem.closest('.options-list');
+                    if (optionsList.querySelectorAll('.option-item').length > 1) {
+                        optionItem.remove();
+                    } else {
+                        showToast('Debes tener al menos una opción.', 'warning');
+                    }
+                }
+            });
+
+            // ============================================
+            // 9. CONTADOR DE PREGUNTAS
+            // ============================================
+            function updatePreguntasCount() {
+                const count = container.querySelectorAll('.question-item').length;
+                if (preguntasCount) {
+                    preguntasCount.textContent = count;
+                }
+            }
+
+            // ============================================
+            // 10. VALIDACIÓN DEL FORMULARIO
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                const preguntas = container.querySelectorAll('.question-item');
+                if (preguntas.length === 0) {
+                    e.preventDefault();
+                    showToast('Debes agregar al menos una pregunta a la encuesta.', 'warning');
+                    document.querySelector('.form-section-title:last-child').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    return false;
+                }
+                
+                // Validar preguntas personalizadas
+                let hasError = false;
+                preguntas.forEach(function(item) {
+                    if (!item.classList.contains('pregunta-catalogo')) {
+                        const textoInput = item.querySelector('input[name="pregunta_texto[]"]');
+                        if (textoInput && !textoInput.value.trim()) {
+                            hasError = true;
+                            textoInput.classList.add('is-invalid');
+                            textoInput.focus();
+                            showToast('Todas las preguntas deben tener texto.', 'danger');
+                        } else if (textoInput) {
+                            textoInput.classList.remove('is-invalid');
+                        }
+                    }
+                });
+                
+                if (hasError) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // ============================================
+            // 11. DRAG & DROP PARA REORDENAR
+            // ============================================
+            let dragItem = null;
+            
+            container.addEventListener('dragstart', function(e) {
+                if (e.target.closest('.question-item')) {
+                    dragItem = e.target.closest('.question-item');
+                    dragItem.style.opacity = '0.5';
+                }
+            });
+            
+            container.addEventListener('dragend', function(e) {
+                if (dragItem) {
+                    dragItem.style.opacity = '1';
+                    dragItem = null;
+                }
+            });
+            
+            container.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                const target = e.target.closest('.question-item');
+                if (target && target !== dragItem) {
+                    const rect = target.getBoundingClientRect();
+                    const after = e.clientY > rect.top + rect.height / 2;
+                    if (after) {
+                        target.parentNode.insertBefore(dragItem, target.nextSibling);
+                    } else {
+                        target.parentNode.insertBefore(dragItem, target);
+                    }
+                }
+            });
+
+            // ============================================
+            // 12. CONFIRMAR ESTADO ACTIVA
+            // ============================================
+            {% if editando_activa %}
+                // Deshabilitar eliminación de preguntas existentes en modo activo
+                document.querySelectorAll('.question-item-readonly .btn-remove').forEach(function(btn) {
+                    btn.style.display = 'none';
+                });
+                
+                // Deshabilitar eliminación de opciones en modo activo
+                document.querySelectorAll('.question-item-readonly .btn-remove-option').forEach(function(btn) {
+                    btn.style.display = 'none';
+                });
+                
+                // Mostrar advertencia al intentar eliminar pregunta del catálogo en modo activo
+                document.querySelectorAll('.catalog-item.selected .btn-remove-catalog').forEach(function(btn) {
+                    btn.title = 'No se puede eliminar en modo activo';
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.opacity = '0.5';
+                });
+            {% endif %}
+
+            // ============================================
+            // 13. INICIALIZAR CONTADOR
+            // ============================================
+            updatePreguntasCount();
+
+            // ============================================
+            // 14. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Formulario de encuesta cargado');
+            {% if editando_activa %}
+                console.log('ℹ️ Modo de edición activa - Solo agregar preguntas');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

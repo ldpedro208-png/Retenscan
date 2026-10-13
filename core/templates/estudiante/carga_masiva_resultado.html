@@ -1,0 +1,678 @@
+<!-- templates/layout/estudiantes/carga_masiva_resultado.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Resultado de Carga Masiva - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --result-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --success-color: #198754;
+            --info-color: #0dcaf0;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        /* ============================================
+           TARJETA DEL RESULTADO
+           ============================================ */
+        .result-card {
+            border: none;
+            border-radius: var(--result-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .result-card .card-header {
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .result-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            border: none;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card .stats-icon {
+            font-size: 2rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stats-card:hover .stats-icon {
+            opacity: 0.3;
+        }
+
+        .stats-card .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+            animation: countUp 0.6s ease forwards;
+        }
+
+        .stats-card .stats-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .stats-card.bg-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            color: #ffffff;
+        }
+
+        .stats-card.bg-info {
+            background: linear-gradient(135deg, #0dcaf0 0%, #0aa3c4 100%);
+            color: #ffffff;
+        }
+
+        .stats-card.bg-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #1a1a2e;
+        }
+
+        .stats-card.bg-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            color: #ffffff;
+        }
+
+        /* ============================================
+           LISTAS DE ADVERTENCIAS Y ERRORES
+           ============================================ */
+        .detail-list {
+            border: none;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+
+        .detail-list .card-header {
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+        }
+
+        .detail-list .card-body {
+            padding: 1.25rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .detail-list .card-body ul {
+            padding-left: 1.25rem;
+            margin-bottom: 0;
+        }
+
+        .detail-list .card-body ul li {
+            padding: 0.3rem 0;
+            font-size: 0.95rem;
+        }
+
+        .detail-list .card-body ul li .bullet-icon {
+            margin-right: 0.5rem;
+        }
+
+        .detail-list.border-warning {
+            border: 1px solid var(--warning-color);
+        }
+
+        .detail-list.border-danger {
+            border: 1px solid var(--danger-color);
+        }
+
+        /* Scroll personalizado */
+        .detail-list .card-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .detail-list .card-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .detail-list .card-body::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .detail-list .card-body::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-action i {
+            margin-right: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-secondary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(108, 117, 125, 0.3);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .result-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .result-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .result-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .result-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .stats-card .stats-number {
+                font-size: 1.75rem;
+            }
+
+            .stats-card .stats-icon {
+                font-size: 1.5rem;
+            }
+
+            .detail-list .card-body {
+                max-height: 200px;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .result-card .card-body {
+                padding: 1rem;
+            }
+
+            .result-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .result-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+
+            .stats-card {
+                padding: 0.75rem;
+            }
+
+            .stats-card .stats-number {
+                font-size: 1.5rem;
+            }
+
+            .stats-card .stats-label {
+                font-size: 0.7rem;
+            }
+
+            .detail-list .card-body ul li {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .result-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .result-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .detail-list .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .detail-list .card-body ul li {
+                color: #c8d6e5;
+            }
+
+            .detail-list .card-body::-webkit-scrollbar-track {
+                background: #2d2d44;
+            }
+
+            .detail-list .card-body::-webkit-scrollbar-thumb {
+                background: #4d4d6a;
+            }
+
+            .detail-list .card-body::-webkit-scrollbar-thumb:hover {
+                background: #5d5d7a;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_list' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'carga_masiva' %}" class="text-decoration-none">
+                    <i class="bi bi-upload" aria-hidden="true"></i> Carga Masiva
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-clipboard-check" aria-hidden="true"></i> Resultado
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <article class="card result-card">
+                <!-- Header -->
+                <header class="card-header {% if resumen.errores %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {% if resumen.errores %}bi-x-circle{% else %}bi-check-circle{% endif %} fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">
+                                {% if resumen.errores %}
+                                    Carga Masiva Completada con Errores
+                                {% else %}
+                                    Carga Masiva Exitosa
+                                {% endif %}
+                            </h4>
+                            <small class="opacity-75">
+                                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                                Procesado el {% now "d/m/Y H:i" %}
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- ============================================ -->
+                    <!-- ESTADÍSTICAS                                -->
+                    <!-- ============================================ -->
+                    <section aria-label="Estadísticas de la carga masiva">
+                        <div class="stats-grid">
+                            <!-- Creados -->
+                            <div class="stats-card bg-success">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-person-plus"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ resumen.exitos }} estudiantes creados">
+                                    {{ resumen.exitos|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Creados
+                                </div>
+                            </div>
+
+                            <!-- Actualizados -->
+                            <div class="stats-card bg-info">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ resumen.actualizados }} estudiantes actualizados">
+                                    {{ resumen.actualizados|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i> Actualizados
+                                </div>
+                            </div>
+
+                            <!-- Advertencias -->
+                            <div class="stats-card bg-warning">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ resumen.advertencias|length }} advertencias">
+                                    {{ resumen.advertencias|length|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i> Advertencias
+                                </div>
+                            </div>
+
+                            <!-- Errores -->
+                            <div class="stats-card bg-danger">
+                                <div class="stats-icon" aria-hidden="true">
+                                    <i class="bi bi-x-circle"></i>
+                                </div>
+                                <div class="stats-number" aria-label="{{ resumen.errores|length }} errores">
+                                    {{ resumen.errores|length|default:0 }}
+                                </div>
+                                <div class="stats-label">
+                                    <i class="bi bi-bug" aria-hidden="true"></i> Errores
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============================================ -->
+                    <!-- DETALLE DE ADVERTENCIAS                     -->
+                    <!-- ============================================ -->
+                    {% if resumen.advertencias %}
+                        <section aria-label="Detalle de advertencias" class="detail-list border-warning">
+                            <header class="card-header bg-warning text-dark">
+                                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                Advertencias
+                                <span class="badge bg-dark ms-2">{{ resumen.advertencias|length }}</span>
+                            </header>
+                            <div class="card-body">
+                                <ul role="list">
+                                    {% for adv in resumen.advertencias %}
+                                        <li role="listitem">
+                                            <i class="bi bi-exclamation-triangle text-warning bullet-icon" aria-hidden="true"></i>
+                                            {{ adv }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </section>
+                    {% endif %}
+
+                    <!-- ============================================ -->
+                    <!-- DETALLE DE ERRORES                         -->
+                    <!-- ============================================ -->
+                    {% if resumen.errores %}
+                        <section aria-label="Detalle de errores" class="detail-list border-danger">
+                            <header class="card-header bg-danger text-white">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                Errores
+                                <span class="badge bg-light text-dark ms-2">{{ resumen.errores|length }}</span>
+                            </header>
+                            <div class="card-body">
+                                <ul role="list">
+                                    {% for err in resumen.errores %}
+                                        <li role="listitem">
+                                            <i class="bi bi-x-circle text-danger bullet-icon" aria-hidden="true"></i>
+                                            {{ err }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </section>
+                    {% endif %}
+
+                    <!-- ============================================ -->
+                    <!-- RESUMEN ADICIONAL                          -->
+                    <!-- ============================================ -->
+                    <section aria-label="Resumen adicional" class="mt-3">
+                        <div class="alert {% if resumen.errores %}alert-warning{% else %}alert-success{% endif %}" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="bi {% if resumen.errores %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2" style="font-size: 1.25rem;" aria-hidden="true"></i>
+                                <div>
+                                    <strong>
+                                        {% if resumen.errores %}
+                                            La carga se completó con {{ resumen.errores|length }} errores.
+                                        {% else %}
+                                            ¡Todos los registros se procesaron correctamente!
+                                        {% endif %}
+                                    </strong>
+                                    <br>
+                                    <small>
+                                        {% if resumen.exitos > 0 %}
+                                            {{ resumen.exitos }} estudiantes creados,
+                                        {% endif %}
+                                        {% if resumen.actualizados > 0 %}
+                                            {{ resumen.actualizados }} actualizados
+                                        {% endif %}
+                                        {% if resumen.exitos == 0 and resumen.actualizados == 0 %}
+                                            No se realizaron cambios.
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============================================ -->
+                    <!-- BOTONES DE ACCIÓN                           -->
+                    <!-- ============================================ -->
+                    <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                        <a href="{% url 'carga_masiva' %}" 
+                           class="btn btn-primary btn-action"
+                           aria-label="Realizar una nueva carga masiva">
+                            <i class="bi bi-upload" aria-hidden="true"></i> Nueva Carga
+                        </a>
+                        <a href="{% url 'estudiante_list' %}" 
+                           class="btn btn-secondary btn-action"
+                           aria-label="Ver listado de estudiantes">
+                            <i class="bi bi-people" aria-hidden="true"></i> Ver Estudiantes
+                        </a>
+                        {% if resumen.errores %}
+                            <button type="button" 
+                                    class="btn btn-outline-danger btn-action"
+                                    onclick="window.print()"
+                                    aria-label="Imprimir reporte de errores">
+                                <i class="bi bi-printer" aria-hidden="true"></i> Imprimir Reporte
+                            </button>
+                        {% endif %}
+                    </footer>
+                </div>
+            </article>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. ANIMACIÓN DE CONTADORES
+            // ============================================
+            function animateNumbers() {
+                const statNumbers = document.querySelectorAll('.stats-number');
+                
+                statNumbers.forEach(function(element) {
+                    const text = element.textContent;
+                    const num = parseInt(text.replace(/,/g, ''));
+                    
+                    if (!isNaN(num) && num > 0) {
+                        const observer = new IntersectionObserver(function(entries) {
+                            entries.forEach(function(entry) {
+                                if (entry.isIntersecting) {
+                                    let current = 0;
+                                    const increment = Math.ceil(num / 30);
+                                    const interval = setInterval(function() {
+                                        current += increment;
+                                        if (current >= num) {
+                                            current = num;
+                                            clearInterval(interval);
+                                        }
+                                        element.textContent = current;
+                                    }, 30);
+                                    observer.unobserve(element);
+                                }
+                            });
+                        });
+                        observer.observe(element);
+                    }
+                });
+            }
+
+            // ============================================
+            // 2. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 3. ANIMACIÓN DE ENTRADA
+            // ============================================
+            setTimeout(function() {
+                animateNumbers();
+            }, 300);
+
+            // ============================================
+            // 4. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de resultados de carga masiva cargada');
+            {% if resumen.errores %}
+                console.warn('⚠️ Se encontraron {{ resumen.errores|length }} errores durante la carga');
+            {% endif %}
+        });
+    </script>
+{% endblock %}

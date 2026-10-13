@@ -1,0 +1,488 @@
+ python.exe -m pip install --upgrade pip<!-- templates/configuracion/configuracion_sistema.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Configuración del Sistema - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .config-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .config-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+        
+        .config-card .card-header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            border: none;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1rem 1.25rem;
+        }
+        
+        .config-card .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .config-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .section-divider {
+            border-top: 2px dashed #e2e8f0;
+            margin: 1.5rem 0;
+        }
+        
+        .info-badge {
+            background: #edf2f7;
+            color: #2d3748;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.active {
+            background: #48bb78;
+        }
+        
+        .status-indicator.inactive {
+            background: #fc8181;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .config-card .card-header {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            }
+            
+            .info-badge {
+                background: #2d3748;
+                color: #e2e8f0;
+            }
+            
+            .section-divider {
+                border-color: #4a5568;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-gear" aria-hidden="true"></i> Configuración
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-gear" aria-hidden="true"></i> 
+            Configuración del Sistema
+            <small class="text-muted fs-6 ms-2">Administración</small>
+        </h1>
+        <span class="badge bg-info">
+            <i class="bi bi-clock-history" aria-hidden="true"></i> 
+            Última actualización: {{ config.fecha_actualizacion|date:"d/m/Y H:i" }}
+        </span>
+    </header>
+
+    <!-- Tarjetas de estado -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-envelope fs-2 text-primary" aria-hidden="true"></i>
+                    <h6 class="mt-2 mb-0">Email</h6>
+                    <span class="badge {% if config.email_host_user %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if config.email_host_user %}Configurado{% else %}No configurado{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-whatsapp fs-2 text-success" aria-hidden="true"></i>
+                    <h6 class="mt-2 mb-0">WhatsApp</h6>
+                    <span class="badge {% if config.twilio_enabled %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if config.twilio_enabled %}Habilitado{% else %}Deshabilitado{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-shield-check fs-2 text-info" aria-hidden="true"></i>
+                    <h6 class="mt-2 mb-0">HTTPS</h6>
+                    <span class="badge {% if config.require_https %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if config.require_https %}Requerido{% else %}No requerido{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock fs-2 text-warning" aria-hidden="true"></i>
+                    <h6 class="mt-2 mb-0">Sesión</h6>
+                    <span class="badge bg-primary">{{ config.session_timeout_minutes }} min</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de configuración -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card config-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="bi bi-gear-wide me-2" aria-hidden="true"></i>
+                        Configuración General
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="configForm">
+                        {% csrf_token %}
+
+                        <!-- SECCIÓN: SITIO -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-globe2" aria-hidden="true"></i> 
+                            Información del Sitio
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.sitio_nombre.id_for_label }}" class="form-label">
+                                        <i class="bi bi-tag" aria-hidden="true"></i> Nombre del Sitio
+                                    </label>
+                                    {{ form.sitio_nombre }}
+                                    <div class="form-text">Nombre que aparecerá en el sistema</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.sitio_url.id_for_label }}" class="form-label">
+                                        <i class="bi bi-link" aria-hidden="true"></i> URL del Sitio
+                                    </label>
+                                    {{ form.sitio_url }}
+                                    <div class="form-text">Ej: http://localhost:8000 o https://tudominio.com</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.sitio_descripcion.id_for_label }}" class="form-label">
+                                        <i class="bi bi-card-text" aria-hidden="true"></i> Descripción
+                                    </label>
+                                    {{ form.sitio_descripcion }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.sitio_logo.id_for_label }}" class="form-label">
+                                        <i class="bi bi-image" aria-hidden="true"></i> Logo del Sitio
+                                    </label>
+                                    {{ form.sitio_logo }}
+                                    <div class="form-text">Sube un logo para el sistema</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- SECCIÓN: EMAIL -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-envelope" aria-hidden="true"></i> 
+                            Configuración de Email
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_host.id_for_label }}" class="form-label">
+                                        <i class="bi bi-server" aria-hidden="true"></i> Servidor SMTP
+                                    </label>
+                                    {{ form.email_host }}
+                                    <div class="form-text">Ej: smtp.gmail.com</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_port.id_for_label }}" class="form-label">
+                                        <i class="bi bi-plug" aria-hidden="true"></i> Puerto
+                                    </label>
+                                    {{ form.email_port }}
+                                    <div class="form-text">587 o 465</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form.email_use_tls }}
+                                    <label class="form-check-label" for="{{ form.email_use_tls.id_for_label }}">
+                                        <i class="bi bi-lock" aria-hidden="true"></i> Usar TLS
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_host_user.id_for_label }}" class="form-label">
+                                        <i class="bi bi-person" aria-hidden="true"></i> Usuario SMTP
+                                    </label>
+                                    {{ form.email_host_user }}
+                                    <div class="form-text">Email que enviará los correos</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_host_password.id_for_label }}" class="form-label">
+                                        <i class="bi bi-key" aria-hidden="true"></i> Contraseña SMTP
+                                    </label>
+                                    {{ form.email_host_password }}
+                                    <div class="form-text">Contraseña de aplicación (no tu contraseña personal)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_from.id_for_label }}" class="form-label">
+                                        <i class="bi bi-send" aria-hidden="true"></i> Email Remitente
+                                    </label>
+                                    {{ form.email_from }}
+                                    <div class="form-text">Dejar en blanco para usar el usuario SMTP</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.email_test_recipient.id_for_label }}" class="form-label">
+                                        <i class="bi bi-send-check" aria-hidden="true"></i> Email de Prueba
+                                    </label>
+                                    {{ form.email_test_recipient }}
+                                    <div class="form-text">Email para enviar prueba de configuración</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" name="test_email" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-send" aria-hidden="true"></i> Probar Email
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- SECCIÓN: WHATSAPP -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-whatsapp" aria-hidden="true"></i> 
+                            Configuración de WhatsApp (Twilio)
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    {{ form.twilio_enabled }}
+                                    <label class="form-check-label" for="{{ form.twilio_enabled.id_for_label }}">
+                                        <strong>Habilitar WhatsApp</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.twilio_account_sid.id_for_label }}" class="form-label">
+                                        <i class="bi bi-person-badge" aria-hidden="true"></i> Account SID
+                                    </label>
+                                    {{ form.twilio_account_sid }}
+                                    <div class="form-text">Tu Account SID de Twilio</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.twilio_auth_token.id_for_label }}" class="form-label">
+                                        <i class="bi bi-key" aria-hidden="true"></i> Auth Token
+                                    </label>
+                                    {{ form.twilio_auth_token }}
+                                    <div class="form-text">Tu Auth Token de Twilio</div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.twilio_whatsapp_number.id_for_label }}" class="form-label">
+                                        <i class="bi bi-phone" aria-hidden="true"></i> Número de WhatsApp
+                                    </label>
+                                    {{ form.twilio_whatsapp_number }}
+                                    <div class="form-text">
+                                        Número de Twilio Sandbox: <code>whatsapp:+14155238886</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- SECCIÓN: SESIÓN Y SEGURIDAD -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-shield-lock" aria-hidden="true"></i> 
+                            Sesión y Seguridad
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.session_timeout_minutes.id_for_label }}" class="form-label">
+                                        <i class="bi bi-clock" aria-hidden="true"></i> Tiempo de Sesión
+                                    </label>
+                                    {{ form.session_timeout_minutes }}
+                                    <div class="form-text">Minutos antes de expirar (0 = sin límite)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form.session_expire_at_browser_close }}
+                                    <label class="form-check-label" for="{{ form.session_expire_at_browser_close.id_for_label }}">
+                                        <i class="bi bi-window" aria-hidden="true"></i> Expirar al cerrar navegador
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form.require_https }}
+                                    <label class="form-check-label" for="{{ form.require_https.id_for_label }}">
+                                        <i class="bi bi-lock" aria-hidden="true"></i> Requerir HTTPS
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.allowed_hosts.id_for_label }}" class="form-label">
+                                        <i class="bi bi-globe" aria-hidden="true"></i> Hosts Permitidos
+                                    </label>
+                                    {{ form.allowed_hosts }}
+                                    <div class="form-text">
+                                        Separar por comas. Ej: <code>localhost,127.0.0.1,miservidor.com,192.168.1.100</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- SECCIÓN: NOTIFICACIONES -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-bell" aria-hidden="true"></i> 
+                            Notificaciones
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.notificaciones_email_habilitadas }}
+                                    <label class="form-check-label" for="{{ form.notificaciones_email_habilitadas.id_for_label }}">
+                                        <i class="bi bi-envelope" aria-hidden="true"></i> Notificaciones por Email
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.notificaciones_whatsapp_habilitadas }}
+                                    <label class="form-check-label" for="{{ form.notificaciones_whatsapp_habilitadas.id_for_label }}">
+                                        <i class="bi bi-whatsapp" aria-hidden="true"></i> Notificaciones por WhatsApp
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- SECCIÓN: CACHÉ -->
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-database" aria-hidden="true"></i> 
+                            Configuración de Caché
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.cache_timeout.id_for_label }}" class="form-label">
+                                        <i class="bi bi-clock" aria-hidden="true"></i> Tiempo de Caché
+                                    </label>
+                                    {{ form.cache_timeout }}
+                                    <div class="form-text">Segundos antes de expirar (0 = desactivado)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating-custom">
+                                    <label for="{{ form.cache_max_entries.id_for_label }}" class="form-label">
+                                        <i class="bi bi-list" aria-hidden="true"></i> Máximo de Entradas
+                                    </label>
+                                    {{ form.cache_max_entries }}
+                                    <div class="form-text">Límite de elementos en caché</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-action">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                <i class="bi bi-save" aria-hidden="true"></i> Guardar Configuración
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('configForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            form.addEventListener('submit', function(e) {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                }
+            });
+
+            // Mostrar/ocultar campos de Twilio según estado
+            const twilioEnabled = document.getElementById('{{ form.twilio_enabled.id_for_label }}');
+            const twilioFields = document.querySelectorAll('.twilio-field');
+
+            function toggleTwilioFields() {
+                const show = twilioEnabled && twilioEnabled.checked;
+                twilioFields.forEach(field => {
+                    field.closest('.form-floating-custom').style.display = show ? 'block' : 'none';
+                });
+            }
+
+            if (twilioEnabled) {
+                twilioEnabled.addEventListener('change', toggleTwilioFields);
+                toggleTwilioFields();
+            }
+
+            console.log('✅ Panel de configuración cargado');
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - RetenScan{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>{{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- Código -->
+                    <div class="mb-3">
+                        <label for="codigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" 
+                               value="{{ materia.codigo|default:'' }}" placeholder="Ej: MAT-101">
+                        <div class="form-text">Código único de la materia (opcional)</div>
+                    </div>
+                    
+                    <!-- Nombre -->
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                               value="{{ materia.nombre|default:'' }}" required>
+                    </div>
+                    
+                    <!-- Créditos -->
+                    <div class="mb-3">
+                        <label for="creditos" class="form-label">Créditos</label>
+                        <input type="number" class="form-control" id="creditos" name="creditos" 
+                               value="{{ materia.creditos|default:3 }}" min="1" max="10">
+                        <div class="form-text">Número de créditos (1-10)</div>
+                    </div>
+                    
+                    <!-- Semestre Curricular -->
+                    <div class="mb-3">
+                        <label for="semestre_curricular" class="form-label">Semestre Curricular</label>
+                        <input type="number" class="form-control" id="semestre_curricular" name="semestre_curricular" 
+                               value="{{ materia.semestre_curricular|default:'' }}" min="1" max="12">
+                        <div class="form-text">Semestre en el que se cursa la materia</div>
+                    </div>
+                    
+                    <!-- Carrera - CORREGIDO: usar idCarrera en lugar de id -->
+                    <div class="mb-3">
+                        <label for="carrera_id" class="form-label">Carrera *</label>
+                        <select class="form-select" id="carrera_id" name="carrera_id" required>
+                            <option value="">Seleccionar carrera</option>
+                            {% for carrera in carreras %}
+                            <option value="{{ carrera.idCarrera }}" {% if materia.idCarrera.idCarrera == carrera.idCarrera %}selected{% endif %}>
+                                {{ carrera.nombre }} 
+                                {% if es_superuser and carrera.idUniversidad %}
+                                    ({{ carrera.idUniversidad.nombre }})
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Selecciona la carrera a la que pertenece esta materia</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a href="{% url 'materia_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

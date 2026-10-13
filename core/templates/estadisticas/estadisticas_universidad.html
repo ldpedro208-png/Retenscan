@@ -1,0 +1,1560 @@
+<!-- templates/estadisticas/estadisticas_universidad.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas de la Universidad - RetenScan{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================
+       ESTADÍSTICAS - USA VARIABLES GLOBALES DE base.html
+       ============================================ */
+    
+    /* ============================================
+       HEADER CLARO (derivado de las variables globales)
+       ============================================ */
+    .stats-header {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #c7d2fe 100%);
+        color: var(--primary-dark);
+        border-radius: var(--border-radius-md);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        border: 1px solid #c7d2fe;
+    }
+
+    .stats-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(78, 115, 223, 0.15) 0%, transparent 70%);
+        transform: translate(30%, -30%);
+        pointer-events: none;
+    }
+
+    .stats-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.02em;
+        color: var(--primary-dark);
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .stats-header h1 i {
+        color: var(--secondary-color);
+    }
+
+    .stats-header .subtitle {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        position: relative;
+        z-index: 1;
+        font-weight: 500;
+    }
+
+    .stats-header .header-meta {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+        position: relative;
+        z-index: 1;
+        flex-wrap: wrap;
+    }
+
+    .exec-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        background: #ffffff;
+        border: 1px solid #c7d2fe;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .exec-badge i {
+        color: var(--secondary-color);
+    }
+
+    /* ============================================
+       KPI CARDS
+       ============================================ */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kpi-card {
+        background: var(--bg-card);
+        border-radius: var(--border-radius-md);
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .kpi-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .kpi-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .kpi-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-icon-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Iconos con fondos claros (armonizan con base) */
+    .kpi-icon-badge.blue { 
+        background: rgba(78, 115, 223, 0.12); 
+        color: var(--secondary-color); 
+    }
+    .kpi-icon-badge.green { 
+        background: rgba(28, 200, 138, 0.12); 
+        color: var(--success-color); 
+    }
+    .kpi-icon-badge.red { 
+        background: rgba(231, 74, 59, 0.12); 
+        color: var(--danger-color); 
+    }
+    .kpi-icon-badge.amber { 
+        background: rgba(246, 194, 62, 0.15); 
+        color: #d4a20a; 
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.25rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-value small {
+        font-size: 1rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-left: 0.15rem;
+    }
+
+    .kpi-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-delta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .kpi-delta.positive { 
+        color: var(--success-color); 
+        background: rgba(28, 200, 138, 0.1); 
+    }
+    .kpi-delta.negative { 
+        color: var(--danger-color); 
+        background: rgba(231, 74, 59, 0.1); 
+    }
+    .kpi-delta.neutral { 
+        color: var(--text-secondary); 
+        background: rgba(0, 0, 0, 0.04); 
+    }
+
+    .kpi-chart-mini {
+        height: 30px;
+        width: 70px;
+        position: relative;
+    }
+
+    /* ============================================
+       CHART CARDS
+       ============================================ */
+    .chart-card {
+        background: var(--bg-card);
+        border-radius: var(--border-radius-md);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        margin-bottom: 1rem;
+        transition: var(--transition);
+    }
+
+    .chart-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .chart-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .chart-title {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .chart-title h6 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-title h6 i {
+        color: var(--secondary-color);
+        font-size: 1.05rem;
+    }
+
+    .chart-title small {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .chart-actions {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .chart-actions button {
+        border: none;
+        background: rgba(0, 0, 0, 0.04);
+        color: var(--text-secondary);
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.85rem;
+    }
+
+    .chart-actions button:hover {
+        background: var(--secondary-color);
+        color: white;
+    }
+
+    .chart-body {
+        position: relative;
+        width: 100%;
+    }
+
+    /* ============================================
+       RESUMEN INSTITUCIONAL
+       ============================================ */
+    .quick-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .quick-stat:hover {
+        background: rgba(78, 115, 223, 0.06);
+    }
+
+    .quick-stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .quick-stat-icon.blue { 
+        background: rgba(78, 115, 223, 0.12); 
+        color: var(--secondary-color); 
+    }
+    .quick-stat-icon.green { 
+        background: rgba(28, 200, 138, 0.12); 
+        color: var(--success-color); 
+    }
+    .quick-stat-icon.amber { 
+        background: rgba(246, 194, 62, 0.15); 
+        color: #d4a20a; 
+    }
+    .quick-stat-icon.red { 
+        background: rgba(231, 74, 59, 0.12); 
+        color: var(--danger-color); 
+    }
+
+    .quick-stat-content {
+        flex: 1;
+    }
+
+    .quick-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 0.15rem;
+    }
+
+    .quick-stat-value {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 1.15rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================
+       TABLA COMPARATIVA
+       ============================================ */
+    .table-professional {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-professional th {
+        background: rgba(0, 0, 0, 0.03);
+        padding: 0.85rem 1rem;
+        text-align: left;
+        font-weight: 700;
+        color: var(--text-secondary);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+        white-space: nowrap;
+    }
+
+    .table-professional th:first-child { border-top-left-radius: 8px; }
+    .table-professional th:last-child { border-top-right-radius: 8px; }
+
+    .table-professional td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        vertical-align: middle;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .table-professional tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-professional tbody tr:hover {
+        background: rgba(78, 115, 223, 0.04);
+    }
+
+    .progress-mini {
+        height: 8px;
+        background: rgba(0, 0, 0, 0.06);
+        border-radius: 4px;
+        overflow: hidden;
+        min-width: 80px;
+    }
+
+    .progress-mini-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    /* ============================================
+       BADGES
+       ============================================ */
+    .metric-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .metric-badge.blue { 
+        background: rgba(78, 115, 223, 0.12); 
+        color: var(--secondary-color); 
+    }
+    .metric-badge.green { 
+        background: rgba(28, 200, 138, 0.12); 
+        color: var(--success-color); 
+    }
+    .metric-badge.red { 
+        background: rgba(231, 74, 59, 0.12); 
+        color: var(--danger-color); 
+    }
+    .metric-badge.amber { 
+        background: rgba(246, 194, 62, 0.15); 
+        color: #d4a20a; 
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+        .stats-header {
+            padding: 1.25rem;
+        }
+        
+        .stats-header h1 {
+            font-size: 1.25rem;
+        }
+        
+        .kpi-value {
+            font-size: 1.5rem;
+        }
+        
+        .kpi-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- ============================================ -->
+    <!-- HEADER                                       -->
+    <!-- ============================================ -->
+    <div class="stats-header">
+        <h1>
+            <i class="bi bi-speedometer2"></i>
+            Panel de Control Institucional
+        </h1>
+        <p class="subtitle">
+            {% if universidad %}{{ universidad.nombre }}{% else %}Vista Global - Todas las Universidades{% endif %}
+        </p>
+        
+        <div class="header-meta">
+            <span class="exec-badge">
+                <i class="bi bi-calendar3"></i>
+                {{ fecha_actual|date:"d M Y, H:i" }}
+            </span>
+            <span class="exec-badge">
+                <i class="bi bi-people-fill"></i>
+                {{ stats_generales.total_estudiantes }} estudiantes
+            </span>
+            {% if is_superuser %}
+            <span class="exec-badge">
+                <i class="bi bi-shield-check"></i>
+                Superusuario
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILTRO (superuser)                           -->
+    <!-- ============================================ -->
+    {% if is_superuser and universidades_list %}
+    <div class="chart-card mb-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold small text-uppercase" style="color: var(--text-muted);">
+                    <i class="bi bi-funnel"></i> Filtrar por institución
+                </label>
+                <select name="universidad_id" class="form-select form-select-sm">
+                    <option value="">Todas las universidades</option>
+                    {% for uni in universidades_list %}
+                        <option value="{{ uni.idUniversidad }}" 
+                                {% if universidad and universidad.idUniversidad == uni.idUniversidad %}selected{% endif %}>
+                            {{ uni.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-check-circle"></i> Aplicar
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'estadisticas_universidad' %}" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-arrow-clockwise"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- KPI CARDS                                    -->
+    <!-- ============================================ -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Retención</span>
+                <div class="kpi-icon-badge green">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+            <div class="kpi-value">
+                {{ kpis.tasa_retencion|floatformat:1 }}<small>%</small>
+            </div>
+            <div class="kpi-footer">
+                <span class="kpi-delta positive">
+                    <i class="bi bi-arrow-up"></i> Activos
+                </span>
+                <div class="kpi-chart-mini" id="miniRetencion"></div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Deserción</span>
+                <div class="kpi-icon-badge red">
+                    <i class="bi bi-person-dash"></i>
+                </div>
+            </div>
+            <div class="kpi-value">
+                {{ kpis.tasa_desercion|floatformat:1 }}<small>%</small>
+            </div>
+            <div class="kpi-footer">
+                <span class="kpi-delta negative">
+                    <i class="bi bi-arrow-down"></i> Meta: &lt;10%
+                </span>
+                <div class="kpi-chart-mini" id="miniDesercion"></div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Promedio</span>
+                <div class="kpi-icon-badge blue">
+                    <i class="bi bi-mortarboard"></i>
+                </div>
+            </div>
+            <div class="kpi-value">
+                {{ kpis.promedio_general|floatformat:1 }}<small>/100</small>
+            </div>
+            <div class="kpi-footer">
+                <span class="kpi-delta neutral">
+                    <i class="bi bi-bar-chart"></i> Escala
+                </span>
+                <div class="kpi-chart-mini" id="miniPromedio"></div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Asistencia</span>
+                <div class="kpi-icon-badge amber">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+            <div class="kpi-value">
+                {{ kpis.promedio_asistencia|floatformat:1 }}<small>%</small>
+            </div>
+            <div class="kpi-footer">
+                <span class="kpi-delta positive">
+                    <i class="bi bi-arrow-up"></i> Buena
+                </span>
+                <div class="kpi-chart-mini" id="miniAsistencia"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILA 1: CARRERAS + RESUMEN                   -->
+    <!-- ============================================ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-bar-chart-steps"></i>
+                            Matrícula por Carrera
+                        </h6>
+                        <small>Top {{ carreras_labels|length }} carreras con mayor número de estudiantes</small>
+                    </div>
+                    <div class="chart-actions">
+                        <button type="button" title="Descargar" onclick="downloadChart('chartCarreras', 'matricula-carreras')">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 340px;">
+                    <canvas id="chartCarreras"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="chart-card" style="height: 100%;">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-info-circle"></i>
+                            Resumen
+                        </h6>
+                        <small>Datos generales</small>
+                    </div>
+                </div>
+                <div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-icon blue">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="quick-stat-content">
+                            <div class="quick-stat-label">Estudiantes</div>
+                            <div class="quick-stat-value">{{ stats_generales.total_estudiantes }}</div>
+                        </div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-icon green">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <div class="quick-stat-content">
+                            <div class="quick-stat-label">Usuarios</div>
+                            <div class="quick-stat-value">{{ stats_generales.total_usuarios }}</div>
+                        </div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-icon amber">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div class="quick-stat-content">
+                            <div class="quick-stat-label">Carreras</div>
+                            <div class="quick-stat-value">{{ stats_generales.total_carreras }}</div>
+                        </div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-icon red">
+                            <i class="bi bi-award"></i>
+                        </div>
+                        <div class="quick-stat-content">
+                            <div class="quick-stat-label">Becas Activas</div>
+                            <div class="quick-stat-value">{{ stats_generales.total_becas_activas }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILA 2: ESTADO + NOTAS                       -->
+    <!-- ============================================ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-pie-chart-fill"></i>
+                            Composición Estudiantil
+                        </h6>
+                        <small>Distribución por estado académico</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 300px;">
+                    <canvas id="chartEstados"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-graph-up"></i>
+                            Rendimiento Académico
+                        </h6>
+                        <small>Distribución de promedios</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 300px;">
+                    <canvas id="chartNotas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILA 3: ASISTENCIA + ALERTAS                 -->
+    <!-- ============================================ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-activity"></i>
+                            Tendencia de Asistencia
+                        </h6>
+                        <small>Últimas 8 semanas</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 320px;">
+                    <canvas id="chartAsistencia"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Alertas Activas
+                        </h6>
+                        <small>Por nivel</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 320px;">
+                    <canvas id="chartAlertas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILA 4: FACTORES + BECAS                     -->
+    <!-- ============================================ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-shield-exclamation"></i>
+                            Factores de Riesgo
+                        </h6>
+                        <small>Top factores identificados</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 300px;">
+                    <canvas id="chartFactores"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <h6>
+                            <i class="bi bi-award-fill"></i>
+                            Becas Otorgadas
+                        </h6>
+                        <small>Por tipo de beca</small>
+                    </div>
+                </div>
+                <div class="chart-body" style="height: 300px;">
+                    <canvas id="chartBecas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TABLA COMPARATIVA (superuser)                -->
+    <!-- ============================================ -->
+    {% if is_superuser and comparativa_universidades %}
+    <div class="chart-card mb-3">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <h6>
+                    <i class="bi bi-table"></i>
+                    Comparativa de Instituciones
+                </h6>
+                <small>Métricas comparativas</small>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table-professional">
+                <thead>
+                    <tr>
+                        <th>Institución</th>
+                        <th class="text-center">Total</th>
+                        <th class="text-center">Activos</th>
+                        <th class="text-center">En Riesgo</th>
+                        <th>Retención</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for uni in comparativa_universidades %}
+                    <tr>
+                        <td><strong>{{ uni.nombre }}</strong></td>
+                        <td class="text-center">
+                            <span class="metric-badge blue">{{ uni.total }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="metric-badge green">{{ uni.activos }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="metric-badge red">{{ uni.en_riesgo }}</span>
+                        </td>
+                        <td>
+                            {% if uni.total > 0 %}
+                                {% widthratio uni.activos uni.total 100 as retencion %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-mini flex-grow-1">
+                                        <div class="progress-mini-bar" style="width: {{ retencion }}%; background: linear-gradient(90deg, var(--success-color), #20c997);"></div>
+                                    </div>
+                                    <small class="fw-bold">{{ retencion }}%</small>
+                                </div>
+                            {% else %}
+                                <small class="text-muted">—</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ============================================ -->
+<!-- DATOS JSON PARA GRÁFICOS                     -->
+<!-- ============================================ -->
+{{ carreras_labels|json_script:"carreras-labels" }}
+{{ carreras_values|json_script:"carreras-values" }}
+{{ estados_labels|json_script:"estados-labels" }}
+{{ estados_values|json_script:"estados-values" }}
+{{ notas_labels|json_script:"notas-labels" }}
+{{ notas_values|json_script:"notas-values" }}
+{{ semanas|json_script:"semanas-labels" }}
+{{ asistencia_semanal|json_script:"asistencia-values" }}
+{{ alertas_labels|json_script:"alertas-labels" }}
+{{ alertas_values|json_script:"alertas-values" }}
+{{ factores_labels|json_script:"factores-labels" }}
+{{ factores_values|json_script:"factores-values" }}
+{{ becas_tipos_labels|json_script:"becas-labels" }}
+{{ becas_tipos_values|json_script:"becas-values" }}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ============================================
+    // PALETA BASADA EN VARIABLES GLOBALES DE base.html
+    // ============================================
+    const rootStyles = getComputedStyle(document.documentElement);
+    
+    const palette = {
+        primary: rootStyles.getPropertyValue('--primary-color').trim() || '#1a2a6c',
+        primaryLight: rootStyles.getPropertyValue('--primary-light').trim() || '#2d4373',
+        secondary: rootStyles.getPropertyValue('--secondary-color').trim() || '#4e73df',
+        accent: rootStyles.getPropertyValue('--accent-color').trim() || '#667eea',
+        success: rootStyles.getPropertyValue('--success-color').trim() || '#1cc88a',
+        danger: rootStyles.getPropertyValue('--danger-color').trim() || '#e74a3b',
+        warning: rootStyles.getPropertyValue('--warning-color').trim() || '#f6c23e',
+        info: rootStyles.getPropertyValue('--info-color').trim() || '#36b9cc',
+        textPrimary: rootStyles.getPropertyValue('--text-primary').trim() || '#1a202c',
+        textSecondary: rootStyles.getPropertyValue('--text-secondary').trim() || '#4a5568',
+        textMuted: rootStyles.getPropertyValue('--text-muted').trim() || '#a0aec0',
+    };
+
+    const chartPalette = [
+        palette.secondary, palette.success, palette.warning, palette.danger,
+        palette.info, palette.accent, palette.primaryLight, '#20c997',
+        '#fd7e14', '#6f42c1',
+    ];
+
+    const gridColor = 'rgba(0, 0, 0, 0.05)';
+
+    // ============================================
+    // CONFIGURACIÓN GLOBAL DE CHART.JS
+    // ============================================
+    Chart.register(ChartDataLabels);
+    
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = palette.textSecondary;
+    Chart.defaults.plugins.legend.position = 'bottom';
+    Chart.defaults.plugins.legend.labels.padding = 16;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+    Chart.defaults.plugins.legend.labels.color = palette.textPrimary;
+    Chart.defaults.plugins.datalabels.display = false;
+
+    function getData(id) {
+        const el = document.getElementById(id);
+        if (!el) return [];
+        try { return JSON.parse(el.textContent); }
+        catch (e) { console.error('Error parsing', id, e); return []; }
+    }
+
+    // ============================================
+    // MINI SPARKLINES
+    // ============================================
+    function createSparkline(elementId, data, color) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        new Chart(el, {
+            type: 'line',
+            data: {
+                labels: data.map((_, i) => i),
+                datasets: [{
+                    data: data,
+                    borderColor: color,
+                    borderWidth: 2,
+                    fill: true,
+                    backgroundColor: color + '20',
+                    tension: 0.4,
+                    pointRadius: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } },
+            }
+        });
+    }
+
+    createSparkline('miniRetencion', [85, 87, 88, 86, 89, 91, 90, 92], palette.success);
+    createSparkline('miniDesercion', [14, 13, 12, 13, 11, 10, 9, 8], palette.danger);
+    createSparkline('miniPromedio', [70, 72, 71, 74, 75, 76, 77, 78], palette.secondary);
+    createSparkline('miniAsistencia', [75, 78, 80, 82, 84, 85, 86, 88], palette.warning);
+
+    // ============================================
+    // GRÁFICO 1: CARRERAS - BARRA HORIZONTAL
+    // ============================================
+    const carrerasCanvas = document.getElementById('chartCarreras');
+    if (carrerasCanvas) {
+        const labels = getData('carreras-labels');
+        const values = getData('carreras-values');
+        const total = values.reduce((a, b) => a + b, 0);
+        
+        new Chart(carrerasCanvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Estudiantes',
+                    data: values,
+                    backgroundColor: (ctx) => {
+                        const chart = ctx.chart;
+                        const { ctx: canvasCtx, chartArea } = chart;
+                        if (!chartArea) return palette.secondary;
+                        const gradient = canvasCtx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+                        gradient.addColorStop(0, palette.accent);
+                        gradient.addColorStop(1, palette.secondary);
+                        return gradient;
+                    },
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 24,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 70 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'right',
+                        color: palette.textPrimary,
+                        font: { weight: '700', size: 12 },
+                        formatter: (value) => {
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return `${value} · ${pct}%`;
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => {
+                                const pct = ((ctx.parsed.x / total) * 100).toFixed(1);
+                                return ` ${ctx.parsed.x} estudiantes · ${pct}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: { display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { weight: '600', size: 12 },
+                            color: palette.textPrimary
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 2: ESTADOS - BARRA APILADA
+    // ============================================
+    const estadosCanvas = document.getElementById('chartEstados');
+    if (estadosCanvas) {
+        const labels = getData('estados-labels');
+        const values = getData('estados-values');
+        
+        const colorMap = {
+            'Activo': palette.success,
+            'Inactivo': palette.warning,
+            'Suspendido': palette.danger,
+            'Egresado': palette.info,
+            'Abandonado': palette.accent,
+        };
+        
+        new Chart(estadosCanvas, {
+            type: 'bar',
+            data: {
+                labels: ['Estudiantes'],
+                datasets: labels.map((label, i) => ({
+                    label: label,
+                    data: [values[i]],
+                    backgroundColor: colorMap[label] || palette.secondary,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 60,
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 30 } },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            padding: 16, 
+                            font: { size: 12, weight: '600' },
+                            color: palette.textPrimary
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: '#ffffff',
+                        font: { weight: '700', size: 12 },
+                        formatter: (value) => value > 0 ? value : ''
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => {
+                                const total = ctx.chart.data.datasets.reduce((s, d) => s + d.data[0], 0);
+                                const pct = ((ctx.parsed.y / total) * 100).toFixed(1);
+                                return ` ${ctx.dataset.label}: ${ctx.parsed.y} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { stacked: true, display: false },
+                    y: { stacked: true, display: false, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 3: NOTAS - BARRA VERTICAL
+    // ============================================
+    const notasCanvas = document.getElementById('chartNotas');
+    if (notasCanvas) {
+        const labels = getData('notas-labels');
+        const values = getData('notas-values');
+        
+        const colorMap = {
+            'Excelente': palette.success,
+            'Muy Bueno': palette.info,
+            'Bueno': palette.secondary,
+            'Regular': palette.warning,
+            'Bajo': palette.danger,
+            'Sin datos': palette.textMuted,
+        };
+        
+        new Chart(notasCanvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: labels.map(l => colorMap[l] || palette.secondary),
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 50,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 25 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        color: palette.textPrimary,
+                        font: { weight: '700', size: 13 },
+                        formatter: (v) => v > 0 ? v : ''
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.parsed.y} estudiantes`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: { 
+                            precision: 0, 
+                            font: { size: 11 }, 
+                            color: palette.textSecondary 
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { 
+                            font: { weight: '600', size: 12 }, 
+                            color: palette.textPrimary 
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 4: ASISTENCIA - ÁREA CON BANDAS
+    // ============================================
+    const asistenciaCanvas = document.getElementById('chartAsistencia');
+    if (asistenciaCanvas) {
+        const ctx = asistenciaCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 350);
+        gradient.addColorStop(0, 'rgba(78, 115, 223, 0.3)');
+        gradient.addColorStop(1, 'rgba(78, 115, 223, 0.02)');
+
+        new Chart(asistenciaCanvas, {
+            type: 'line',
+            data: {
+                labels: getData('semanas-labels'),
+                datasets: [{
+                    label: 'Asistencia',
+                    data: getData('asistencia-values'),
+                    borderColor: palette.secondary,
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: palette.secondary,
+                    pointBorderWidth: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 20, right: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        align: 'top',
+                        anchor: 'end',
+                        color: palette.textPrimary,
+                        font: { weight: '700', size: 11 },
+                        backgroundColor: '#ffffff',
+                        borderRadius: 4,
+                        padding: { top: 2, bottom: 2, left: 5, right: 5 },
+                        formatter: (v) => v.toFixed(1) + '%'
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => ` Asistencia: ${ctx.parsed.y.toFixed(1)}%`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: {
+                            callback: (v) => v + '%',
+                            font: { size: 11 },
+                            color: palette.textSecondary
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { 
+                            font: { size: 11, weight: '600' }, 
+                            color: palette.textPrimary 
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'referenceBands',
+                beforeDraw(chart) {
+                    const { ctx, chartArea, scales: { y } } = chart;
+                    if (!chartArea) return;
+                    
+                    // Banda verde (>=85%)
+                    const yGreen = y.getPixelForValue(85);
+                    const yTop = y.getPixelForValue(100);
+                    ctx.fillStyle = 'rgba(28, 200, 138, 0.08)';
+                    ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yGreen - yTop);
+                    
+                    // Banda amarilla (70-85%)
+                    const yYellow = y.getPixelForValue(70);
+                    ctx.fillStyle = 'rgba(246, 194, 62, 0.08)';
+                    ctx.fillRect(chartArea.left, yGreen, chartArea.right - chartArea.left, yYellow - yGreen);
+                    
+                    // Banda roja (<70%)
+                    const yBottom = y.getPixelForValue(0);
+                    ctx.fillStyle = 'rgba(231, 74, 59, 0.08)';
+                    ctx.fillRect(chartArea.left, yYellow, chartArea.right - chartArea.left, yBottom - yYellow);
+                }
+            }]
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 5: ALERTAS - BARRA
+    // ============================================
+    const alertasCanvas = document.getElementById('chartAlertas');
+    if (alertasCanvas) {
+        const labels = getData('alertas-labels');
+        const values = getData('alertas-values');
+        
+        const colorMap = {
+            'Crítico': palette.danger,
+            'Alto': '#fd7e14',
+            'Medio': palette.warning,
+            'Bajo': palette.success,
+        };
+        
+        new Chart(alertasCanvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: labels.map(l => colorMap[l] || palette.secondary),
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 40,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 25 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        color: palette.textPrimary,
+                        font: { weight: '700', size: 13 },
+                        formatter: (v) => v > 0 ? v : ''
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.parsed.y} alertas`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: { 
+                            precision: 0,
+                            color: palette.textSecondary
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { 
+                            font: { weight: '600', size: 12 },
+                            color: palette.textPrimary
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 6: FACTORES - LOLLIPOP
+    // ============================================
+    const factoresCanvas = document.getElementById('chartFactores');
+    if (factoresCanvas) {
+        const labels = getData('factores-labels');
+        const values = getData('factores-values');
+        
+        new Chart(factoresCanvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Casos',
+                        data: values,
+                        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                        borderColor: palette.secondary,
+                        borderWidth: 0,
+                        borderRadius: 0,
+                        barThickness: 4,
+                        order: 2,
+                    },
+                    {
+                        label: 'Casos',
+                        data: values,
+                        type: 'scatter',
+                        backgroundColor: palette.secondary,
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        pointRadius: 9,
+                        pointHoverRadius: 12,
+                        order: 1,
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 50 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'right',
+                        color: palette.textPrimary,
+                        font: { weight: '700', size: 12 },
+                        formatter: (v) => v
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.parsed.x} casos`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        ticks: { precision: 0, display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { 
+                            font: { weight: '600', size: 11 },
+                            color: palette.textPrimary
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // GRÁFICO 7: BECAS - BARRA APILADA
+    // ============================================
+    const becasCanvas = document.getElementById('chartBecas');
+    if (becasCanvas) {
+        const labels = getData('becas-labels');
+        const values = getData('becas-values');
+        const total = values.reduce((a, b) => a + b, 0);
+        
+        new Chart(becasCanvas, {
+            type: 'bar',
+            data: {
+                labels: ['Distribución'],
+                datasets: labels.map((label, i) => ({
+                    label: label,
+                    data: [values[i]],
+                    backgroundColor: chartPalette[i % chartPalette.length],
+                    borderRadius: 0,
+                    borderSkipped: false,
+                    barThickness: 60,
+                }))
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            padding: 12, 
+                            font: { size: 11, weight: '600' },
+                            color: palette.textPrimary,
+                            generateLabels: (chart) => {
+                                return chart.data.datasets.map((ds, i) => ({
+                                    text: `${ds.label} (${values[i]})`,
+                                    fillStyle: ds.backgroundColor,
+                                    strokeStyle: ds.backgroundColor,
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    index: i,
+                                }));
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: (ctx) => {
+                            const value = ctx.dataset.data[0];
+                            const total = ctx.chart.data.datasets.reduce((s, d) => s + d.data[0], 0);
+                            return (value / total) > 0.08;
+                        },
+                        color: '#ffffff',
+                        font: { weight: '700', size: 12 },
+                        formatter: (v) => v
+                    },
+                    tooltip: {
+                        backgroundColor: palette.primary,
+                        padding: 12,
+                        titleColor: '#ffffff',
+                        bodyColor: '#e0e7ff',
+                        callbacks: {
+                            label: (ctx) => {
+                                const pct = ((ctx.parsed.x / total) * 100).toFixed(1);
+                                return ` ${ctx.dataset.label}: ${ctx.parsed.x} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { stacked: true, display: false },
+                    y: { stacked: true, display: false }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // FUNCIÓN DESCARGA
+    // ============================================
+    window.downloadChart = function(canvasId, filename) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = filename + '.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    };
+
+    console.log('✅ Panel de estadísticas cargado correctamente');
+});
+</script>
+{% endblock %}

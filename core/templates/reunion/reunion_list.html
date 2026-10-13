@@ -1,0 +1,694 @@
+<!-- templates/layout/reunion/reunion_list.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Mis Reuniones - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --list-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETAS DE ESTADÍSTICAS
+           ============================================ */
+        .stat-card {
+            border: none;
+            border-radius: var(--list-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card .stat-icon {
+            opacity: 0.2;
+            font-size: 3rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.35;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stat-card.bg-primary { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+        .stat-card.bg-success { background: linear-gradient(135deg, #198754 0%, #157347 100%); }
+        .stat-card.bg-danger { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
+
+        /* ============================================
+           TABS
+           ============================================ */
+        .nav-tabs .nav-link {
+            font-weight: 500;
+            color: #6c757d;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            transition: all var(--transition-speed) ease;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0d6efd;
+            background: #f8f9fa;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            background: #ffffff;
+            border-bottom: 3px solid #0d6efd;
+        }
+
+        .nav-tabs .nav-link .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            margin-left: 0.3rem;
+        }
+
+        .nav-tabs .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        /* ============================================
+           LISTA DE REUNIONES
+           ============================================ */
+        .reunion-item {
+            border: none;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+            background: #ffffff;
+        }
+
+        .reunion-item:last-child {
+            border-bottom: none;
+        }
+
+        .reunion-item:hover {
+            background: #f8f9fa;
+        }
+
+        .reunion-item .reunion-title {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .reunion-item .reunion-meta {
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .reunion-item .reunion-meta i {
+            margin-right: 0.2rem;
+        }
+
+        .reunion-item .reunion-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .reunion-item .badge-status {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .stat-card:focus-visible,
+        .reunion-item:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .nav-tabs .nav-link:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2.5rem;
+            }
+
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .reunion-item {
+                padding: 0.6rem 0.75rem;
+            }
+
+            .reunion-item .reunion-title {
+                font-size: 0.95rem;
+            }
+
+            .reunion-item .reunion-meta {
+                font-size: 0.85rem;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+
+            .nav-tabs .nav-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .reunion-item {
+                padding: 0.5rem 0.6rem;
+            }
+
+            .reunion-item .d-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 0.25rem;
+            }
+
+            .reunion-item .reunion-date {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .stat-card.bg-primary { background: linear-gradient(135deg, #1a2a3a 0%, #0a58ca 100%); }
+            .stat-card.bg-success { background: linear-gradient(135deg, #1a2a2a 0%, #157347 100%); }
+            .stat-card.bg-danger { background: linear-gradient(135deg, #2d1a1a 0%, #b02a37 100%); }
+
+            .nav-tabs .nav-link {
+                color: #8a8a9a;
+            }
+
+            .nav-tabs .nav-link:hover {
+                color: #4dabf7;
+                background: #252540;
+            }
+
+            .nav-tabs .nav-link.active {
+                color: #4dabf7;
+                background: #2d2d2d;
+                border-bottom-color: #4dabf7;
+            }
+
+            .reunion-item {
+                background: #2d2d2d;
+                border-bottom-color: #2d2d44;
+            }
+
+            .reunion-item:hover {
+                background: #252540;
+            }
+
+            .reunion-item .reunion-title {
+                color: #ecf0f1;
+            }
+
+            .reunion-item .reunion-meta {
+                color: #c8d6e5;
+            }
+
+            .reunion-item .reunion-date {
+                color: #8a8a9a;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-calendar-event" aria-hidden="true"></i> Reuniones
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-calendar-event" aria-hidden="true"></i> 
+            Mis Reuniones
+            <span class="badge bg-secondary ms-2">{{ programadas|length|add:completadas|length|add:canceladas|length }}</span>
+        </h1>
+        <a href="{% url 'reunion_create' %}" 
+           class="btn btn-primary btn-action"
+           aria-label="Programar nueva reunión">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> Programar Reunión
+        </a>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- RESUMEN                                      -->
+    <!-- ============================================ -->
+    <section aria-label="Resumen de reuniones" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-clock" aria-hidden="true"></i> Programadas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ programadas|length }} reuniones programadas">
+                        {{ programadas|length }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-clock"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> Completadas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ completadas|length }} reuniones completadas">
+                        {{ completadas|length }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="card stat-card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="stat-label">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Canceladas
+                    </h6>
+                    <p class="stat-value" aria-label="{{ canceladas|length }} reuniones canceladas">
+                        {{ canceladas|length }}
+                    </p>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- TABS                                        -->
+    <!-- ============================================ -->
+    <ul class="nav nav-tabs mb-4" role="tablist" aria-label="Filtro de reuniones">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" 
+                    id="programadas-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#programadas" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="programadas" 
+                    aria-selected="true">
+                <i class="bi bi-clock" aria-hidden="true"></i> 
+                Programadas
+                <span class="badge bg-primary">{{ programadas|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="completadas-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#completadas" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="completadas" 
+                    aria-selected="false">
+                <i class="bi bi-check-circle" aria-hidden="true"></i> 
+                Completadas
+                <span class="badge bg-secondary">{{ completadas|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="canceladas-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#canceladas" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="canceladas" 
+                    aria-selected="false">
+                <i class="bi bi-x-circle" aria-hidden="true"></i> 
+                Canceladas
+                <span class="badge bg-secondary">{{ canceladas|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO DE TABS                           -->
+    <!-- ============================================ -->
+    <div class="tab-content">
+        <!-- ============================================ -->
+        <!-- TAB: PROGRAMADAS                           -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade show active" 
+             id="programadas" 
+             role="tabpanel" 
+             aria-labelledby="programadas-tab">
+            
+            {% if programadas %}
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" role="list">
+                            {% for reunion in programadas %}
+                                <a href="{% url 'reunion_detail' reunion.idReunion %}" 
+                                   class="list-group-item list-group-item-action reunion-item"
+                                   role="listitem"
+                                   aria-label="Reunión: {{ reunion.titulo }} con {{ reunion.estudiante.nombre }}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1 me-2">
+                                            <div class="reunion-title">
+                                                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                                {{ reunion.titulo }}
+                                            </div>
+                                            <div class="reunion-meta">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                                <span class="mx-1">•</span>
+                                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                                <span class="badge bg-info">{{ reunion.duracion }} min</span>
+                                            </div>
+                                            <div class="reunion-date">
+                                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                                {{ reunion.fecha_programada|date:"d/m/Y H:i" }}
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0">
+                                            {% if reunion.ubicacion %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                                    {{ reunion.ubicacion }}
+                                                </span>
+                                            {% endif %}
+                                            <span class="badge bg-primary badge-status d-block mt-1">
+                                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                                Programada
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                    <h5 class="empty-title">No hay reuniones programadas</h5>
+                    <p class="empty-description">
+                        Aún no tienes reuniones programadas. 
+                        Puedes programar una reunión haciendo clic en el botón "Programar Reunión".
+                    </p>
+                    <a href="{% url 'reunion_create' %}" 
+                       class="btn btn-primary btn-sm mt-2"
+                       aria-label="Programar una reunión">
+                        <i class="bi bi-plus-circle" aria-hidden="true"></i> 
+                        Programar Reunión
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB: COMPLETADAS                            -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade" 
+             id="completadas" 
+             role="tabpanel" 
+             aria-labelledby="completadas-tab">
+            
+            {% if completadas %}
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" role="list">
+                            {% for reunion in completadas %}
+                                <div class="list-group-item reunion-item" role="listitem">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1 me-2">
+                                            <div class="reunion-title">
+                                                <i class="bi bi-check-circle text-success" aria-hidden="true"></i>
+                                                {{ reunion.titulo }}
+                                            </div>
+                                            <div class="reunion-meta">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                            </div>
+                                            <div class="reunion-date">
+                                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                                {{ reunion.fecha_programada|date:"d/m/Y H:i" }}
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0">
+                                            <span class="badge bg-success badge-status">
+                                                <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                                Completada
+                                            </span>
+                                            <br>
+                                            <a href="{% url 'reunion_detail' reunion.idReunion %}" 
+                                               class="btn btn-sm btn-info mt-1"
+                                               aria-label="Ver detalles de la reunión">
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <h5 class="empty-title">No hay reuniones completadas</h5>
+                    <p class="empty-description">
+                        Aún no has completado ninguna reunión.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB: CANCELADAS                             -->
+        <!-- ============================================ -->
+        <div class="tab-pane fade" 
+             id="canceladas" 
+             role="tabpanel" 
+             aria-labelledby="canceladas-tab">
+            
+            {% if canceladas %}
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" role="list">
+                            {% for reunion in canceladas %}
+                                <div class="list-group-item reunion-item" role="listitem">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1 me-2">
+                                            <div class="reunion-title">
+                                                <i class="bi bi-x-circle text-danger" aria-hidden="true"></i>
+                                                {{ reunion.titulo }}
+                                            </div>
+                                            <div class="reunion-meta">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                            </div>
+                                            <div class="reunion-date">
+                                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                                {{ reunion.fecha_programada|date:"d/m/Y H:i" }}
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0">
+                                            <span class="badge bg-danger badge-status">
+                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                                Cancelada
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <h5 class="empty-title">No hay reuniones canceladas</h5>
+                    <p class="empty-description">
+                        No tienes reuniones canceladas.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ESTADÍSTICAS RÁPIDAS                        -->
+    <!-- ============================================ -->
+    <footer class="mt-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center text-muted small">
+            <div>
+                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                <strong>Total:</strong> 
+                {{ programadas|length|add:completadas|length|add:canceladas|length }} reuniones
+            </div>
+            <div>
+                <span class="badge bg-primary me-1">{{ programadas|length }}</span>
+                <span class="text-muted">programadas</span>
+                <span class="mx-2">|</span>
+                <span class="badge bg-success me-1">{{ completadas|length }}</span>
+                <span class="text-muted">completadas</span>
+                <span class="mx-2">|</span>
+                <span class="badge bg-danger me-1">{{ canceladas|length }}</span>
+                <span class="text-muted">canceladas</span>
+            </div>
+            <div>
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                Última actualización: {% now "d/m/Y H:i" %}
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.reunion-item, .btn-action, .nav-link').forEach(function(item) {
+                item.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 2. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de listado de reuniones cargada');
+            
+            // Mostrar resumen
+            const total = {{ programadas|length|add:completadas|length|add:canceladas|length }};
+            console.log('ℹ️ Total de reuniones: ' + total);
+        });
+    </script>
+{% endblock %}

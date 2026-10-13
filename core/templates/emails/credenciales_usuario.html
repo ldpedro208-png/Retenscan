@@ -1,0 +1,665 @@
+<!-- templates/emails/credenciales_usuario.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Tus credenciales de acceso - RetenScan</title>
+    
+    <!-- Estilos inline para compatibilidad con clientes de email -->
+    <style>
+        /* ============================================
+           RESET Y CONFIGURACIÓN BASE
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* ============================================
+           CONTENEDOR PRINCIPAL
+           ============================================ */
+        .email-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f6f9;
+        }
+        
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* ============================================
+           HEADER
+           ============================================ */
+        .email-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: #ffffff;
+            padding: 30px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .email-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+        
+        .email-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .email-header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .email-header .header-icon {
+            font-size: 28px;
+            margin-right: 10px;
+        }
+        
+        /* ============================================
+           CONTENIDO
+           ============================================ */
+        .email-content {
+            padding: 40px;
+        }
+        
+        .email-content p {
+            margin-bottom: 16px;
+            color: #4a5568;
+        }
+        
+        .email-content .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        /* ============================================
+           CREDENCIALES
+           ============================================ */
+        .credentials-box {
+            background: #f8f9fa;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .credentials-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .credentials-box .credential-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .credentials-box .credential-item:last-child {
+            border-bottom: none;
+        }
+        
+        .credentials-box .credential-item .label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        
+        .credentials-box .credential-item .value {
+            font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #ffffff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0d6efd;
+            border: 1px solid #e2e8f0;
+            letter-spacing: 0.5px;
+            word-break: break-all;
+            max-width: 60%;
+            text-align: right;
+        }
+        
+        .credentials-box .credential-item .value.password {
+            color: #dc3545;
+            background: #fff5f5;
+            border-color: #f5c6cb;
+        }
+        
+        /* ============================================
+           BADGE DE ROL
+           ============================================ */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            background: #198754;
+            color: #ffffff;
+        }
+        
+        .role-badge.admin {
+            background: #dc3545;
+        }
+        
+        .role-badge.tutor {
+            background: #0d6efd;
+        }
+        
+        .role-badge.profesor {
+            background: #fd7e14;
+        }
+        
+        .role-badge.estudiante {
+            background: #20c997;
+        }
+        
+        /* ============================================
+           ADVERTENCIA
+           ============================================ */
+        .warning-box {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .warning-box strong {
+            color: #856404;
+        }
+        
+        .warning-box ul {
+            padding-left: 20px;
+            margin: 8px 0 0 0;
+        }
+        
+        .warning-box ul li {
+            color: #856404;
+            font-size: 14px;
+            padding: 3px 0;
+        }
+        
+        /* ============================================
+           BOTÓN DE ACCIÓN
+           ============================================ */
+        .btn-container {
+            text-align: center;
+            margin: 32px 0 24px 0;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0b5ed7 0%, #084298 100%);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+            text-decoration: none;
+        }
+        
+        .btn-primary .btn-icon {
+            margin-right: 8px;
+        }
+        
+        /* ============================================
+           ENLACES ADICIONALES
+           ============================================ */
+        .additional-links {
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .additional-links a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .additional-links a:hover {
+            text-decoration: underline;
+            color: #0d6efd;
+        }
+        
+        /* ============================================
+           SEPARADOR
+           ============================================ */
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 24px 0;
+        }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .email-footer {
+            padding: 24px 40px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .email-footer p {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 4px 0;
+        }
+        
+        .email-footer .footer-links {
+            margin-top: 8px;
+        }
+        
+        .email-footer .footer-links a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 0 8px;
+        }
+        
+        .email-footer .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ============================================
+           RESPONSIVE PARA CLIENTES DE EMAIL
+           ============================================ */
+        @media only screen and (max-width: 600px) {
+            .email-wrapper {
+                padding: 10px;
+            }
+            
+            .email-header {
+                padding: 20px 24px;
+            }
+            
+            .email-header h1 {
+                font-size: 20px;
+            }
+            
+            .email-content {
+                padding: 24px 20px;
+            }
+            
+            .credentials-box {
+                padding: 16px;
+            }
+            
+            .credentials-box .credential-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 8px 0;
+            }
+            
+            .credentials-box .credential-item .value {
+                max-width: 100%;
+                width: 100%;
+                text-align: left;
+                margin-top: 4px;
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            
+            .btn-primary {
+                padding: 10px 24px;
+                font-size: 14px;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .email-footer {
+                padding: 16px 20px;
+            }
+            
+            .email-footer .footer-links a {
+                display: inline-block;
+                margin: 4px 6px;
+            }
+            
+            .warning-box ul li {
+                font-size: 13px;
+            }
+        }
+        
+        @media only screen and (max-width: 400px) {
+            .email-header h1 {
+                font-size: 17px;
+            }
+            
+            .email-content {
+                padding: 16px;
+            }
+            
+            .credentials-box .credential-item .label {
+                font-size: 13px;
+            }
+            
+            .credentials-box .credential-item .value {
+                font-size: 12px;
+                padding: 4px 8px;
+            }
+            
+            .role-badge {
+                font-size: 12px;
+                padding: 3px 10px;
+            }
+        }
+        
+        /* ============================================
+           ACCESIBILIDAD PARA EMAILS
+           ============================================ */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* ============================================
+           TEMA OSCURO (limitado para emails)
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1a1a2e;
+            }
+            
+            .email-content p {
+                color: #c8d6e5;
+            }
+            
+            .email-content .greeting {
+                color: #ecf0f1;
+            }
+            
+            .credentials-box {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .credentials-box h3 {
+                color: #ecf0f1;
+            }
+            
+            .credentials-box .credential-item {
+                border-bottom-color: #2d2d44;
+            }
+            
+            .credentials-box .credential-item .label {
+                color: #c8d6e5;
+            }
+            
+            .credentials-box .credential-item .value {
+                background: #1a1a2e;
+                border-color: #2d2d44;
+                color: #4dabf7;
+            }
+            
+            .credentials-box .credential-item .value.password {
+                background: #2d1a2e;
+                border-color: #442d2d;
+                color: #f87171;
+            }
+            
+            .warning-box {
+                background: #2d241a;
+                border-left-color: #ffc107;
+            }
+            
+            .warning-box strong {
+                color: #ffd970;
+            }
+            
+            .warning-box ul li {
+                color: #ffd970;
+            }
+            
+            .email-footer {
+                border-top-color: #2d2d44;
+            }
+            
+            .email-footer p {
+                color: #8a8a9a;
+            }
+            
+            .additional-links a {
+                color: #8a8a9a;
+            }
+            
+            .divider {
+                border-top-color: #2d2d44;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================ -->
+    <!-- EMAIL WRAPPER (Tabla para compatibilidad)    -->
+    <!-- ============================================ -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f6f9; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);">
+                    
+                    <!-- ============================================ -->
+                    <!-- HEADER                                      -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: #ffffff; padding: 30px 40px; position: relative; overflow: hidden;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 28px; margin-right: 10px;">🔐</span>
+                                        <h1 style="font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.02em; display: inline-block;">Bienvenido a RetenScan</h1>
+                                        <span style="display: block; font-size: 14px; opacity: 0.9; margin-top: 4px;">
+                                            Sistema de Retención Estudiantil
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ============================================ -->
+                    <!-- CONTENIDO                                   -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <!-- Saludo -->
+                            <p style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 16px;">
+                                <span style="font-weight: 400;">Hola</span> 
+                                <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>,
+                            </p>
+                            
+                            <p style="color: #4a5568; margin-bottom: 16px;">
+                                Has sido registrado en el sistema 
+                                <strong>{{ site_name|default:"RetenScan" }}</strong> 
+                                como <strong>{{ rol_display|default:"Usuario" }}</strong>.
+                            </p>
+                            
+                            <!-- ======================================== -->
+                            <!-- CREDENCIALES                          -->
+                            <!-- ======================================== -->
+                            <div style="background: #f8f9fa; padding: 20px 24px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                                <h3 style="font-size: 16px; font-weight: 700; color: #2d3748; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔑</span> Tus credenciales de acceso
+                                </h3>
+                                
+                                <!-- Usuario -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                                    <span style="font-weight: 600; color: #4a5568; font-size: 14px;">👤 Usuario:</span>
+                                    <span style="font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace; background: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 14px; font-weight: 600; color: #0d6efd; border: 1px solid #e2e8f0; letter-spacing: 0.5px;">
+                                        {{ usuario.username }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Contraseña temporal -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                                    <span style="font-weight: 600; color: #4a5568; font-size: 14px;">🔑 Contraseña temporal:</span>
+                                    <span style="font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace; background: #fff5f5; padding: 4px 12px; border-radius: 4px; font-size: 14px; font-weight: 600; color: #dc3545; border: 1px solid #f5c6cb; letter-spacing: 0.5px;">
+                                        {{ password_temporal }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Rol -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                                    <span style="font-weight: 600; color: #4a5568; font-size: 14px;">🎯 Rol:</span>
+                                    <span style="display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; 
+                                        {% if rol|lower == 'administrador' or rol|lower == 'admin' %}background: #dc3545; color: #ffffff;
+                                        {% elif rol|lower == 'tutor' %}background: #0d6efd; color: #ffffff;
+                                        {% elif rol|lower == 'profesor' or rol|lower == 'docente' %}background: #fd7e14; color: #ffffff;
+                                        {% elif rol|lower == 'estudiante' %}background: #20c997; color: #ffffff;
+                                        {% else %}background: #198754; color: #ffffff;{% endif %}">
+                                        {{ rol_display|default:"Usuario" }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- ======================================== -->
+                            <!-- ADVERTENCIA                           -->
+                            <!-- ======================================== -->
+                            <div style="background: #fff9e6; border-left: 4px solid #ffc107; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+                                <strong style="color: #856404; display: block; margin-bottom: 4px;">⚠️ Importante:</strong>
+                                <ul style="padding-left: 20px; margin: 8px 0 0 0;">
+                                    <li style="color: #856404; font-size: 14px; padding: 3px 0;">
+                                        Esta es una <strong>contraseña temporal</strong>.
+                                    </li>
+                                    <li style="color: #856404; font-size: 14px; padding: 3px 0;">
+                                        <strong>DEBES cambiar tu contraseña</strong> en tu primer inicio de sesión.
+                                    </li>
+                                    <li style="color: #856404; font-size: 14px; padding: 3px 0;">
+                                        No compartas tus credenciales con nadie.
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- ======================================== -->
+                            <!-- BOTÓN DE ACCIÓN                        -->
+                            <!-- ======================================== -->
+                            <div style="text-align: center; margin: 32px 0 24px 0;">
+                                <a href="{{ url_login|default:'#' }}" 
+                                   style="display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);">
+                                    🔓 Iniciar Sesión
+                                </a>
+                            </div>
+                            
+                            <!-- ======================================== -->
+                            <!-- ENLACES ADICIONALES                    -->
+                            <!-- ======================================== -->
+                            <div style="text-align: center; margin: 16px 0;">
+                                <small>
+                                    <a href="{{ url_cambiar_password|default:'#' }}" 
+                                       style="color: #6c757d; text-decoration: none; font-size: 13px;">
+                                        ¿Olvidaste tu contraseña? Cámbiala aquí
+                                    </a>
+                                </small>
+                            </div>
+                            
+                            <!-- Despedida -->
+                            <p style="color: #4a5568; margin: 16px 0;">
+                                Saludos,<br>
+                                <strong>{{ site_name|default:"RetenScan" }}</strong>
+                            </p>
+                            
+                            <!-- Separador -->
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+                            
+                            <!-- Nota automática -->
+                            <p style="font-size: 12px; color: #6c757d; text-align: center; margin: 0;">
+                                Este es un mensaje automático del sistema {{ site_name|default:"RetenScan" }}.<br>
+                                Por favor, no respondas a este correo.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- ============================================ -->
+                    <!-- FOOTER                                      -->
+                    <!-- ============================================ -->
+                    <tr>
+                        <td style="padding: 24px 40px; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <p style="font-size: 12px; color: #6c757d; margin: 4px 0;">
+                                <span style="color: #6c757d;">📧</span> 
+                                {{ site_email|default:"soporte@retenscan.com" }} &bull;
+                                <span style="color: #6c757d;">📱</span> 
+                                {{ site_phone|default:"+56 2 1234 5678" }}
+                            </p>
+                            <div style="margin-top: 8px;">
+                                <a href="{{ site_url|default:'#' }}" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    {{ site_name|default:"RetenScan" }}
+                                </a>
+                                <a href="#" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    Política de Privacidad
+                                </a>
+                                <a href="#" 
+                                   style="color: #0d6efd; text-decoration: none; font-size: 12px; margin: 0 8px;">
+                                    Ayuda
+                                </a>
+                            </div>
+                            <p style="font-size: 11px; color: #8a8a9a; margin-top: 8px;">
+                                &copy; {% now "Y" %} {{ site_name|default:"RetenScan" }}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,761 @@
+<!-- templates/layout/estudiantes/estudiante_form.html -->
+<!-- ✅ VERSIÓN CORREGIDA Y SIMPLIFICADA -->
+
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Registrar Estudiante" }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .form-card .card-header {
+        background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+        color: #ffffff;
+        border: none;
+        padding: 1.25rem 1.5rem;
+    }
+    .form-card .card-body {
+        padding: 1.5rem;
+        background: #fafbfc;
+    }
+    .form-section {
+        background: #ffffff;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid #e9ecef;
+    }
+    .form-section .section-title {
+        color: #1a3a5c;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .photo-container {
+        width: 150px;
+        height: 180px;
+        margin: 0 auto 1rem;
+        border: 3px solid #cbd5e0;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        overflow: hidden;
+        position: relative;
+    }
+    .photo-container #previewImage {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+    }
+    .photo-container #placeholderIcon {
+        text-align: center;
+        color: #6c757d;
+    }
+    .photo-container #placeholderIcon i {
+        font-size: 3.5rem;
+        display: block;
+    }
+    .photo-container .btn-remove-photo {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        width: 1.75rem;
+        height: 1.75rem;
+        border: none;
+        border-radius: 50%;
+        background: #dc3545;
+        color: #ffffff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: none;
+        z-index: 10;
+    }
+    .btn-select-photo {
+        background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+        color: #ffffff;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-select-photo.btn-camera {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    .form-floating-custom {
+        margin-bottom: 1rem;
+    }
+    .form-floating-custom .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    .form-floating-custom .form-label .required {
+        color: #dc3545;
+        font-weight: 700;
+    }
+    .form-floating-custom .form-control,
+    .form-floating-custom .form-select {
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.95rem;
+        border: 1px solid #ced4da;
+    }
+    .form-floating-custom .form-control:focus,
+    .form-floating-custom .form-select:focus {
+        border-color: #2a5f8f;
+        box-shadow: 0 0 0 3px rgba(42, 95, 143, 0.15);
+    }
+    .form-floating-custom .form-control.is-invalid,
+    .form-floating-custom .form-select.is-invalid {
+        border-color: #dc3545;
+    }
+    .form-floating-custom .form-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .btn-action {
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-action.btn-primary {
+        background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+        border: none;
+        color: #ffffff;
+    }
+    .btn-action.btn-secondary {
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        background: #ffffff;
+    }
+    .camera-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.92);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 1rem;
+    }
+    .camera-modal-overlay.active {
+        display: flex;
+    }
+    .camera-wrapper {
+        position: relative;
+        max-width: 90vw;
+        max-height: 75vh;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+    }
+    .camera-wrapper video {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 75vh;
+        object-fit: contain;
+    }
+    .camera-modal-controls {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .camera-modal-controls button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 120px;
+        justify-content: center;
+        color: white;
+    }
+    .camera-modal-controls .btn-capture {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    .camera-modal-controls .btn-switch-camera {
+        background: linear-gradient(135deg, #17a2b8, #0dcaf0);
+    }
+    .camera-modal-controls .btn-close-camera {
+        background: linear-gradient(135deg, #dc3545, #e74c3c);
+    }
+    @media (max-width: 768px) {
+        .form-card .card-body { padding: 1rem; }
+        .photo-container { width: 110px; height: 140px; }
+        .btn-action { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="Breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'estudiante_list' %}">Estudiantes</a></li>
+        <li class="breadcrumb-item active">{{ titulo|default:"Registrar Estudiante" }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-12">
+        <article class="card form-card">
+            <header class="card-header">
+                <div class="d-flex align-items-center">
+                    <i class="bi {% if form.instance.pk %}bi-pencil-square{% else %}bi-person-plus{% endif %} fs-2 me-2"></i>
+                    <div>
+                        <h4 class="mb-0">{{ titulo|default:"Registrar Estudiante" }}</h4>
+                        <small>Complete todos los campos obligatorios (*)</small>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-building"></i> {{ universidad_nombre|default:"Sin universidad" }}
+                    </span>
+                </div>
+            </header>
+
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="estudianteForm" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row g-4">
+                        <!-- COLUMNA IZQUIERDA -->
+                        <div class="col-lg-4 col-md-5">
+                            <!-- Foto -->
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-camera"></i> Fotografía</h6>
+                                <div class="photo-container" id="photoContainer">
+                                    <img id="previewImage" src="" alt="Vista previa" style="display: none;">
+                                    <div id="placeholderIcon">
+                                        <i class="bi bi-person-circle"></i>
+                                        <span>Sin foto</span>
+                                    </div>
+                                    <button type="button" id="btnRemovePhoto" class="btn-remove-photo" aria-label="Eliminar foto">✕</button>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                    <button type="button" class="btn-select-photo" id="btnSelectPhoto">
+                                        <i class="bi bi-upload"></i> Seleccionar
+                                    </button>
+                                    <button type="button" class="btn-select-photo btn-camera" id="btnTakePhoto">
+                                        <i class="bi bi-camera"></i> Tomar foto
+                                    </button>
+                                </div>
+                                <div id="fileInputContainer">{{ form.foto }}</div>
+                                {{ form.foto_eliminar }}
+                                <small class="text-muted d-block mt-1">JPG, PNG, GIF | Máx. 5MB</small>
+                                {% if form.foto.errors %}
+                                    <div class="text-danger small">{{ form.foto.errors }}</div>
+                                {% endif %}
+                            </section>
+
+                            <!-- Datos Personales -->
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-person-badge"></i> Datos Personales</h6>
+                                
+                                <div class="form-floating-custom">
+                                    <label for="id_first_name" class="form-label">Nombre <span class="required">*</span></label>
+                                    <input type="text" name="first_name" id="id_first_name" 
+                                           class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                           value="{{ form.first_name.value|default:'' }}" required>
+                                    {% if form.first_name.errors %}<div class="invalid-feedback">{{ form.first_name.errors }}</div>{% endif %}
+                                </div>
+
+                                <div class="form-floating-custom">
+                                    <label for="id_last_name" class="form-label">Apellidos <span class="required">*</span></label>
+                                    <input type="text" name="last_name" id="id_last_name" 
+                                           class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                           value="{{ form.last_name.value|default:'' }}" required>
+                                    {% if form.last_name.errors %}<div class="invalid-feedback">{{ form.last_name.errors }}</div>{% endif %}
+                                </div>
+
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_carnet" class="form-label">Carnet <span class="required">*</span></label>
+                                            <input type="text" name="carnet" id="id_carnet" 
+                                                   class="form-control {% if form.carnet.errors %}is-invalid{% endif %}"
+                                                   value="{{ form.carnet.value|default:'' }}" required>
+                                            {% if form.carnet.errors %}<div class="invalid-feedback">{{ form.carnet.errors }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_genero" class="form-label">Género</label>
+                                            <select name="genero" id="id_genero" class="form-select">
+                                                <option value="">Selecciona...</option>
+                                                <option value="M" {% if form.genero.value == 'M' %}selected{% endif %}>Masculino</option>
+                                                <option value="F" {% if form.genero.value == 'F' %}selected{% endif %}>Femenino</option>
+                                                <option value="Otro" {% if form.genero.value == 'Otro' %}selected{% endif %}>Otro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_fecha_nacimiento" class="form-label">Fecha Nac.</label>
+                                            <input type="date" name="fecha_nacimiento" id="id_fecha_nacimiento" 
+                                                   class="form-control"
+                                                   value="{{ form.fecha_nacimiento.value|date:'Y-m-d'|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_nacionalidad" class="form-label">Nacionalidad</label>
+                                            <input type="text" name="nacionalidad" id="id_nacionalidad" 
+                                                   class="form-control" value="{{ form.nacionalidad.value|default:'Nacional' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Contacto -->
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-envelope"></i> Contacto</h6>
+                                
+                                <div class="form-floating-custom">
+                                    <label for="id_email" class="form-label">Email <span class="required">*</span></label>
+                                    <input type="email" name="email" id="id_email" 
+                                           class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                           value="{{ form.email.value|default:'' }}" required>
+                                    {% if form.email.errors %}<div class="invalid-feedback">{{ form.email.errors }}</div>{% endif %}
+                                </div>
+
+                                <div class="form-floating-custom">
+                                    <label for="id_telefono" class="form-label">Teléfono</label>
+                                    <input type="text" name="telefono" id="id_telefono" 
+                                           class="form-control" value="{{ form.telefono.value|default:'' }}">
+                                </div>
+
+                                <div class="form-floating-custom">
+                                    <label for="id_direccion" class="form-label">Dirección</label>
+                                    <textarea name="direccion" id="id_direccion" class="form-control" rows="2">{{ form.direccion.value|default:'' }}</textarea>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- COLUMNA DERECHA -->
+                        <div class="col-lg-8 col-md-7">
+                            <!-- Datos Académicos -->
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-mortarboard"></i> Datos Académicos</h6>
+                                
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_idCarrera" class="form-label">Carrera <span class="required">*</span></label>
+                                            <select name="idCarrera" id="id_idCarrera" 
+                                                    class="form-select {% if form.idCarrera.errors %}is-invalid{% endif %}" required>
+                                                <option value="">Selecciona...</option>
+                                                {% for carrera in carreras %}
+                                                    <option value="{{ carrera.idCarrera }}" 
+                                                            {% if form.idCarrera.value == carrera.idCarrera|stringformat:"s" %}selected{% endif %}>
+                                                        {{ carrera.nombre }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            {% if form.idCarrera.errors %}<div class="invalid-feedback">{{ form.idCarrera.errors }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_ano_ingreso" class="form-label">Año Ingreso <span class="required">*</span></label>
+                                            <input type="number" name="ano_ingreso" id="id_ano_ingreso" 
+                                                   class="form-control" value="{{ form.ano_ingreso.value|default:2024 }}" min="2000" max="2030" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_semestre_actual" class="form-label">Semestre Actual</label>
+                                            <input type="number" name="semestre_actual" id="id_semestre_actual" 
+                                                   class="form-control" value="{{ form.semestre_actual.value|default:1 }}" min="1">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_estado_academico" class="form-label">Estado Académico</label>
+                                            <select name="estado_academico" id="id_estado_academico" class="form-select">
+                                                <option value="Activo" {% if form.estado_academico.value == 'Activo' %}selected{% endif %}>Activo</option>
+                                                <option value="Inactivo" {% if form.estado_academico.value == 'Inactivo' %}selected{% endif %}>Inactivo</option>
+                                                <option value="Suspendido" {% if form.estado_academico.value == 'Suspendido' %}selected{% endif %}>Suspendido</option>
+                                                <option value="Egresado" {% if form.estado_academico.value == 'Egresado' %}selected{% endif %}>Egresado</option>
+                                                <option value="Abandonado" {% if form.estado_academico.value == 'Abandonado' %}selected{% endif %}>Abandonado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Contacto Emergencia -->
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-exclamation-triangle"></i> Contacto Emergencia</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_contacto_emergencia_nombre" class="form-label">Nombre Contacto</label>
+                                            <input type="text" name="contacto_emergencia_nombre" id="id_contacto_emergencia_nombre" 
+                                                   class="form-control" value="{{ form.contacto_emergencia_nombre.value|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating-custom">
+                                            <label for="id_telefono_emergencia" class="form-label">Teléfono Emergencia</label>
+                                            <input type="text" name="telefono_emergencia" id="id_telefono_emergencia" 
+                                                   class="form-control" value="{{ form.telefono_emergencia.value|default:'' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Contraseña - SOLO CREACIÓN -->
+                            {% if es_creacion and not form.instance.pk %}
+                            <section class="form-section">
+                                <h6 class="section-title"><i class="bi bi-key"></i> Configuración Contraseña</h6>
+                                
+                                <div class="form-floating-custom">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" name="generar_password_auto" 
+                                               id="id_generar_password_auto" 
+                                               class="form-check-input" checked
+                                               onchange="togglePasswordFields(this)">
+                                        <label class="form-check-label" for="id_generar_password_auto">
+                                            Generar contraseña automáticamente
+                                        </label>
+                                        <div class="form-text">Se enviará una contraseña temporal al correo del estudiante.</div>
+                                    </div>
+                                </div>
+
+                                <div id="passwordFieldsContainer">
+                                    <div class="form-floating-custom">
+                                        <label for="id_password" class="form-label">Contraseña <span class="required">*</span></label>
+                                        <input type="password" name="password" id="id_password" 
+                                               class="form-control" minlength="6">
+                                        <div class="form-text">Mínimo 6 caracteres.</div>
+                                    </div>
+                                    <div class="form-floating-custom">
+                                        <label for="id_confirm_password" class="form-label">Confirmar Contraseña <span class="required">*</span></label>
+                                        <input type="password" name="confirm_password" id="id_confirm_password" 
+                                               class="form-control" minlength="6">
+                                    </div>
+                                </div>
+                            </section>
+                            {% endif %}
+
+                            <!-- Errores -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    <strong>Errores:</strong>
+                                    <ul class="mb-0">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                                </div>
+                            {% endif %}
+
+                            <!-- Botones -->
+                            <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+                                <a href="{% url 'estudiante_list' %}" class="btn btn-secondary btn-action">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                                    <i class="bi bi-save"></i> 
+                                    {% if form.instance.pk %}Actualizar{% else %}Guardar{% endif %} Estudiante
+                                </button>
+                            </footer>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </article>
+    </div>
+</div>
+
+<!-- Modal Cámara -->
+<div class="camera-modal-overlay" id="cameraModal">
+    <div class="camera-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+    <div class="camera-modal-controls">
+        <button type="button" class="btn-capture" id="btnCapture"><i class="bi bi-camera"></i> Capturar</button>
+        <button type="button" class="btn-switch-camera" id="btnSwitchCamera"><i class="bi bi-arrow-repeat"></i> Cambiar</button>
+        <button type="button" class="btn-close-camera" id="btnCloseCamera"><i class="bi bi-x-circle"></i> Cerrar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ============================================
+    // ELEMENTOS
+    // ============================================
+    const fotoInput = document.querySelector('input[name="foto"]');
+    const previewImage = document.getElementById('previewImage');
+    const placeholderIcon = document.getElementById('placeholderIcon');
+    const btnSelectPhoto = document.getElementById('btnSelectPhoto');
+    const btnRemovePhoto = document.getElementById('btnRemovePhoto');
+    const btnTakePhoto = document.getElementById('btnTakePhoto');
+    const form = document.getElementById('estudianteForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const fotoEliminarInput = document.querySelector('input[name="foto_eliminar"]');
+
+    // Cámara
+    const cameraModal = document.getElementById('cameraModal');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const btnCapture = document.getElementById('btnCapture');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const btnSwitchCamera = document.getElementById('btnSwitchCamera');
+
+    // ============================================
+    // TOGGLE CONTRASEÑA - ✅ CORREGIDO
+    // ============================================
+    window.togglePasswordFields = function(checkbox) {
+        const passwordField = document.getElementById('id_password');
+        const confirmField = document.getElementById('id_confirm_password');
+        const container = document.getElementById('passwordFieldsContainer');
+        
+        if (checkbox.checked) {
+            container.style.display = 'none';
+            if (passwordField) { passwordField.required = false; passwordField.value = ''; }
+            if (confirmField) { confirmField.required = false; confirmField.value = ''; }
+        } else {
+            container.style.display = 'block';
+            if (passwordField) passwordField.required = true;
+            if (confirmField) confirmField.required = true;
+        }
+    };
+
+    // Inicializar toggle
+    const autoCheckbox = document.getElementById('id_generar_password_auto');
+    if (autoCheckbox) {
+        togglePasswordFields(autoCheckbox);
+    }
+
+    // ============================================
+    // MANEJO DE FOTO
+    // ============================================
+    if (fotoInput) fotoInput.style.display = 'none';
+
+    if (btnSelectPhoto && fotoInput) {
+        btnSelectPhoto.addEventListener('click', function() {
+            fotoInput.click();
+        });
+    }
+
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                if (fotoEliminarInput) fotoEliminarInput.value = 'false';
+                handleFile(file);
+            }
+        });
+    }
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            showToast('Selecciona una imagen válida.', 'warning');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('La imagen es demasiado grande. Máximo 5MB.', 'warning');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            placeholderIcon.style.display = 'none';
+            btnRemovePhoto.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ============================================
+    // ELIMINAR FOTO
+    // ============================================
+    if (btnRemovePhoto) {
+        btnRemovePhoto.addEventListener('click', function() {
+            if (fotoEliminarInput) fotoEliminarInput.value = 'true';
+            if (fotoInput) fotoInput.value = '';
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            placeholderIcon.style.display = 'block';
+            btnRemovePhoto.style.display = 'none';
+            showToast('La foto será eliminada al guardar.', 'info');
+        });
+    }
+
+    // ============================================
+    // CÁMARA
+    // ============================================
+    let stream = null;
+    let facingMode = 'environment';
+
+    async function startCamera() {
+        try {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            const constraints = {
+                video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
+            };
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => { video.play(); resolve(); };
+            });
+            cameraModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } catch (error) {
+            showToast('No se pudo acceder a la cámara. Verifica los permisos.', 'danger');
+        }
+    }
+
+    function stopCamera() {
+        if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+        video.srcObject = null;
+        cameraModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function capturePhoto() {
+        if (!stream || !video.videoWidth) {
+            showToast('La cámara no está lista.', 'warning');
+            return;
+        }
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        const size = Math.min(width, height);
+        const offsetX = (width - size) / 2;
+        const offsetY = (height - size) / 2;
+
+        canvas.width = 400;
+        canvas.height = 500;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, offsetX, offsetY, size, size, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(function(blob) {
+            if (blob) {
+                const file = new File([blob], 'foto_capturada.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fotoInput.files = dataTransfer.files;
+                if (fotoEliminarInput) fotoEliminarInput.value = 'false';
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    placeholderIcon.style.display = 'none';
+                    btnRemovePhoto.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                stopCamera();
+                showToast('¡Foto capturada!', 'success');
+            }
+        }, 'image/jpeg', 0.92);
+    }
+
+    if (btnTakePhoto) {
+        btnTakePhoto.addEventListener('click', function() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Tu navegador no soporta la cámara.', 'warning');
+                return;
+            }
+            startCamera();
+        });
+    }
+
+    if (btnCapture) btnCapture.addEventListener('click', capturePhoto);
+    if (btnCloseCamera) btnCloseCamera.addEventListener('click', stopCamera);
+    if (btnSwitchCamera) {
+        btnSwitchCamera.addEventListener('click', function() {
+            facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+            startCamera();
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && cameraModal.classList.contains('active')) stopCamera();
+    });
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message, type = 'info') {
+        const colors = { success: '#198754', warning: '#ffc107', info: '#0d6efd', danger: '#dc3545' };
+        const icons = { success: 'bi-check-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle', danger: 'bi-exclamation-circle' };
+        const container = document.createElement('div');
+        container.className = 'position-fixed bottom-0 end-0 p-3';
+        container.style.zIndex = '9999';
+        container.innerHTML = `
+            <div class="toast show" style="min-width:300px; background:white; border-radius:0.5rem; box-shadow:0 0.5rem 1rem rgba(0,0,0,0.15);">
+                <div class="toast-header" style="background:${colors[type]}; color:white; border-radius:0.5rem 0.5rem 0 0; padding:0.5rem 0.75rem;">
+                    <i class="bi ${icons[type]}" style="margin-right:0.5rem;"></i>
+                    <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body" style="padding:0.75rem; color:#333;">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(container);
+        setTimeout(() => { container.remove(); }, 4000);
+    }
+
+    // ============================================
+    // FOTO EXISTENTE
+    // ============================================
+    {% if form.instance.idUsuario.foto %}
+        previewImage.src = "{{ form.instance.idUsuario.foto.url }}";
+        previewImage.style.display = 'block';
+        placeholderIcon.style.display = 'none';
+        btnRemovePhoto.style.display = 'block';
+    {% endif %}
+
+    // ============================================
+    // PREVENIR DOBLE ENVÍO
+    // ============================================
+    form.addEventListener('submit', function() {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin"></i> Guardando...';
+        }
+    });
+});
+</script>
+{% endblock %}

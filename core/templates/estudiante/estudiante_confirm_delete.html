@@ -1,0 +1,548 @@
+<!-- templates/estudiante/estudiante_confirm_delete.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Estudiante - {{ estudiante.nombre_completo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --delete-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        }
+
+        .delete-card {
+            border: none;
+            border-radius: var(--delete-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            border-left: 4px solid #dc3545;
+        }
+
+        .delete-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(220, 53, 69, 0.12);
+        }
+
+        .delete-card .card-header {
+            background: var(--danger-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .delete-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .delete-card .card-body {
+            padding: 2rem;
+        }
+
+        .warning-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            display: inline-block;
+            animation: warningPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .student-summary {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .student-summary .summary-item {
+            display: flex;
+            padding: 0.3rem 0;
+            font-size: 0.95rem;
+            color: #4a5568;
+        }
+
+        .student-summary .summary-item .label {
+            font-weight: 600;
+            min-width: 100px;
+            color: #2d3748;
+        }
+
+        .student-summary .summary-item .value {
+            color: #4a5568;
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        .alert-custom ul {
+            padding-left: 1.25rem;
+            margin-bottom: 0;
+        }
+
+        .alert-custom ul li {
+            padding: 0.15rem 0;
+        }
+
+        .alert-custom.alert-danger {
+            background: #fde8e8;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-custom.alert-warning {
+            background: #fff9e6;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-danger {
+            background: var(--danger-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .delete-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .student-summary .summary-item {
+                flex-direction: column;
+                gap: 0.15rem;
+            }
+
+            .student-summary .summary-item .label {
+                min-width: auto;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .delete-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .delete-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .student-summary {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .student-summary .summary-item {
+                color: #c8d6e5;
+            }
+
+            .student-summary .summary-item .label {
+                color: #ecf0f1;
+            }
+
+            .student-summary .summary-item .value {
+                color: #c8d6e5;
+            }
+
+            .alert-custom.alert-danger {
+                background: #2d1a1a;
+                color: #f8d7da;
+            }
+
+            .alert-custom.alert-warning {
+                background: #2d241a;
+                color: #ffd970;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_list' %}" class="text-decoration-none">
+                    <i class="bi bi-people" aria-hidden="true"></i> Estudiantes
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" class="text-decoration-none">
+                    {{ estudiante.nombre_completo }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <article class="card delete-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Eliminar Estudiante</h4>
+                            <small>
+                                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                                Esta acción no se puede deshacer
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Icono de advertencia -->
+                    <div class="text-center py-3">
+                        <div class="warning-icon" aria-hidden="true">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                        <h4 class="mt-3 text-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            ¿Eliminar este estudiante?
+                        </h4>
+                        <p class="text-muted">
+                            Esta acción es <strong>permanente</strong> y no se puede deshacer.
+                            <br>
+                            <span class="text-danger">
+                                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                Todos los datos asociados se perderán.
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Resumen del estudiante -->
+                    <div class="student-summary">
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-person" aria-hidden="true"></i> Nombre:
+                            </span>
+                            <span class="value"><strong>{{ estudiante.nombre_completo }}</strong></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-card-text" aria-hidden="true"></i> Carnet:
+                            </span>
+                            <span class="value"><strong>{{ estudiante.carnet }}</strong></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-mortarboard" aria-hidden="true"></i> Carrera:
+                            </span>
+                            <span class="value">{{ estudiante.idCarrera.nombre|default:"Sin asignar" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-flag" aria-hidden="true"></i> Estado:
+                            </span>
+                            <span class="value">
+                                <span class="badge 
+                                    {% if estudiante.estado_academico == 'Activo' %}bg-success
+                                    {% elif estudiante.estado_academico == 'Inactivo' %}bg-warning text-dark
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ estudiante.estado_academico|default:"Sin estado" }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-envelope" aria-hidden="true"></i> Email:
+                            </span>
+                            <span class="value">{{ estudiante.email|default:"Sin email" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Datos que se eliminarán -->
+                    <div class="alert-custom alert-danger" role="alert">
+                        <i class="bi bi-exclamation-circle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">⚠️ Se ELIMINARÁN PERMANENTEMENTE:</div>
+                            <ul>
+                                <li>❌ El perfil del estudiante</li>
+                                <li>❌ Historial académico</li>
+                                <li>❌ Registros de asistencia</li>
+                                <li>❌ Riesgos e intervenciones</li>
+                                <li>❌ Todas las relaciones y asignaciones</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Alternativa -->
+                    <div class="alert-custom alert-warning" role="alert">
+                        <i class="bi bi-info-circle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">💡 Alternativa</div>
+                            <p class="mb-0">
+                                Si quieres conservar los datos, puedes <strong>desactivar</strong> al estudiante 
+                                en lugar de eliminarlo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+
+                        <!-- Campo de confirmación -->
+                        <div class="mb-3">
+                            <label for="confirmText" class="form-label fw-semibold">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                Escribe <span class="text-danger fw-bold">ELIMINAR</span> para confirmar:
+                            </label>
+                            <input type="text" 
+                                   id="confirmText" 
+                                   class="form-control" 
+                                   placeholder="Escribe ELIMINAR para confirmar"
+                                   aria-describedby="confirmHelp"
+                                   autocomplete="off">
+                            <div id="confirmHelp" class="form-text">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Esta medida previene eliminaciones accidentales
+                            </div>
+                            <div id="confirmFeedback" class="invalid-feedback" style="display: none;">
+                                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                Debes escribir "ELIMINAR" para confirmar la eliminación
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'estudiante_detail' estudiante.idEstudiante %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al perfil del estudiante">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-action" id="deleteBtn" disabled>
+                                <i class="bi bi-trash" aria-hidden="true"></i> 
+                                Eliminar Estudiante
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación adicional -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Confirmación Final
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-trash" style="font-size: 3rem; color: #dc3545;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás absolutamente seguro?</h5>
+                        <p class="text-muted">
+                            Esta acción eliminará permanentemente al estudiante 
+                            <strong>"{{ estudiante.nombre_completo }}"</strong> y todos sus datos asociados.
+                        </p>
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>¡No podrás recuperar esta información!</strong>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Revisar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">
+                        <i class="bi bi-trash" aria-hidden="true"></i> 
+                        Eliminar Permanentemente
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmInput = document.getElementById('confirmText');
+            const deleteBtn = document.getElementById('deleteBtn');
+            const deleteForm = document.getElementById('deleteForm');
+            const confirmFeedback = document.getElementById('confirmFeedback');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmDelete = document.getElementById('confirmDelete');
+
+            if (confirmInput && deleteBtn) {
+                const requiredText = 'ELIMINAR';
+
+                confirmInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    const isValid = value === requiredText;
+
+                    if (value.length > 0) {
+                        if (isValid) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            confirmFeedback.style.display = 'none';
+                            deleteBtn.disabled = false;
+                        } else {
+                            this.classList.remove('is-valid');
+                            this.classList.add('is-invalid');
+                            confirmFeedback.style.display = 'block';
+                            deleteBtn.disabled = true;
+                        }
+                    } else {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        confirmFeedback.style.display = 'none';
+                        deleteBtn.disabled = true;
+                    }
+                });
+
+                deleteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (confirmInput.value.trim() !== 'ELIMINAR') {
+                        confirmInput.classList.add('is-invalid');
+                        confirmFeedback.style.display = 'block';
+                        confirmInput.focus();
+                        return;
+                    }
+                    confirmModal.show();
+                });
+
+                confirmDelete.addEventListener('click', function() {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Eliminando...';
+                    deleteForm.submit();
+                });
+
+                confirmInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!deleteBtn.disabled) {
+                            deleteBtn.click();
+                        }
+                    }
+                });
+
+                setTimeout(function() {
+                    confirmInput.focus();
+                }, 300);
+            }
+
+            console.log('✅ Página de confirmación de eliminación cargada');
+        });
+    </script>
+{% endblock %}

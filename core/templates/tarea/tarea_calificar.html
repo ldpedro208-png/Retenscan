@@ -1,0 +1,830 @@
+<!-- templates/layout/tarea/tarea_calificar.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Calificar Tarea - {{ tarea.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --grade-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+        }
+
+        /* ============================================
+           TARJETA DE CALIFICACIÓN
+           ============================================ */
+        .grade-card {
+            border: none;
+            border-radius: var(--grade-card-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            overflow: hidden;
+        }
+
+        .grade-card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .grade-card .card-header {
+            border: none;
+            padding: 0.75rem 1.25rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .grade-card .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           TABLA DE RESPUESTAS
+           ============================================ */
+        .table-respuestas thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            background: #f8f9fa;
+        }
+
+        .table-respuestas tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-respuestas tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-respuestas tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-respuestas .answer-text {
+            background: #f8f9fa;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           CAMPOS DE CALIFICACIÓN
+           ============================================ */
+        .score-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .score-input-group .form-control {
+            width: 80px;
+            text-align: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .score-input-group .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .score-input-group .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .score-input-group .form-control.is-valid {
+            border-color: #198754;
+        }
+
+        .score-input-group .score-max {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        /* ============================================
+           RETROALIMENTACIÓN
+           ============================================ */
+        .feedback-textarea {
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+            transition: all var(--transition-speed) ease;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .feedback-textarea:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        /* ============================================
+           BADGES DE ESTADO
+           ============================================ */
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           ALERTA DE INSTRUCCIONES
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-action.btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .grade-card:nth-child(1) { animation-delay: 0.05s; }
+        .grade-card:nth-child(2) { animation-delay: 0.10s; }
+        .grade-card:nth-child(3) { animation-delay: 0.15s; }
+        .grade-card:nth-child(4) { animation-delay: 0.20s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .grade-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible,
+        .form-textarea:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 992px) {
+            .table-respuestas thead th {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.4rem;
+            }
+
+            .table-respuestas tbody td {
+                padding: 0.4rem 0.4rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grade-card .card-body {
+                padding: 1rem;
+            }
+
+            .table-respuestas {
+                font-size: 0.8rem;
+            }
+
+            .table-respuestas thead th {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.3rem;
+            }
+
+            .table-respuestas tbody td {
+                padding: 0.3rem 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            .score-input-group .form-control {
+                width: 60px;
+                font-size: 0.8rem;
+            }
+
+            .feedback-textarea {
+                font-size: 0.85rem;
+                min-height: 60px;
+            }
+
+            .btn-action {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-respuestas {
+                font-size: 0.75rem;
+            }
+
+            .table-respuestas thead th {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.2rem;
+            }
+
+            .table-respuestas tbody td {
+                padding: 0.2rem 0.2rem;
+                font-size: 0.75rem;
+            }
+
+            .score-input-group .form-control {
+                width: 50px;
+                font-size: 0.75rem;
+            }
+
+            .feedback-textarea {
+                font-size: 0.8rem;
+                min-height: 50px;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .grade-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .grade-card .card-header {
+                background: #252540;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-respuestas thead th {
+                background: #252540;
+                color: #c8d6e5;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-respuestas tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-respuestas tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .table-respuestas .answer-text {
+                background: #252540;
+                color: #ecf0f1;
+            }
+
+            .score-input-group .form-control {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .score-input-group .form-control:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .score-input-group .score-max {
+                color: #8a8a9a;
+            }
+
+            .feedback-textarea {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .feedback-textarea:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+
+            .alert-custom.alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+            }
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_list' %}" class="text-decoration-none">
+                    <i class="bi bi-list-task" aria-hidden="true"></i> Tareas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'tarea_detail' tarea.idTarea %}" class="text-decoration-none">
+                    {{ tarea.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-check2-square" aria-hidden="true"></i> Calificar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ENCABEZADO                                   -->
+    <!-- ============================================ -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-check2-square" aria-hidden="true"></i> 
+            Calificar: <span class="text-primary">{{ tarea.titulo }}</span>
+            <span class="badge bg-secondary ms-2">{{ asignaciones|length }} entregas</span>
+        </h1>
+        <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+           class="btn btn-secondary btn-action"
+           aria-label="Volver al detalle de la tarea">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- INSTRUCCIONES                                -->
+    <!-- ============================================ -->
+    <div class="alert alert-custom alert-info" role="alert">
+        <i class="bi bi-info-circle alert-icon" aria-hidden="true"></i>
+        <div class="alert-content">
+            <strong>Instrucciones:</strong>
+            <ul class="mb-0 mt-1">
+                <li>Asigna un <strong>puntaje</strong> a cada respuesta según la rúbrica de la tarea.</li>
+                <li>Deja <strong>retroalimentación</strong> para ayudar al estudiante a mejorar.</li>
+                <li>La retroalimentación será visible para el estudiante al ver sus resultados.</li>
+                <li>Puedes incluir bloques de código usando <code>```python</code> en la retroalimentación general.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LISTA DE ENTREGAS                           -->
+    <!-- ============================================ -->
+    {% if asignaciones %}
+        <form method="post" id="calificarForm" novalidate>
+            {% csrf_token %}
+
+            {% for asignacion in asignaciones %}
+                <section aria-label="Entrega de {{ asignacion.estudiante.nombre }}" class="grade-card card mb-4">
+                    <!-- Header -->
+                    <header class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person" aria-hidden="true"></i> 
+                            {{ asignacion.estudiante.nombre }} {{ asignacion.estudiante.apellido_paterno }}
+                            <span class="badge bg-info">{{ asignacion.estudiante.carnet }}</span>
+                        </h5>
+                        <div>
+                            <span class="badge-status bg-success text-white">
+                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                Entregado: {{ asignacion.fecha_entrega|date:"d/m/Y H:i" }}
+                            </span>
+                            {% if asignacion.calificada %}
+                                <span class="badge-status bg-primary text-white ms-2">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i> Calificada
+                                </span>
+                            {% endif %}
+                        </div>
+                    </header>
+
+                    <!-- Body -->
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-respuestas" 
+                                   aria-label="Respuestas de {{ asignacion.estudiante.nombre }}">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 20%;">
+                                            <i class="bi bi-question-circle" aria-hidden="true"></i> Pregunta
+                                        </th>
+                                        <th scope="col" style="width: 30%;">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Respuesta
+                                        </th>
+                                        <th scope="col" style="width: 20%;">
+                                            <i class="bi bi-star" aria-hidden="true"></i> Puntaje
+                                        </th>
+                                        <th scope="col" style="width: 30%;">
+                                            <i class="bi bi-chat-dots" aria-hidden="true"></i> Retroalimentación
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for respuesta in asignacion.respuestas.all %}
+                                        <tr>
+                                            <!-- Pregunta -->
+                                            <td>
+                                                <strong>{{ forloop.counter }}.</strong>
+                                                <br>
+                                                <small>{{ respuesta.pregunta.pregunta|truncatechars:60 }}</small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-star" aria-hidden="true"></i>
+                                                    Máx: {{ respuesta.pregunta.puntaje }} pts
+                                                </small>
+                                            </td>
+
+                                            <!-- Respuesta -->
+                                            <td>
+                                                {% if respuesta.opcion %}
+                                                    <span class="badge bg-info mb-1">
+                                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Opción seleccionada
+                                                    </span>
+                                                    <br>
+                                                    {{ respuesta.opcion.texto }}
+                                                {% elif respuesta.respuesta_texto %}
+                                                    <span class="badge bg-info mb-1">
+                                                        <i class="bi bi-pencil" aria-hidden="true"></i> Texto libre
+                                                    </span>
+                                                    <br>
+                                                    <div class="answer-text">
+                                                        {{ respuesta.respuesta_texto }}
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">Sin respuesta</span>
+                                                {% endif %}
+                                            </td>
+
+                                            <!-- Puntaje -->
+                                            <td>
+                                                <div class="score-input-group">
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           name="calificacion_{{ respuesta.idRespuestaTarea }}" 
+                                                           value="{{ respuesta.calificacion|default:'' }}"
+                                                           step="0.5" 
+                                                           min="0" 
+                                                           max="{{ respuesta.pregunta.puntaje }}"
+                                                           aria-label="Puntaje para pregunta {{ forloop.counter }}"
+                                                           data-puntaje-max="{{ respuesta.pregunta.puntaje }}">
+                                                    <span class="score-max">/ {{ respuesta.pregunta.puntaje }}</span>
+                                                </div>
+                                                <small class="text-muted">Ingresa el puntaje obtenido</small>
+                                            </td>
+
+                                            <!-- Retroalimentación -->
+                                            <td>
+                                                <textarea class="form-control feedback-textarea" 
+                                                          name="retroalimentacion_{{ respuesta.idRespuestaTarea }}" 
+                                                          rows="3"
+                                                          placeholder="Escribe retroalimentación para el estudiante...">{{ respuesta.retroalimentacion_pregunta|default:'' }}</textarea>
+                                                <small class="text-muted">Visible para el estudiante</small>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Retroalimentación general -->
+                        <div class="mt-3 pt-3 border-top">
+                            <label for="retro_general_{{ asignacion.idAsignacion }}" class="form-label fw-semibold">
+                                <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                                Retroalimentación General
+                            </label>
+                            <textarea class="form-control feedback-textarea" 
+                                      id="retro_general_{{ asignacion.idAsignacion }}"
+                                      name="retroalimentacion_general_{{ asignacion.idAsignacion }}" 
+                                      rows="3"
+                                      placeholder="Escribe retroalimentación general para el estudiante...">{{ asignacion.retroalimentacion|default:'' }}</textarea>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Puedes incluir bloques de código usando triple backtick. 
+                                Ejemplo: <code>```python\nprint("Hola mundo")\n```</code>
+                            </small>
+                        </div>
+                    </div>
+                </section>
+            {% endfor %}
+
+            <!-- Botones de acción -->
+            <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+                   class="btn btn-secondary btn-action"
+                   aria-label="Cancelar y volver al detalle de la tarea">
+                    <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+                    <i class="bi bi-save" aria-hidden="true"></i> Guardar Calificaciones
+                </button>
+            </footer>
+        </form>
+    {% else %}
+        <!-- Estado vacío -->
+        <div class="empty-state">
+            <div class="empty-icon" aria-hidden="true">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h5 class="empty-title">No hay entregas para calificar</h5>
+            <p class="empty-description">
+                Los estudiantes aún no han entregado esta tarea.
+                <br>
+                <span class="text-muted">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    Las entregas aparecerán aquí cuando los estudiantes envíen sus respuestas.
+                </span>
+            </p>
+            <a href="{% url 'tarea_detail' tarea.idTarea %}" 
+               class="btn btn-secondary btn-action mt-3"
+               aria-label="Volver al detalle de la tarea">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a la tarea
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('calificarForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const scoreInputs = document.querySelectorAll('input[name^="calificacion_"]');
+
+            // ============================================
+            // 1. VALIDACIÓN DE PUNTAJES EN TIEMPO REAL
+            // ============================================
+            if (scoreInputs) {
+                scoreInputs.forEach(function(input) {
+                    input.addEventListener('input', function() {
+                        const value = parseFloat(this.value);
+                        const max = parseFloat(this.dataset.puntajeMax);
+                        
+                        if (!isNaN(value) && value >= 0) {
+                            if (value > max) {
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                                showToast('El puntaje no puede exceder el máximo de ' + max + ' puntos.', 'warning');
+                            } else {
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        } else if (this.value === '') {
+                            this.classList.remove('is-invalid', 'is-valid');
+                        } else {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                        }
+                    });
+                });
+            }
+
+            // ============================================
+            // 2. VALIDACIÓN ANTES DE ENVIAR
+            // ============================================
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    let hasError = false;
+                    
+                    // Validar puntajes
+                    scoreInputs.forEach(function(input) {
+                        const value = parseFloat(input.value);
+                        const max = parseFloat(input.dataset.puntajeMax);
+                        
+                        if (input.value !== '' && !isNaN(value)) {
+                            if (value < 0 || value > max) {
+                                hasError = true;
+                                input.classList.add('is-invalid');
+                                input.focus();
+                                showToast('Corrige los puntajes inválidos antes de guardar.', 'warning');
+                            }
+                        }
+                    });
+                    
+                    if (hasError) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    // Deshabilitar botón para evitar doble envío
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Guardando...';
+                    }
+                });
+            }
+
+            // ============================================
+            // 3. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 4. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 5. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de calificación de tarea cargada');
+            console.log('ℹ️ ' + {{ asignaciones|length }} + ' entregas para calificar');
+        });
+    </script>
+{% endblock %}

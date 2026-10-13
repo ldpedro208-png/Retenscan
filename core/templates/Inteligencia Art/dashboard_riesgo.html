@@ -1,0 +1,1042 @@
+<!-- templates/layout/Inteligencia Art/dashboard_riesgo.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Riesgo Predictivo - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --dashboard-card-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --shadow-hover: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        /* ============================================
+           TARJETAS DE RIESGO
+           ============================================ */
+        .risk-card {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            transition: all var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            cursor: default;
+            overflow: hidden;
+        }
+
+        .risk-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .risk-card .card-body {
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .risk-card .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.85;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .risk-card .card-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .risk-card .card-icon {
+            font-size: 2.5rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 0.75rem;
+            bottom: 0.75rem;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .risk-card:hover .card-icon {
+            opacity: 0.35;
+        }
+
+        .risk-card.bg-primary { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+        .risk-card.bg-danger { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
+        .risk-card.bg-warning { background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); }
+        .risk-card.bg-info { background: linear-gradient(135deg, #0dcaf0 0%, #0aa3c4 100%); }
+
+        .risk-card.bg-warning .card-text,
+        .risk-card.bg-warning .card-title,
+        .risk-card.bg-warning .card-icon { color: #1a1a2e; }
+
+        /* ============================================
+           TARJETA DE ESTADÍSTICAS ADICIONALES
+           ============================================ */
+        .stats-card-extra {
+            border: none;
+            border-radius: var(--dashboard-card-radius);
+            transition: all var(--transition-speed) ease;
+            background: #f8f9fa;
+        }
+
+        .stats-card-extra:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stats-card-extra .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ============================================
+           TABLA DE ESTUDIANTES EN RIESGO
+           ============================================ */
+        .table-risk {
+            margin-bottom: 0;
+        }
+
+        .table-risk thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #4a5568;
+            border-bottom-width: 2px;
+            font-weight: 600;
+            padding: 0.75rem 0.75rem;
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-risk tbody td {
+            padding: 0.75rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-risk tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .table-risk tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-risk tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           BARRA DE PROGRESO DE RIESGO
+           ============================================ */
+        .risk-progress {
+            height: 1.5rem;
+            border-radius: 0.75rem;
+            background-color: #e9ecef;
+            min-width: 100px;
+            overflow: hidden;
+        }
+
+        .risk-progress .progress-bar {
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            line-height: 1.5rem;
+            transition: width 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ============================================
+           BADGES
+           ============================================ */
+        .badge-risk {
+            padding: 0.35rem 0.8rem;
+            font-size: 0.75rem;
+            border-radius: 50px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-risk i {
+            margin-right: 0.3rem;
+        }
+
+        /* ============================================
+           FACTORES Y RECOMENDACIONES
+           ============================================ */
+        .factor-item {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.85rem;
+        }
+
+        .factor-item:last-child {
+            border-bottom: none;
+        }
+
+        .recomendation-item {
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.85rem;
+        }
+
+        .recomendation-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           ESTADO VACÍO
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #28a745;
+        }
+
+        .empty-state .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 1rem;
+        }
+
+        .empty-state .empty-description {
+            color: #6c757d;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .count-animate {
+            animation: countUp 0.6s ease forwards;
+        }
+
+        .risk-card:nth-child(1) { animation-delay: 0.05s; }
+        .risk-card:nth-child(2) { animation-delay: 0.10s; }
+        .risk-card:nth-child(3) { animation-delay: 0.15s; }
+        .risk-card:nth-child(4) { animation-delay: 0.20s; }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .risk-card:focus-visible,
+        .stats-card-extra:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .risk-card .card-text {
+                font-size: 2rem;
+            }
+
+            .risk-card .card-icon {
+                font-size: 2rem;
+            }
+
+            .table-risk {
+                font-size: 0.85rem;
+            }
+
+            .table-risk thead th,
+            .table-risk tbody td {
+                padding: 0.5rem 0.5rem;
+            }
+
+            .risk-progress {
+                height: 1.25rem;
+                min-width: 80px;
+            }
+
+            .risk-progress .progress-bar {
+                font-size: 0.65rem;
+                line-height: 1.25rem;
+            }
+
+            .btn-group {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .risk-card .card-text {
+                font-size: 1.5rem;
+            }
+
+            .risk-card .card-body {
+                padding: 1rem;
+            }
+
+            .table-risk {
+                font-size: 0.75rem;
+            }
+
+            .table-risk thead th,
+            .table-risk tbody td {
+                padding: 0.3rem 0.3rem;
+            }
+
+            .badge-risk {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+            .risk-progress {
+                height: 1rem;
+                min-width: 60px;
+            }
+
+            .risk-progress .progress-bar {
+                font-size: 0.6rem;
+                line-height: 1rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .stats-card-extra {
+                background: #252540;
+                color: #e0e0e0;
+            }
+
+            .table-risk thead th {
+                background: #252540;
+                color: #c8d6e5;
+                border-bottom-color: #2d2d44;
+            }
+
+            .table-risk tbody td {
+                border-bottom-color: #2d2d44;
+                color: #c8d6e5;
+            }
+
+            .table-risk tbody tr:hover {
+                background-color: #252540;
+            }
+
+            .risk-progress {
+                background-color: #2d2d44;
+            }
+
+            .factor-item {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .recomendation-item {
+                border-bottom-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .empty-state .empty-title {
+                color: #ecf0f1;
+            }
+
+            .btn-outline-secondary {
+                color: #c8d6e5;
+                border-color: #4d4d5d;
+            }
+
+            .btn-outline-secondary:hover {
+                background: #3d3d4d;
+                border-color: #5d5d6d;
+                color: #ecf0f1;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-robot" aria-hidden="true"></i> IA Predictiva
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- ALERTAS DEL SISTEMA                         -->
+    <!-- ============================================ -->
+    <div class="container-fluid fade-in">
+        <!-- Modelo no entrenado -->
+        {% if necesita_entrenamiento %}
+            <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1" aria-hidden="true"></i>
+                    <div>
+                        <h5 class="alert-heading">⚠️ Modelo no entrenado</h5>
+                        <p class="mb-0">
+                            El modelo predictivo necesita ser entrenado con los datos disponibles 
+                            para comenzar a generar predicciones.
+                        </p>
+                        {% if user_rol == 'admin' %}
+                            <a href="{% url 'entrenar_modelo' %}" class="btn btn-warning btn-sm mt-2">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> 
+                                Entrenar Modelo Ahora
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                        aria-label="Cerrar"></button>
+            </div>
+        {% endif %}
+
+        <!-- Modelo no disponible -->
+        {% if not modelo_disponible and not necesita_entrenamiento %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1" aria-hidden="true"></i>
+                    <div>
+                        <h5 class="alert-heading">❌ Error del sistema</h5>
+                        <p class="mb-0">
+                            El modelo predictivo no está disponible. 
+                            Por favor, contacta al administrador del sistema.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                        aria-label="Cerrar"></button>
+            </div>
+        {% endif %}
+
+        <!-- ============================================ -->
+        <!-- ENCABEZADO                                   -->
+        <!-- ============================================ -->
+        <header class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="bi bi-robot text-primary" aria-hidden="true"></i> 
+                    Dashboard de Riesgo Predictivo
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i> 
+                    Última actualización: {% now "d/m/Y H:i" %}
+                    {% if total_estudiantes %}
+                        · {{ total_estudiantes }} estudiantes evaluados
+                    {% endif %}
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2" role="group" aria-label="Acciones del dashboard">
+                {% if user_rol == 'admin' %}
+                    <a href="{% url 'entrenar_modelo' %}" 
+                       class="btn btn-warning btn-action"
+                       aria-label="Entrenar modelo de IA">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Entrenar Modelo
+                    </a>
+                    <a href="{% url 'actualizar_riesgos' %}" 
+                       class="btn btn-secondary btn-action"
+                       aria-label="Actualizar riesgos de estudiantes">
+                        <i class="bi bi-sync" aria-hidden="true"></i> Actualizar Riesgos
+                    </a>
+                {% endif %}
+                <a href="{% url 'dashboard' %}" 
+                   class="btn btn-outline-secondary btn-action"
+                   aria-label="Volver al dashboard principal">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- ============================================ -->
+        <!-- TARJETAS DE RESUMEN                         -->
+        <!-- ============================================ -->
+        <section aria-label="Resumen de riesgo" class="row g-4 mb-4">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <article class="card risk-card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">Total en Riesgo</h6>
+                                <p class="card-text count-animate" id="total-riesgo">
+                                    {{ total|default:0 }}
+                                </p>
+                                <small class="opacity-75">
+                                    <i class="bi bi-people" aria-hidden="true"></i> 
+                                    {{ total|default:0 }} estudiantes
+                                </small>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <article class="card risk-card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">Críticos</h6>
+                                <p class="card-text count-animate" id="criticos">
+                                    {{ criticos|default:0 }}
+                                </p>
+                                <small class="opacity-75">
+                                    <i class="bi bi-exclamation-octagon" aria-hidden="true"></i> 
+                                    Requieren atención inmediata
+                                </small>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="bi bi-exclamation-diamond"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <article class="card risk-card bg-warning text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">Alto Riesgo</h6>
+                                <p class="card-text count-animate" id="altos">
+                                    {{ altos|default:0 }}
+                                </p>
+                                <small class="opacity-75">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i> 
+                                    Requieren seguimiento
+                                </small>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="bi bi-exclamation-square"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <article class="card risk-card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">Riesgo Medio</h6>
+                                <p class="card-text count-animate" id="medios">
+                                    {{ medios|default:0 }}
+                                </p>
+                                <small class="opacity-75">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i> 
+                                    Monitoreo preventivo
+                                </small>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- LISTA DE ESTUDIANTES EN RIESGO              -->
+        <!-- ============================================ -->
+        {% if hay_riesgos and estudiantes_riesgo %}
+            <section aria-label="Estudiantes con riesgo detectado">
+                <article class="card shadow-sm">
+                    <header class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people" aria-hidden="true"></i> 
+                            Estudiantes con Riesgo Detectado
+                            <span class="badge bg-primary ms-2">{{ estudiantes_riesgo|length }}</span>
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#riskTable" 
+                                    aria-expanded="true" 
+                                    aria-controls="riskTable"
+                                    aria-label="Expandir/contraer tabla">
+                                <i class="bi bi-chevron-up" id="riskTableIcon" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    onclick="exportTableToCSV('riesgo_estudiantes.csv')" 
+                                    aria-label="Exportar a CSV">
+                                <i class="bi bi-download" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="card-body collapse show" id="riskTable">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-risk" id="riskTableBody" 
+                                   aria-label="Tabla de estudiantes en riesgo">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Estudiante</th>
+                                        <th scope="col">Carnet</th>
+                                        <th scope="col">Carrera</th>
+                                        <th scope="col">Probabilidad</th>
+                                        <th scope="col">Nivel</th>
+                                        <th scope="col">Factores</th>
+                                        <th scope="col">Recomendaciones</th>
+                                        <th scope="col">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in estudiantes_riesgo %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-placeholder bg-light rounded-circle me-2" 
+                                                         style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
+                                                         aria-hidden="true">
+                                                        <i class="bi bi-person text-secondary"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ item.estudiante_nombre|default:"Sin nombre" }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ item.email|default:"Sin email" }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><code>{{ item.carnet|default:"N/A" }}</code></td>
+                                            <td>{{ item.carrera|default:"Sin asignar" }}</td>
+                                            <td>
+                                                <div class="risk-progress" role="progressbar" 
+                                                     aria-valuenow="{{ item.probabilidad|default:0 }}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    <div class="progress-bar 
+                                                        {% if item.probabilidad > 70 %}bg-danger
+                                                        {% elif item.probabilidad > 50 %}bg-warning text-dark
+                                                        {% elif item.probabilidad > 30 %}bg-info
+                                                        {% else %}bg-success{% endif %}" 
+                                                         style="width: {{ item.probabilidad|default:0 }}%;">
+                                                        {{ item.probabilidad|default:0 }}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% with nivel=item.nivel_riesgo|default:"Desconocido" %}
+                                                    <span class="badge badge-risk 
+                                                        {% if nivel == 'Crítico' %}bg-danger text-white
+                                                        {% elif nivel == 'Alto' %}bg-warning text-dark
+                                                        {% elif nivel == 'Medio' %}bg-info text-white
+                                                        {% elif nivel == 'Bajo' %}bg-success text-white
+                                                        {% else %}bg-secondary text-white{% endif %}">
+                                                        <i class="bi 
+                                                            {% if nivel == 'Crítico' %}bi-exclamation-octagon
+                                                            {% elif nivel == 'Alto' %}bi-exclamation-triangle
+                                                            {% elif nivel == 'Medio' %}bi-exclamation-circle
+                                                            {% elif nivel == 'Bajo' %}bi-check-circle
+                                                            {% else %}bi-dash-circle{% endif %}" 
+                                                            aria-hidden="true"></i>
+                                                        {{ nivel }}
+                                                    </span>
+                                                {% endwith %}
+                                            </td>
+                                            <td>
+                                                {% if item.factores_importantes %}
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            type="button"
+                                                            data-bs-toggle="collapse" 
+                                                            data-bs-target="#factores{{ forloop.counter }}"
+                                                            aria-expanded="false"
+                                                            aria-controls="factores{{ forloop.counter }}">
+                                                        <i class="bi bi-list-ul" aria-hidden="true"></i>
+                                                        Ver ({{ item.factores_importantes|length }})
+                                                    </button>
+                                                    <div class="collapse mt-2" id="factores{{ forloop.counter }}">
+                                                        <div class="card card-body bg-light p-2">
+                                                            <ul class="list-unstyled mb-0 small">
+                                                                {% for factor, importancia in item.factores_importantes %}
+                                                                    <li class="factor-item">
+                                                                        <span class="badge bg-primary me-1">{{ importancia|floatformat:2 }}</span>
+                                                                        {{ factor|title }}
+                                                                    </li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted small">No disponibles</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.recomendaciones %}
+                                                    <button class="btn btn-sm btn-outline-success" 
+                                                            type="button"
+                                                            data-bs-toggle="collapse" 
+                                                            data-bs-target="#recomendaciones{{ forloop.counter }}"
+                                                            aria-expanded="false"
+                                                            aria-controls="recomendaciones{{ forloop.counter }}">
+                                                        <i class="bi bi-lightbulb" aria-hidden="true"></i>
+                                                        Ver ({{ item.recomendaciones|length }})
+                                                    </button>
+                                                    <div class="collapse mt-2" id="recomendaciones{{ forloop.counter }}">
+                                                        <div class="card card-body bg-light p-2">
+                                                            <ul class="list-unstyled mb-0">
+                                                                {% for rec in item.recomendaciones %}
+                                                                    <li class="recomendation-item">
+                                                                        <span class="badge 
+                                                                            {% if rec.prioridad == 'Alta' %}bg-danger
+                                                                            {% elif rec.prioridad == 'Media' %}bg-warning text-dark
+                                                                            {% else %}bg-info{% endif %} me-2">
+                                                                            {{ rec.prioridad|default:"Media" }}
+                                                                        </span>
+                                                                        {{ rec.recomendacion|default:"Sin recomendación específica" }}
+                                                                    </li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted small">Sin recomendaciones</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group" 
+                                                     aria-label="Acciones del estudiante">
+                                                    <a href="{% url 'estudiante_detail' item.estudiante_id %}" 
+                                                       class="btn btn-outline-info" 
+                                                       title="Ver perfil completo"
+                                                       aria-label="Ver perfil de {{ item.estudiante_nombre }}">
+                                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                                    </a>
+                                                    {% if user_rol == 'admin' or user_rol == 'tutor' %}
+                                                        <a href="{% url 'intervencion_create' item.estudiante_id %}" 
+                                                           class="btn btn-outline-success"
+                                                           title="Crear intervención"
+                                                           aria-label="Crear intervención para {{ item.estudiante_nombre }}">
+                                                            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación -->
+                        {% if estudiantes_riesgo|length > 10 %}
+                            <nav aria-label="Navegación de tabla" class="mt-3">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Anterior</span>
+                                    </li>
+                                    <li class="page-item active">
+                                        <span class="page-link">1</span>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#" onclick="return false;">2</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#" onclick="return false;">Siguiente</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    </div>
+                </article>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- ESTADÍSTICAS ADICIONALES                    -->
+            <!-- ============================================ -->
+            <section aria-label="Estadísticas adicionales" class="row mt-4">
+                <div class="col-md-6">
+                    <article class="card stats-card-extra">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-graph-up" aria-hidden="true"></i> 
+                                Distribución de Riesgo
+                            </h6>
+                            <div class="d-flex justify-content-around mt-3">
+                                <div class="text-center">
+                                    <span class="badge bg-danger d-block p-2 mb-1">Crítico</span>
+                                    <span class="h4">{{ criticos|default:0 }}</span>
+                                </div>
+                                <div class="text-center">
+                                    <span class="badge bg-warning text-dark d-block p-2 mb-1">Alto</span>
+                                    <span class="h4">{{ altos|default:0 }}</span>
+                                </div>
+                                <div class="text-center">
+                                    <span class="badge bg-info d-block p-2 mb-1">Medio</span>
+                                    <span class="h4">{{ medios|default:0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-md-6">
+                    <article class="card stats-card-extra">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-clock-history" aria-hidden="true"></i> 
+                                Últimas Acciones
+                            </h6>
+                            <div class="mt-2">
+                                <small class="d-block text-muted">
+                                    <i class="bi bi-arrow-right" aria-hidden="true"></i> 
+                                    Entrenamiento: {% if modelo_disponible %}Completado{% else %}Pendiente{% endif %}
+                                </small>
+                                <small class="d-block text-muted">
+                                    <i class="bi bi-arrow-right" aria-hidden="true"></i> 
+                                    Estudiantes evaluados: {{ total_estudiantes|default:0 }}
+                                </small>
+                                <small class="d-block text-muted">
+                                    <i class="bi bi-arrow-right" aria-hidden="true"></i> 
+                                    Última actualización: {% now "d/m/Y H:i" %}
+                                </small>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+        {% else %}
+            <!-- ============================================ -->
+            <!-- ESTADO VACÍO                                -->
+            <!-- ============================================ -->
+            <article class="card shadow-sm">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-icon" aria-hidden="true">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <h4 class="empty-title">No hay estudiantes en riesgo</h4>
+                        <p class="empty-description">
+                            Todos los estudiantes están dentro de los parámetros normales de riesgo.
+                        </p>
+                        {% if user_rol == 'admin' %}
+                            <a href="{% url 'entrenar_modelo' %}" 
+                               class="btn btn-outline-primary mt-2"
+                               aria-label="Entrenar modelo nuevamente">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> 
+                                Entrenar modelo nuevamente
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // 1. ANIMACIÓN DE BARRAS DE PROGRESO
+            // ============================================
+            setTimeout(function() {
+                document.querySelectorAll('.risk-progress .progress-bar').forEach(function(bar) {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(function() {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 200);
+
+            // ============================================
+            // 2. MANEJO DE COLAPSABLES
+            // ============================================
+            document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const target = document.querySelector(this.dataset.bsTarget);
+                    if (target) {
+                        const isExpanding = !target.classList.contains('show');
+                        const icon = this.querySelector('i');
+                        if (icon) {
+                            icon.className = isExpanding ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+                        }
+                        // Actualizar texto del botón
+                        const text = this.textContent.trim();
+                        if (text.includes('Ver')) {
+                            this.textContent = text.replace('Ver', isExpanding ? 'Ocultar' : 'Ver');
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // 3. MANEJAR EL TOGGLE DE LA TABLA
+            // ============================================
+            const tableToggle = document.querySelector('[data-bs-target="#riskTable"]');
+            if (tableToggle) {
+                tableToggle.addEventListener('click', function() {
+                    const icon = document.getElementById('riskTableIcon');
+                    if (icon) {
+                        icon.className = icon.className.includes('chevron-up') ? 
+                            'bi bi-chevron-down' : 'bi bi-chevron-up';
+                    }
+                });
+            }
+
+            // ============================================
+            // 4. CONTADOR ANIMADO
+            // ============================================
+            function animateCounter(element, target) {
+                if (!element) return;
+                let current = 0;
+                const increment = Math.ceil(target / 30);
+                const interval = setInterval(function() {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(interval);
+                    }
+                    element.textContent = current;
+                }, 30);
+            }
+
+            // Animar los contadores de las tarjetas
+            const totalElement = document.getElementById('total-riesgo');
+            const criticosElement = document.getElementById('criticos');
+            const altosElement = document.getElementById('altos');
+            const mediosElement = document.getElementById('medios');
+
+            if (totalElement) animateCounter(totalElement, parseInt(totalElement.textContent) || 0);
+            if (criticosElement) animateCounter(criticosElement, parseInt(criticosElement.textContent) || 0);
+            if (altosElement) animateCounter(altosElement, parseInt(altosElement.textContent) || 0);
+            if (mediosElement) animateCounter(mediosElement, parseInt(mediosElement.textContent) || 0);
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Dashboard de riesgo predictivo cargado');
+        });
+
+        // ============================================
+        // 7. EXPORTAR TABLA A CSV
+        // ============================================
+        function exportTableToCSV(filename) {
+            const table = document.getElementById('riskTableBody');
+            if (!table) return;
+
+            const rows = table.querySelectorAll('tr');
+            let csvContent = '';
+
+            // Encabezados
+            const headers = ['Estudiante', 'Carnet', 'Carrera', 'Probabilidad', 'Nivel', 'Factores', 'Recomendaciones'];
+            csvContent += headers.join(',') + '\n';
+
+            // Datos
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length > 0) {
+                    const rowData = [];
+                    // Tomar solo las primeras 7 columnas (ignorar la columna de acciones)
+                    for (let i = 0; i < Math.min(cols.length - 1, 7); i++) {
+                        let text = cols[i].textContent.trim();
+                        // Limpiar texto para CSV
+                        text = text.replace(/,/g, ';').replace(/\n/g, ' ');
+                        rowData.push(text);
+                    }
+                    csvContent += rowData.join(',') + '\n';
+                }
+            });
+
+            // Crear y descargar archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // 8. ACTUALIZACIÓN AUTOMÁTICA (5 minutos)
+        // ============================================
+        setInterval(function() {
+            if (document.visibilityState === 'visible') {
+                fetch(window.location.href)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        // Actualizar solo los números de las tarjetas
+                        const newTotal = doc.getElementById('total-riesgo');
+                        const newCriticos = doc.getElementById('criticos');
+                        const newAltos = doc.getElementById('altos');
+                        const newMedios = doc.getElementById('medios');
+
+                        if (newTotal) document.getElementById('total-riesgo').textContent = newTotal.textContent;
+                        if (newCriticos) document.getElementById('criticos').textContent = newCriticos.textContent;
+                        if (newAltos) document.getElementById('altos').textContent = newAltos.textContent;
+                        if (newMedios) document.getElementById('medios').textContent = newMedios.textContent;
+                    })
+                    .catch(() => console.log('No se pudo actualizar automáticamente'));
+            }
+        }, 300000); // 5 minutos
+    </script>
+{% endblock %}

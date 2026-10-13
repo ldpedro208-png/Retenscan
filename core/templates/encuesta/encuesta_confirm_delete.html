@@ -1,0 +1,813 @@
+<!-- templates/layout/encuesta/encuesta_confirm_delete.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Encuesta - {{ encuesta.titulo }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Variables CSS */
+        :root {
+            --delete-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --danger-color: #dc3545;
+            --danger-light: #f8d7da;
+        }
+
+        /* Tarjeta de confirmación */
+        .delete-card {
+            border: none;
+            border-radius: var(--delete-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .delete-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(220, 53, 69, 0.15);
+        }
+
+        .delete-card .card-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .delete-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+        
+        .delete-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .delete-card .card-body {
+            padding: 2rem;
+        }
+
+        /* Icono de advertencia */
+        .warning-icon {
+            font-size: 4rem;
+            color: var(--danger-color);
+            display: inline-block;
+            animation: warningPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes warningPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.7;
+            }
+        }
+
+        /* Resumen de la encuesta */
+        .survey-summary {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border: 1px solid #e2e8f0;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .survey-summary:hover {
+            background: #f1f3f5;
+        }
+        
+        .survey-summary .survey-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+        
+        .survey-summary .survey-description {
+            color: #4a5568;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .survey-summary .survey-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem 1.5rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .survey-summary .survey-meta .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Lista de datos a eliminar */
+        .delete-list {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin: 1.25rem 0;
+        }
+        
+        .delete-list ul {
+            margin-bottom: 0;
+            padding-left: 1.25rem;
+        }
+        
+        .delete-list ul li {
+            color: #856404;
+            padding: 0.2rem 0;
+            font-size: 0.95rem;
+        }
+        
+        .delete-list .list-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Estadísticas de la encuesta */
+        .survey-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .survey-stats .stat-item {
+            background: #ffffff;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .survey-stats .stat-item .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .survey-stats .stat-item .stat-label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            display: block;
+            margin-top: 0.1rem;
+        }
+
+        /* Botones de acción */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-action i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-action:active {
+            transform: translateY(0);
+        }
+        
+        .btn-action.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+        }
+        
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-action.btn-secondary:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(108, 117, 125, 0.3);
+        }
+
+        /* Input de confirmación */
+        .confirm-input-group {
+            background: #f8f9fa;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin: 1.25rem 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .confirm-input-group .form-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .confirm-input-group .form-control {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            font-family: monospace;
+        }
+        
+        .confirm-input-group .form-control:focus {
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+        
+        .confirm-input-group .form-control.is-invalid {
+            border-color: var(--danger-color);
+        }
+        
+        .confirm-input-group .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        /* Accesibilidad */
+        .delete-card:focus-visible {
+            outline: 3px solid var(--danger-color);
+            outline-offset: 2px;
+        }
+        
+        .btn-action:focus-visible {
+            outline: 3px solid var(--danger-color);
+            outline-offset: 2px;
+        }
+        
+        .form-control:focus-visible {
+            outline: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .delete-card .card-body {
+                padding: 1.25rem;
+            }
+            
+            .delete-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+            
+            .delete-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+            
+            .survey-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+            
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+            
+            .survey-summary .survey-meta {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .delete-card .card-body {
+                padding: 1rem;
+            }
+            
+            .delete-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .delete-card .card-header h4 {
+                font-size: 1rem;
+            }
+            
+            .warning-icon {
+                font-size: 3rem;
+            }
+            
+            .survey-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            
+            .survey-stats .stat-item .stat-number {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Tema oscuro */
+        @media (prefers-color-scheme: dark) {
+            .delete-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .delete-card .card-body {
+                background-color: #2d2d2d;
+            }
+            
+            .survey-summary {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .survey-summary:hover {
+                background: #2d2d44;
+            }
+            
+            .survey-summary .survey-title {
+                color: #ecf0f1;
+            }
+            
+            .survey-summary .survey-description {
+                color: #c8d6e5;
+            }
+            
+            .survey-summary .survey-meta {
+                color: #8a8a9a;
+            }
+            
+            .survey-stats .stat-item {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .survey-stats .stat-item .stat-number {
+                color: #ecf0f1;
+            }
+            
+            .survey-stats .stat-item .stat-label {
+                color: #8a8a9a;
+            }
+            
+            .delete-list {
+                background: #2d241a;
+                border-left-color: #ffc107;
+            }
+            
+            .delete-list ul li {
+                color: #ffd970;
+            }
+            
+            .confirm-input-group {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+            
+            .confirm-input-group .form-label {
+                color: #c8d6e5;
+            }
+            
+            .confirm-input-group .form-control {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+            
+            .confirm-input-group .form-control:focus {
+                border-color: var(--danger-color);
+                box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+            }
+            
+            .confirm-input-group .form-text {
+                color: #8a8a9a;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_list' %}" class="text-decoration-none">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i> Encuestas
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" class="text-decoration-none">
+                    {{ encuesta.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-10">
+            <article class="card delete-card" 
+                     role="alert" 
+                     aria-live="polite">
+                
+                <!-- Encabezado -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Confirmar Eliminación</h4>
+                            <small class="opacity-75">
+                                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                                Esta acción no se puede deshacer
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Cuerpo -->
+                <div class="card-body">
+                    <!-- Icono de advertencia -->
+                    <div class="text-center py-3">
+                        <div class="warning-icon" aria-hidden="true">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                        <h4 class="mt-3 text-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            ¿Estás seguro de eliminar esta encuesta?
+                        </h4>
+                        <p class="text-muted">
+                            Esta acción no se puede deshacer y se perderán todos los datos asociados.
+                        </p>
+                    </div>
+
+                    <!-- Resumen de la encuesta -->
+                    <section aria-label="Resumen de la encuesta" class="survey-summary">
+                        <h5 class="survey-title">
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            {{ encuesta.titulo }}
+                        </h5>
+                        <p class="survey-description">
+                            {{ encuesta.descripcion|default:"Sin descripción" }}
+                        </p>
+                        <div class="survey-meta">
+                            <span class="meta-item">
+                                <i class="bi bi-tag" aria-hidden="true"></i>
+                                Estado: 
+                                <span class="badge 
+                                    {% if encuesta.estado == 'activa' %}bg-success
+                                    {% elif encuesta.estado == 'borrador' %}bg-warning text-dark
+                                    {% elif encuesta.estado == 'cerrada' %}bg-secondary
+                                    {% else %}bg-info{% endif %}">
+                                    {{ encuesta.get_estado_display }}
+                                </span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                {{ encuesta.fecha_inicio|date:"d/m/Y" }} - {{ encuesta.fecha_fin|date:"d/m/Y" }}
+                            </span>
+                            {% if encuesta.es_obligatoria %}
+                            <span class="meta-item">
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i> Obligatoria
+                                </span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <!-- Estadísticas de la encuesta -->
+                    {% if estadisticas %}
+                    <section aria-label="Estadísticas de la encuesta" class="survey-stats">
+                        {% if estadisticas.preguntas %}
+                        <div class="stat-item">
+                            <span class="stat-number">{{ estadisticas.preguntas }}</span>
+                            <span class="stat-label">
+                                <i class="bi bi-question-circle" aria-hidden="true"></i> Preguntas
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if estadisticas.respuestas %}
+                        <div class="stat-item">
+                            <span class="stat-number">{{ estadisticas.respuestas }}</span>
+                            <span class="stat-label">
+                                <i class="bi bi-check-circle" aria-hidden="true"></i> Respuestas
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if estadisticas.asignaciones %}
+                        <div class="stat-item">
+                            <span class="stat-number">{{ estadisticas.asignaciones }}</span>
+                            <span class="stat-label">
+                                <i class="bi bi-people" aria-hidden="true"></i> Asignaciones
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if estadisticas.respondieron %}
+                        <div class="stat-item">
+                            <span class="stat-number">{{ estadisticas.respondieron }}</span>
+                            <span class="stat-label">
+                                <i class="bi bi-person-check" aria-hidden="true"></i> Respondieron
+                            </span>
+                        </div>
+                        {% endif %}
+                    </section>
+                    {% endif %}
+
+                    <!-- Lista de datos a eliminar -->
+                    <div class="delete-list" role="note">
+                        <strong>
+                            <i class="bi bi-info-circle list-icon" aria-hidden="true"></i>
+                            Se eliminarán los siguientes datos:
+                        </strong>
+                        <ul>
+                            <li>
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                                La encuesta y su información
+                            </li>
+                            <li>
+                                <i class="bi bi-question-lg" aria-hidden="true"></i>
+                                Todas las preguntas y opciones de respuesta
+                            </li>
+                            <li>
+                                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                Todas las respuestas de los estudiantes
+                            </li>
+                            <li>
+                                <i class="bi bi-person-plus" aria-hidden="true"></i>
+                                Todas las asignaciones realizadas
+                            </li>
+                            {% if estadisticas.respuestas > 0 %}
+                            <li class="text-danger fw-bold">
+                                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                {{ estadisticas.respuestas }} respuestas de estudiantes se perderán permanentemente
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Confirmación de texto (opcional) -->
+                    <div class="confirm-input-group">
+                        <label for="confirmText" class="form-label">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                            Escribe <span class="text-danger fw-bold">ELIMINAR</span> para confirmar:
+                        </label>
+                        <input type="text" 
+                               id="confirmText" 
+                               class="form-control" 
+                               placeholder="Escribe ELIMINAR para confirmar"
+                               aria-describedby="confirmHelp"
+                               autocomplete="off">
+                        <div id="confirmHelp" class="form-text">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            Esta medida previene eliminaciones accidentales
+                        </div>
+                        <div id="confirmFeedback" class="invalid-feedback" style="display: none;">
+                            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                            Debes escribir "ELIMINAR" para confirmar la eliminación
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
+                            <a href="{% url 'encuesta_detail' encuesta.idEncuesta %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al detalle de la encuesta">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" 
+                                    class="btn btn-danger btn-action" 
+                                    id="deleteBtn"
+                                    disabled>
+                                <i class="bi bi-trash" aria-hidden="true"></i> 
+                                Sí, Eliminar Encuesta
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Mensaje de advertencia final -->
+                    <div class="alert alert-danger mt-3 mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                        <strong>¡Advertencia!</strong>
+                        Esta acción es irreversible. Todos los datos asociados a la encuesta serán eliminados permanentemente.
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación adicional -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Confirmación Final
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-trash" style="font-size: 3rem; color: #dc3545;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás absolutamente seguro?</h5>
+                        <p class="text-muted">
+                            Esta acción eliminará permanentemente la encuesta 
+                            <strong>"{{ encuesta.titulo }}"</strong> y todos sus datos.
+                        </p>
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>¡No podrás recuperar esta información!</strong>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">
+                        <i class="bi bi-trash" aria-hidden="true"></i> 
+                        Eliminar Permanentemente
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const confirmInput = document.getElementById('confirmText');
+            const deleteBtn = document.getElementById('deleteBtn');
+            const deleteForm = document.getElementById('deleteForm');
+            const confirmFeedback = document.getElementById('confirmFeedback');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmDelete = document.getElementById('confirmDelete');
+
+            // ============================================
+            // 1. VALIDACIÓN DE CONFIRMACIÓN
+            // ============================================
+            if (confirmInput && deleteBtn) {
+                const requiredText = 'ELIMINAR';
+                
+                confirmInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    const isValid = value === requiredText;
+                    
+                    if (value.length > 0) {
+                        if (isValid) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            confirmFeedback.style.display = 'none';
+                            deleteBtn.disabled = false;
+                        } else {
+                            this.classList.remove('is-valid');
+                            this.classList.add('is-invalid');
+                            confirmFeedback.style.display = 'block';
+                            deleteBtn.disabled = true;
+                        }
+                    } else {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        confirmFeedback.style.display = 'none';
+                        deleteBtn.disabled = true;
+                    }
+                });
+
+                // Soporte para pegar texto
+                confirmInput.addEventListener('paste', function() {
+                    setTimeout(function() {
+                        confirmInput.dispatchEvent(new Event('input'));
+                    }, 10);
+                });
+            }
+
+            // ============================================
+            // 2. CONFIRMACIÓN ANTES DE ENVIAR
+            // ============================================
+            if (deleteForm) {
+                deleteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Verificar que el texto de confirmación sea correcto
+                    if (confirmInput && confirmInput.value.trim() !== 'ELIMINAR') {
+                        if (confirmInput) {
+                            confirmInput.classList.add('is-invalid');
+                            confirmFeedback.style.display = 'block';
+                            confirmInput.focus();
+                        }
+                        return;
+                    }
+                    
+                    // Mostrar modal de confirmación
+                    confirmModal.show();
+                });
+            }
+
+            // ============================================
+            // 3. CONFIRMAR Y ELIMINAR
+            // ============================================
+            if (confirmDelete) {
+                confirmDelete.addEventListener('click', function() {
+                    // Deshabilitar botón para evitar doble envío
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Eliminando...';
+                    
+                    // Enviar el formulario
+                    deleteForm.submit();
+                });
+            }
+
+            // ============================================
+            // 4. SOPORTE PARA TECLADO
+            // ============================================
+            if (confirmInput) {
+                confirmInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!deleteBtn.disabled) {
+                            deleteBtn.click();
+                        }
+                    }
+                });
+            }
+
+            // ============================================
+            // 5. ENFOQUE AUTOMÁTICO EN EL CAMPO DE CONFIRMACIÓN
+            // ============================================
+            if (confirmInput) {
+                setTimeout(function() {
+                    confirmInput.focus();
+                }, 300);
+            }
+
+            // ============================================
+            // 6. EFECTO SHAKE PARA ERROR
+            // ============================================
+            if (confirmInput) {
+                confirmInput.addEventListener('invalid', function() {
+                    this.classList.add('shake');
+                    setTimeout(function() {
+                        confirmInput.classList.remove('shake');
+                    }, 300);
+                });
+            }
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de confirmación de eliminación cargada');
+        });
+    </script>
+{% endblock %}

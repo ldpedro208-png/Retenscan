@@ -1,0 +1,694 @@
+<!-- templates/layout/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Retención Estudiantil - RetenScan">
+    <meta name="theme-color" content="#1a2a6c">
+    
+    <title>{% block title %}RetenScan - Sistema de Retención Estudiantil{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    
+    <!-- ✅ Highlight.js - Versión corregida (sin módulos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Estilos personalizados -->
+    <style>
+        /* ===== VARIABLES CSS ===== */
+        :root {
+            --primary-color: #1a2a6c;
+            --primary-dark: #0f1a4a;
+            --primary-light: #2d4373;
+            --secondary-color: #4e73df;
+            --accent-color: #667eea;
+            --success-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+            
+            --bg-body: #f0f2f6;
+            --bg-card: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-muted: #a0aec0;
+            
+            --border-radius-sm: 8px;
+            --border-radius-md: 16px;
+            --border-radius-lg: 20px;
+            --border-radius-xl: 24px;
+            
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 15px 45px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 25px 60px rgba(0, 0, 0, 0.15);
+            
+            --transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            
+            --code-bg: #1e1e1e;
+            --code-radius: 8px;
+            --nav-active-bg: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ===== RESET Y BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* ===== TYPOGRAPHY ===== */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar-main {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+            box-shadow: 0 4px 20px rgba(26, 42, 108, 0.25);
+            padding: 0.75rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .navbar-main .navbar-brand {
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+            color: #fff !important;
+            padding: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-main .navbar-brand i {
+            font-size: 1.6rem;
+            color: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.3rem;
+            border-radius: 10px;
+        }
+
+        .navbar-main .navbar-brand span {
+            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-main .nav-link {
+            color: rgba(255, 255, 255, 0.75) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .navbar-main .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .navbar-main .nav-link.active {
+            color: #fff !important;
+            background: var(--nav-active-bg);
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-main .nav-link i {
+            margin-right: 0.4rem;
+            font-size: 1.05rem;
+        }
+
+        /* Badge de notificaciones en navbar */
+        .navbar-main .badge-notification {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .navbar-main .badge-notification .badge-counter {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 0.6rem;
+            padding: 0.2rem 0.45rem;
+            border-radius: 50px;
+            background: var(--danger-color);
+            color: #fff;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(231, 74, 59, 0.4);
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Dropdown del usuario */
+        .navbar-main .dropdown-toggle::after {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .navbar-main .dropdown-menu {
+            border: none;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-xl);
+            padding: 0.5rem;
+            min-width: 220px;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .navbar-main .dropdown-menu .dropdown-item {
+            border-radius: var(--border-radius-sm);
+            padding: 0.6rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .navbar-main .dropdown-menu .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(78, 115, 223, 0.08), rgba(26, 42, 108, 0.08));
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .navbar-main .dropdown-menu .dropdown-item i {
+            margin-right: 0.6rem;
+            width: 1.2rem;
+            text-align: center;
+            color: var(--secondary-color);
+        }
+
+        .navbar-main .dropdown-menu .dropdown-divider {
+            margin: 0.3rem 0;
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Toggler */
+        .navbar-main .navbar-toggler {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius-sm);
+            padding: 0.4rem 0.6rem;
+        }
+
+        .navbar-main .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-main .navbar-toggler-icon {
+            filter: brightness(10);
+        }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb-custom .breadcrumb-item {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .breadcrumb-custom .breadcrumb-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .breadcrumb-custom .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        #main-content {
+            flex: 1;
+            padding: 1.5rem 0;
+        }
+
+        /* ===== ALERTAS ===== */
+        .alert-custom {
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-custom i {
+            font-size: 1.3rem;
+        }
+
+        .alert-custom .btn-close {
+            filter: none;
+            opacity: 0.6;
+        }
+
+        .alert-custom .btn-close:hover {
+            opacity: 1;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer-main {
+            background: #fff;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.5rem 0;
+            margin-top: auto;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .footer-main p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .footer-main .badge-version {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+        }
+
+        /* ===== SKIP LINK ===== */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            z-index: 9999;
+            border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            transition: top 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .navbar-main .navbar-nav {
+                padding: 0.5rem 0;
+            }
+            .navbar-main .nav-link {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-main .navbar-brand {
+                font-size: 1.1rem;
+            }
+            .navbar-main .navbar-brand i {
+                font-size: 1.3rem;
+            }
+            #main-content {
+                padding: 1rem 0;
+            }
+            .footer-main p {
+                font-size: 0.75rem;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .navbar-main .container-fluid {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
+
+        /* ===== LOADING STATE ===== */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+            border-radius: inherit;
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .shadow-hover {
+            transition: var(--transition);
+        }
+        .shadow-hover:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .rounded-4 {
+            border-radius: var(--border-radius-md) !important;
+        }
+        .rounded-5 {
+            border-radius: var(--border-radius-lg) !important;
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #1cc88a, #13855c);
+        }
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #e74a3b, #b52d1f);
+        }
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f6c23e, #d4a20a);
+        }
+        .bg-gradient-info {
+            background: linear-gradient(135deg, #36b9cc, #1f7a8c);
+        }
+    </style>
+
+    {# ✅ NUEVO: bloque para CSS específico de cada plantilla #}
+    {% block extra_css %}{% endblock %}
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Skip to content link - Accesibilidad -->
+    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+
+    <!-- ============================================ -->
+    <!-- HEADER - NAVEGACIÓN PRINCIPAL               -->
+    <!-- ============================================ -->
+    <header role="banner">
+        <nav class="navbar navbar-main navbar-expand-lg" aria-label="Navegación principal">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'dashboard' %}" aria-current="page">
+                    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+                    <span>RetenScan</span>
+                </a>
+                
+                <button class="navbar-toggler" type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#navbarNav" 
+                        aria-controls="navbarNav" 
+                        aria-expanded="false" 
+                        aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Menú principal -->
+                    {% if user.is_authenticated %}
+                        {% include 'layout/_main_nav.html' %}
+                    {% endif %}
+
+                    <!-- Menú de usuario -->
+                    <ul class="navbar-nav ms-auto" role="menubar">
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown" role="none">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   role="menuitem" 
+                                   aria-haspopup="true" 
+                                   aria-expanded="false"
+                                   data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                                    <span class="d-none d-lg-inline">{{ user.get_full_name|default:user.username }}</span>
+                                    <span class="badge bg-light text-dark ms-1 d-none d-md-inline" 
+                                          style="font-size: 0.6rem; padding: 0.2rem 0.5rem; border-radius: 50px;">
+                                        {{ rol|default:"estudiante"|title }}
+                                    </span>
+                                    <!-- Badge de mensajes no leídos -->
+                                    {% if mensajes_no_leidos > 0 %}
+                                        <span class="badge-counter" aria-label="{{ mensajes_no_leidos }} mensajes no leídos">
+                                            {{ mensajes_no_leidos }}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" role="menu">
+                                    <li role="none">
+                                        <a class="dropdown-item" href="{% url 'perfil' %}" role="menuitem">
+                                            <i class="bi bi-person" aria-hidden="true"></i> Mi Perfil
+                                        </a>
+                                    </li>
+                                    <li role="none">
+                                        <a class="dropdown-item" href="{% url 'password_change' %}" role="menuitem">
+                                            <i class="bi bi-key" aria-hidden="true"></i> Cambiar Contraseña
+                                        </a>
+                                    </li>
+                                    {% if user.is_staff or user.is_superuser %}
+                                        <li role="separator" class="dropdown-divider"></li>
+                                        <li role="none">
+                                            <a class="dropdown-item" href="{% url 'admin:index' %}" role="menuitem">
+                                                <i class="bi bi-shield-lock" aria-hidden="true"></i> Panel Admin
+                                            </a>
+                                        </li>
+                                        <li role="none">
+                                            <a class="dropdown-item" href="{% url 'usuario_create' %}" role="menuitem">
+                                                <i class="bi bi-person-plus" aria-hidden="true"></i> Crear Usuario
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    <li role="separator" class="dropdown-divider"></li>
+                                    <li role="none">
+                                        <form method="post" action="{% url 'logout' %}" class="dropdown-item p-0">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item" 
+                                                    style="background: none; border: none; width: 100%; text-align: left;"
+                                                    role="menuitem">
+                                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar Sesión
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            {% if not request.resolver_match.url_name == 'login' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'login' %}">
+                                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Iniciar Sesión
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                         -->
+    <!-- ============================================ -->
+    <main id="main-content" class="container" role="main">
+        <!-- Breadcrumb (opcional) -->
+        {% block breadcrumb %}{% endblock %}
+
+        <!-- Mensajes flash -->
+        {% if messages %}
+            <section aria-label="Notificaciones" class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show" 
+                         role="alert">
+                        <i class="bi 
+                            {% if message.tags == 'success' %}bi-check-circle-fill text-success
+                            {% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-circle-fill text-danger
+                            {% elif message.tags == 'warning' %}bi-exclamation-triangle-fill text-warning
+                            {% else %}bi-info-circle-fill text-info{% endif %}" 
+                           aria-hidden="true"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" 
+                                data-bs-dismiss="alert" 
+                                aria-label="Cerrar notificación"></button>
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+        
+        <!-- Contenido específico de la página -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ============================================ -->
+    <!-- FOOTER                                      -->
+    <!-- ============================================ -->
+    <footer class="footer-main" role="contentinfo">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p>
+                        <i class="bi bi-graph-up-arrow text-primary me-1" aria-hidden="true"></i>
+                        &copy; {% now "Y" %} RetenScan
+                        <span class="mx-2 text-muted">|</span>
+                        Sistema de Retención Estudiantil
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>
+                        <span class="badge-version">v2.0</span>
+                        {% if user.is_authenticated %}
+                            <span class="badge bg-light text-secondary ms-2" style="font-weight: 500; padding: 0.25rem 0.75rem;">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                {{ rol|default:"invitado"|title }}
+                            </span>
+                        {% endif %}
+                        {% if universidad %}
+                            <span class="badge bg-primary text-white ms-2" style="font-weight: 500; padding: 0.25rem 0.75rem;">
+                                <i class="bi bi-building" aria-hidden="true"></i>
+                                {{ universidad.nombre|truncatechars:20 }}
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================ -->
+    <!-- WIDGETS ADICIONALES                         -->
+    <!-- ============================================ -->
+    {% block extra_widgets %}
+        {% if user.is_authenticated %}
+            {% include 'chat/widget.html' %}
+        {% endif %}
+    {% endblock %}
+
+    <!-- ============================================ -->
+    <!-- SCRIPTS                                     -->
+    <!-- ============================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ✅ Inicializar Highlight.js en bloques de código
+            if (typeof hljs !== 'undefined') {
+                document.querySelectorAll('pre code').forEach(function(block) {
+                    hljs.highlightElement(block);
+                });
+            }
+
+            // Inicializar todos los tooltips y popovers
+            if (typeof bootstrap !== 'undefined') {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl, {
+                        delay: { show: 100, hide: 50 }
+                    });
+                });
+            }
+
+            // Auto-cerrar alertas después de 5 segundos (excepto las persistentes)
+            document.querySelectorAll('.alert:not(.alert-persistent)').forEach(function(alert) {
+                setTimeout(function() {
+                    const closeBtn = alert.querySelector('.btn-close');
+                    if (closeBtn) {
+                        closeBtn.click();
+                    }
+                }, 5000);
+            });
+
+            // Actualizar título con contador de mensajes
+            {% if mensajes_no_leidos > 0 %}
+                const title = document.querySelector('title');
+                if (title && !title.textContent.startsWith('(')) {
+                    title.textContent = '({{ mensajes_no_leidos }}) ' + title.textContent;
+                }
+            {% endif %}
+
+            // Marcar enlace activo según la URL actual
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.navbar-main .nav-link').forEach(function(link) {
+                const href = link.getAttribute('href');
+                if (href && currentPath.startsWith(href) && href !== '/') {
+                    link.classList.add('active');
+                } else if (href === '/' && currentPath === '/') {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    {# ✅ NUEVO: alias para plantillas que usan extra_js #}
+    {% block extra_js %}{% endblock %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

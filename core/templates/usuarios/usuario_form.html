@@ -1,0 +1,1049 @@
+<!-- templates/usuarios/usuario_form.html -->
+<!-- ✅ VERSIÓN ACTUALIZADA - Con UsuarioCreateForm -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Crear Usuario" }} - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           ESTILOS DE EXPEDIENTE PARA USUARIO
+           ============================================ */
+        .expediente-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .expediente-header {
+            background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+            color: white;
+            padding: 20px 30px;
+            border-bottom: 4px solid #f39c12;
+        }
+
+        .expediente-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .expediente-body {
+            padding: 25px;
+            background: #fafbfc;
+        }
+
+        /* ============================================
+           SECCIÓN DE FOTO
+           ============================================ */
+        .photo-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .photo-container {
+            width: 150px;
+            height: 180px;
+            margin: 0 auto 15px;
+            border: 3px solid #cbd5e0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .photo-container:hover {
+            border-color: #2a5f8f;
+        }
+
+        .photo-container #previewImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: none;
+        }
+
+        .photo-container #placeholderIcon {
+            text-align: center;
+            color: #6c757d;
+            display: block;
+        }
+
+        .photo-container #placeholderIcon i {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .photo-container #placeholderIcon span {
+            font-size: 12px;
+            display: block;
+        }
+
+        .photo-container .btn-remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 25px;
+            height: 25px;
+            border: none;
+            border-radius: 50%;
+            background: #dc3545;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            z-index: 10;
+            transition: all 0.3s ease;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .photo-container .btn-remove-photo:hover {
+            background: #b02a37;
+            transform: scale(1.1);
+        }
+
+        .btn-select-photo {
+            background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-select-photo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 95, 143, 0.3);
+        }
+
+        #fileInputContainer input[type="file"] {
+            display: none;
+        }
+
+        .photo-help {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* ============================================
+           SECCIONES DEL EXPEDIENTE
+           ============================================ */
+        .expediente-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .expediente-section h6 {
+            color: #1a3a5c;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .expediente-section h6 i {
+            font-size: 1.1rem;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 2px;
+        }
+
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #2a5f8f;
+            box-shadow: 0 0 0 3px rgba(42, 95, 143, 0.15);
+        }
+
+        .form-control[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .form-text {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .alert-universidad {
+            background: #e7f3ff;
+            border-left: 4px solid #2a5f8f;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-expediente-guardar {
+            background: linear-gradient(135deg, #1a3a5c 0%, #2a5f8f 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-expediente-guardar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 58, 92, 0.3);
+        }
+
+        .btn-expediente-guardar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-expediente-cancelar {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 10px 25px;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-expediente-cancelar:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .expediente-body {
+                padding: 15px;
+            }
+
+            .photo-container {
+                width: 130px;
+                height: 160px;
+            }
+
+            .photo-container #placeholderIcon i {
+                font-size: 40px;
+            }
+
+            .expediente-section {
+                padding: 15px;
+            }
+
+            .btn-expediente-guardar,
+            .btn-expediente-cancelar {
+                width: 100%;
+            }
+
+            .btn-expediente-cancelar {
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .expediente-header {
+                padding: 15px 20px;
+            }
+
+            .expediente-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .photo-container {
+                width: 110px;
+                height: 140px;
+            }
+
+            .photo-container #placeholderIcon i {
+                font-size: 30px;
+            }
+
+            .form-label {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .expediente-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .expediente-body {
+                background-color: #252540;
+            }
+
+            .expediente-section {
+                background-color: #2d2d2d;
+                border-color: #3d3d4d;
+            }
+
+            .expediente-section h6 {
+                color: #4dabf7;
+                border-bottom-color: #3d3d4d;
+            }
+
+            .photo-section {
+                background-color: #2d2d2d;
+                border-color: #3d3d4d;
+            }
+
+            .photo-container {
+                background: #252540;
+                border-color: #4d4d5d;
+            }
+
+            .photo-container #placeholderIcon {
+                color: #8a8a9a;
+            }
+
+            .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-control, .form-select {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-control:focus, .form-select:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-text {
+                color: #8a8a9a;
+            }
+
+            .btn-expediente-cancelar {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-expediente-cancelar:hover {
+                background: #4d4d5d;
+            }
+
+            .photo-help {
+                color: #8a8a9a;
+            }
+
+            .alert-universidad {
+                background: #1a2a3a;
+                border-left-color: #4dabf7;
+                color: #cfe2ff;
+            }
+
+            .form-control[readonly] {
+                background-color: #2d2d2d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="expediente-card">
+                <!-- HEADER -->
+                <div class="expediente-header">
+                    <h4>
+                        <i class="bi {% if es_edicion %}bi-pencil-square{% else %}bi-person-plus{% endif %}"></i>
+                        {{ titulo|default:"Crear Usuario" }}
+                    </h4>
+                    <small>
+                        {% if es_edicion %}
+                            Modifica los campos que deseas actualizar. El username y rol no se pueden cambiar.
+                        {% else %}
+                            El username se genera automáticamente desde el nombre y apellido
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <!-- BODY -->
+                <div class="expediente-body">
+                    <form method="post" enctype="multipart/form-data" id="usuarioForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- ✅ Información de la universidad -->
+                        <div class="alert-universidad">
+                            <i class="bi bi-building"></i>
+                            <strong>Universidad:</strong> {{ universidad_nombre|default:"Sin asignar" }}
+                            <br>
+                            <small>
+                                <i class="bi bi-info-circle"></i>
+                                {% if es_edicion %}
+                                    El usuario pertenece a esta universidad.
+                                {% else %}
+                                    El usuario será creado en esta universidad automáticamente.
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <!-- ✅ Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- ============================================ -->
+                            <!-- COLUMNA IZQUIERDA - FOTO -->
+                            <!-- ============================================ -->
+                            <div class="col-md-4">
+                                <!-- SECCIÓN DE FOTO -->
+                                <div class="photo-section">
+                                    <h6 class="mb-3"><i class="bi bi-camera"></i> Fotografía</h6>
+                                    
+                                    <div class="photo-container" id="photoContainer">
+                                        <img id="previewImage" 
+                                             src="{% if usuario.foto %}{{ usuario.foto.url }}{% endif %}" 
+                                             alt="Vista previa" 
+                                             style="{% if usuario.foto %}display: block;{% else %}display: none;{% endif %}">
+                                        <div id="placeholderIcon" style="{% if usuario.foto %}display: none;{% else %}display: block;{% endif %}">
+                                            <i class="bi bi-person-circle"></i>
+                                            <span>Sin foto</span>
+                                        </div>
+                                        <button type="button" id="btnRemovePhoto" class="btn-remove-photo" 
+                                                title="Eliminar foto"
+                                                style="{% if usuario.foto %}display: block;{% else %}display: none;{% endif %}">
+                                            ×
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Campo oculto para indicar eliminación de foto -->
+                                    {{ form.foto_eliminar }}
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-info-circle"></i> Tamaño carnet (4.5 x 5.5 cm)
+                                        </small>
+                                    </div>
+                                    
+                                    <button type="button" class="btn-select-photo" id="btnSelectPhoto">
+                                        <i class="bi bi-upload"></i> 
+                                        {% if usuario.foto %}Cambiar foto{% else %}Seleccionar foto{% endif %}
+                                    </button>
+                                    
+                                    <div id="fileInputContainer">
+                                        {{ form.foto }}
+                                    </div>
+                                    
+                                    <small class="photo-help">
+                                        JPG, PNG, GIF | Máx. 5MB
+                                    </small>
+                                    
+                                    {% if form.foto.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ form.foto.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- ============================================ -->
+                            <!-- COLUMNA DERECHA - DATOS DEL USUARIO -->
+                            <!-- ============================================ -->
+                            <div class="col-md-8">
+                                <!-- DATOS PERSONALES -->
+                                <div class="expediente-section">
+                                    <h6><i class="bi bi-person-badge"></i> Datos Personales</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Nombre <span class="required">*</span>
+                                                </label>
+                                                {{ form.first_name }}
+                                                {% if form.first_name.errors %}
+                                                    <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Apellidos <span class="required">*</span>
+                                                </label>
+                                                {{ form.last_name }}
+                                                {% if form.last_name.errors %}
+                                                    <div class="text-danger small">{{ form.last_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Email <span class="required">*</span>
+                                                </label>
+                                                {{ form.email }}
+                                                {% if form.email.errors %}
+                                                    <div class="text-danger small">{{ form.email.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Carnet</label>
+                                                {{ form.carnet }}
+                                                <div class="form-text">Opcional para admin/tutor/profesor</div>
+                                                {% if form.carnet.errors %}
+                                                    <div class="text-danger small">{{ form.carnet.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Teléfono</label>
+                                                {{ form.telefono }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">WhatsApp</label>
+                                                {{ form.whatsapp_telefono }}
+                                                <div class="form-text">Formato: +591 71234567</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Género</label>
+                                                {{ form.genero }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Fecha de nacimiento</label>
+                                                {{ form.fecha_nacimiento }}
+                                                {% if form.fecha_nacimiento.errors %}
+                                                    <div class="text-danger small">{{ form.fecha_nacimiento.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- ✅ Username informativo (solo en creación) -->
+                                    {% if not es_edicion %}
+                                    <div class="alert alert-info mb-0">
+                                        <i class="bi bi-info-circle"></i>
+                                        <strong>Username se generará automáticamente</strong> desde el nombre y apellido
+                                        (Ej: Juan Pérez → <strong>jperez</strong>)
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- ✅ Username readonly (solo en edición) -->
+                                    {% if es_edicion %}
+                                    <div class="alert alert-secondary mb-0">
+                                        <i class="bi bi-person-badge"></i>
+                                        <strong>Username:</strong> {{ usuario.username }}
+                                        <br>
+                                        <small>
+                                            <i class="bi bi-info-circle"></i>
+                                            El nombre de usuario no se puede modificar.
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- ROL Y PERMISOS -->
+                                <div class="expediente-section">
+                                    <h6><i class="bi bi-shield-lock"></i> Rol y Permisos</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Rol <span class="required">*</span>
+                                                </label>
+                                                {% if es_edicion %}
+                                                    <input type="text" class="form-control" 
+                                                           value="{{ usuario.get_rol_display }}" readonly>
+                                                    <input type="hidden" name="rol" value="{{ usuario.rol }}">
+                                                    <div class="form-text">
+                                                        <i class="bi bi-info-circle"></i>
+                                                        El rol no se puede cambiar
+                                                    </div>
+                                                {% else %}
+                                                    {{ form.rol }}
+                                                    {% if form.rol.errors %}
+                                                        <div class="text-danger small">{{ form.rol.errors }}</div>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if es_edicion %}
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Estado</label>
+                                                <div class="form-check form-switch mt-2">
+                                                    <input type="checkbox" 
+                                                           name="is_active" 
+                                                           class="form-check-input" 
+                                                           id="is_active"
+                                                           {% if usuario.is_active %}checked{% endif %}>
+                                                    <label class="form-check-label" for="is_active">
+                                                        Usuario activo
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- ✅ CAMPOS ESPECÍFICOS PARA TUTORES -->
+                                <div class="expediente-section" id="tutorFields" style="display: none;">
+                                    <h6><i class="bi bi-person-badge"></i> Datos de Tutor</h6>
+                                    <p class="text-muted small">Complete los datos específicos para el perfil de tutor</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Especialidad <span class="required">*</span>
+                                                </label>
+                                                {{ form.especialidad }}
+                                                <div class="form-text">Área de especialización del tutor</div>
+                                                {% if form.especialidad.errors %}
+                                                    <div class="text-danger small">{{ form.especialidad.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">Máx. Estudiantes</label>
+                                                {{ form.max_estudiantes }}
+                                                <div class="form-text">Cupos (1-50)</div>
+                                                {% if form.max_estudiantes.errors %}
+                                                    <div class="text-danger small">{{ form.max_estudiantes.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">Estado Tutor</label>
+                                                <div class="form-check form-switch mt-2">
+                                                    {{ form.tutor_activo }}
+                                                    <label class="form-check-label" for="{{ form.tutor_activo.id_for_label }}">
+                                                        Activo
+                                                    </label>
+                                                </div>
+                                                <div class="form-text">Permite asignar estudiantes</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- ✅ SECCIÓN DE CONTRASEÑA (solo en creación) -->
+                                {% if not es_edicion %}
+                                <div class="expediente-section">
+                                    <h6><i class="bi bi-key"></i> Configuración de Contraseña</h6>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        <strong>Nota:</strong> Si no ingresas una contraseña, se generará 
+                                        automáticamente y se enviará al correo del usuario. El usuario deberá 
+                                        cambiarla en su primer inicio de sesión.
+                                    </div>
+                                    
+                                    <!-- ✅ Toggle de contraseña automática -->
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.generar_password_auto }}
+                                        <label class="form-check-label" for="{{ form.generar_password_auto.id_for_label }}">
+                                            <i class="bi bi-magic"></i>
+                                            <strong>Generar contraseña automáticamente</strong>
+                                        </label>
+                                        <div class="form-text ms-4">
+                                            Si está activado, se enviará una contraseña temporal al correo del usuario.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- ✅ Campos de contraseña manual -->
+                                    <div id="passwordFieldsContainer">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">
+                                                        Contraseña
+                                                        <span class="required">*</span>
+                                                    </label>
+                                                    {{ form.password }}
+                                                    {% if form.password.errors %}
+                                                        <div class="text-danger small">{{ form.password.errors }}</div>
+                                                    {% endif %}
+                                                    <div class="form-text">
+                                                        Mínimo 8 caracteres. El usuario deberá cambiarla en su primer inicio de sesión.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">
+                                                        Confirmar Contraseña
+                                                        <span class="required">*</span>
+                                                    </label>
+                                                    {{ form.confirm_password }}
+                                                    {% if form.confirm_password.errors %}
+                                                        <div class="text-danger small">{{ form.confirm_password.errors }}</div>
+                                                    {% endif %}
+                                                    <div class="form-text">Repite la contraseña para confirmar</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- BOTONES -->
+                                <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+                                    <a href="{% if es_edicion %}{% url 'usuario_detail' usuario.pk %}{% else %}{% url 'usuario_list' %}{% endif %}" 
+                                       class="btn-expediente-cancelar">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </a>
+                                    <button type="submit" class="btn-expediente-guardar" id="submitBtn">
+                                        <i class="bi bi-save"></i> 
+                                        {% if es_edicion %}Actualizar Usuario{% else %}Crear Usuario{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ============================================
+    // 1. TOGGLE DE CAMPOS DE CONTRASEÑA
+    // ============================================
+    window.togglePasswordFields = function(checkbox) {
+        const container = document.getElementById('passwordFieldsContainer');
+        const passwordInput = document.getElementById('password_manual');
+        const confirmInput = document.getElementById('confirm_password');
+        
+        if (container) {
+            if (checkbox.checked) {
+                container.style.display = 'none';
+                if (passwordInput) passwordInput.required = false;
+                if (confirmInput) confirmInput.required = false;
+                if (passwordInput) passwordInput.value = '';
+                if (confirmInput) confirmInput.value = '';
+            } else {
+                container.style.display = 'block';
+                if (passwordInput) passwordInput.required = true;
+                if (confirmInput) confirmInput.required = true;
+            }
+        }
+    };
+    
+    // Estado inicial del toggle
+    const generarAutoCheckbox = document.getElementById('generar_password_auto');
+    if (generarAutoCheckbox) {
+        togglePasswordFields(generarAutoCheckbox);
+    }
+    
+    // ============================================
+    // 2. MOSTRAR/OCULTAR CAMPOS DE TUTOR
+    // ============================================
+    const rolSelect = document.getElementById('rolSelect');
+    const rolHidden = document.querySelector('input[name="rol"][type="hidden"]');
+    const tutorFields = document.getElementById('tutorFields');
+    const especialidadInput = document.getElementById('especialidad');
+    const maxEstudiantesInput = document.getElementById('max_estudiantes');
+    
+    function toggleTutorFields() {
+        if (!tutorFields) return;
+        
+        // Detectar el rol actual (select o hidden)
+        let rolActual = '';
+        if (rolSelect && !rolSelect.disabled) {
+            rolActual = rolSelect.value;
+        } else if (rolHidden) {
+            rolActual = rolHidden.value;
+        }
+        
+        if (rolActual === 'tutor') {
+            tutorFields.style.display = 'block';
+            if (especialidadInput) especialidadInput.required = true;
+            if (maxEstudiantesInput) maxEstudiantesInput.required = true;
+            tutorFields.style.animation = 'fadeIn 0.3s ease';
+        } else {
+            tutorFields.style.display = 'none';
+            if (especialidadInput) especialidadInput.required = false;
+            if (maxEstudiantesInput) maxEstudiantesInput.required = false;
+        }
+    }
+    
+    // Ejecutar al cargar (para modo edición)
+    toggleTutorFields();
+    
+    // Escuchar cambios en el select de rol (solo creación)
+    if (rolSelect && !rolSelect.disabled) {
+        rolSelect.addEventListener('change', toggleTutorFields);
+    }
+    
+    // ============================================
+    // 3. MANEJO DE FOTO
+    // ============================================
+    const fileInput = document.querySelector('#fileInputContainer input[type="file"]');
+    const previewImage = document.getElementById('previewImage');
+    const placeholderIcon = document.getElementById('placeholderIcon');
+    const btnSelectPhoto = document.getElementById('btnSelectPhoto');
+    const btnRemovePhoto = document.getElementById('btnRemovePhoto');
+    const eliminarFotoInput = document.querySelector('input[name="foto_eliminar"]');
+    
+    // Ocultar input file por defecto
+    if (fileInput) {
+        fileInput.style.display = 'none';
+    }
+    
+    // Botón para seleccionar foto
+    if (btnSelectPhoto && fileInput) {
+        btnSelectPhoto.addEventListener('click', function() {
+            fileInput.click();
+        });
+    }
+    
+    // Cuando se selecciona un archivo
+    if (fileInput) {
+        fileInput.addEventListener('change', function(event) {
+            const file = this.files[0];
+            
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor selecciona una imagen válida.');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 5MB.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    placeholderIcon.style.display = 'none';
+                    btnRemovePhoto.style.display = 'block';
+                    
+                    if (eliminarFotoInput) {
+                        eliminarFotoInput.value = 'false';
+                    }
+                    
+                    if (btnSelectPhoto) {
+                        btnSelectPhoto.innerHTML = '<i class="bi bi-upload"></i> Cambiar foto';
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Botón para eliminar foto
+    if (btnRemovePhoto) {
+        btnRemovePhoto.addEventListener('click', function() {
+            if (confirm('¿Estás seguro de eliminar la foto?')) {
+                if (fileInput) fileInput.value = '';
+                previewImage.src = '';
+                previewImage.style.display = 'none';
+                placeholderIcon.style.display = 'block';
+                btnRemovePhoto.style.display = 'none';
+                
+                if (eliminarFotoInput) {
+                    eliminarFotoInput.value = 'true';
+                }
+                
+                if (btnSelectPhoto) {
+                    btnSelectPhoto.innerHTML = '<i class="bi bi-upload"></i> Seleccionar foto';
+                }
+            }
+        });
+    }
+    
+    // ============================================
+    // 4. VALIDACIÓN DE CONTRASEÑA
+    // ============================================
+    const passwordInput = document.getElementById('password_manual');
+    const passwordConfirmInput = document.getElementById('confirm_password');
+    
+    if (passwordConfirmInput && passwordInput) {
+        passwordConfirmInput.addEventListener('input', function() {
+            if (passwordInput.value && this.value && passwordInput.value !== this.value) {
+                this.setCustomValidity('Las contraseñas no coinciden');
+                this.style.borderColor = '#dc3545';
+            } else {
+                this.setCustomValidity('');
+                this.style.borderColor = '';
+            }
+        });
+    }
+    
+    // ============================================
+    // 5. VALIDACIÓN ANTES DE ENVIAR
+    // ============================================
+    const form = document.getElementById('usuarioForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Detectar rol actual
+            let rolActual = '';
+            if (rolSelect && !rolSelect.disabled) {
+                rolActual = rolSelect.value;
+            } else if (rolHidden) {
+                rolActual = rolHidden.value;
+            }
+            
+            // Validar tutor
+            if (rolActual === 'tutor') {
+                const especialidad = especialidadInput ? especialidadInput.value.trim() : '';
+                const maxEstudiantes = maxEstudiantesInput ? maxEstudiantesInput.value : '';
+                
+                if (!especialidad) {
+                    e.preventDefault();
+                    alert('⚠️ Por favor, ingresa la especialidad del tutor.');
+                    if (especialidadInput) especialidadInput.focus();
+                    return false;
+                }
+                
+                if (!maxEstudiantes || parseInt(maxEstudiantes) < 1 || parseInt(maxEstudiantes) > 50) {
+                    e.preventDefault();
+                    alert('⚠️ El máximo de estudiantes debe ser entre 1 y 50.');
+                    if (maxEstudiantesInput) maxEstudiantesInput.focus();
+                    return false;
+                }
+            }
+            
+            // Validar contraseñas (solo en creación y si NO es automática)
+            if (generarAutoCheckbox && !generarAutoCheckbox.checked) {
+                const password = passwordInput ? passwordInput.value : '';
+                const passwordConfirm = passwordConfirmInput ? passwordConfirmInput.value : '';
+                
+                if (!password) {
+                    e.preventDefault();
+                    alert('⚠️ Debes escribir una contraseña.');
+                    if (passwordInput) passwordInput.focus();
+                    return false;
+                }
+                
+                if (password.length < 8) {
+                    e.preventDefault();
+                    alert('⚠️ La contraseña debe tener al menos 8 caracteres.');
+                    if (passwordInput) passwordInput.focus();
+                    return false;
+                }
+                
+                if (password !== passwordConfirm) {
+                    e.preventDefault();
+                    alert('⚠️ Las contraseñas no coinciden.');
+                    if (passwordConfirmInput) passwordConfirmInput.focus();
+                    return false;
+                }
+            }
+            
+            // Deshabilitar botón para evitar doble envío
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+            }
+        });
+    }
+});
+
+// ============================================
+// ANIMACIONES CSS
+// ============================================
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

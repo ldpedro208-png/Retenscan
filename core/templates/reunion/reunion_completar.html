@@ -1,0 +1,740 @@
+<!-- templates/layout/reunion/reunion_completar.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Completar Reunión - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --form-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --success-gradient: linear-gradient(135deg, #198754 0%, #157347 100%);
+        }
+
+        /* ============================================
+           TARJETA DEL FORMULARIO
+           ============================================ */
+        .form-card {
+            border: none;
+            border-radius: var(--form-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .form-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card .card-header {
+            background: var(--success-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .form-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .form-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .form-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           ALERTA DE INFORMACIÓN
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        .alert-custom .alert-content .info-row {
+            padding: 0.15rem 0;
+        }
+
+        .alert-custom .alert-content .info-row .label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .alert-custom.alert-info {
+            background: #e7f3ff;
+            color: #0d6efd;
+            border-left: 4px solid #0d6efd;
+        }
+
+        /* ============================================
+           CAMPOS DEL FORMULARIO
+           ============================================ */
+        .form-floating-custom {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-floating-custom .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-floating-custom .form-label .required {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-floating-custom .form-control {
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .form-floating-custom .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+        .form-floating-custom .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-floating-custom .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+        }
+
+        .form-floating-custom .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .form-floating-custom .form-text .icon {
+            margin-right: 0.25rem;
+        }
+
+        /* ============================================
+           CONTADOR DE CARACTERES
+           ============================================ */
+        .char-counter {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .char-counter .count {
+            font-weight: 600;
+        }
+
+        .char-counter .count.warning {
+            color: #ffc107;
+        }
+
+        .char-counter .count.danger {
+            color: #dc3545;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-success {
+            background: var(--success-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-success:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(25, 135, 84, 0.4);
+        }
+
+        .btn-action.btn-success:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .form-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .form-control:focus-visible {
+            outline: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .form-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .form-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-card .card-body {
+                padding: 1rem;
+            }
+
+            .form-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .form-floating-custom .form-label {
+                font-size: 0.85rem;
+            }
+
+            .form-floating-custom .form-control {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .char-counter {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .form-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .form-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .form-floating-custom .form-label {
+                color: #c8d6e5;
+            }
+
+            .form-floating-custom .form-control {
+                background-color: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #e0e0e0;
+            }
+
+            .form-floating-custom .form-control:focus {
+                background-color: #3d3d4d;
+                color: #e0e0e0;
+                border-color: #4dabf7;
+            }
+
+            .form-floating-custom .form-control::placeholder {
+                color: #8a8a9a;
+            }
+
+            .form-floating-custom .form-text {
+                color: #8a8a9a;
+            }
+
+            .char-counter {
+                color: #8a8a9a;
+            }
+
+            .alert-custom.alert-info {
+                background: #1a2a3a;
+                color: #cfe2ff;
+            }
+
+            .alert-custom.alert-info .alert-content .info-row .label {
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reunion_list' %}" class="text-decoration-none">
+                    <i class="bi bi-calendar-event" aria-hidden="true"></i> Reuniones
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reunion_detail' reunion.idReunion %}" class="text-decoration-none">
+                    {{ reunion.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-check-circle" aria-hidden="true"></i> Completar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <article class="card form-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Completar Reunión</h4>
+                            <small>
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Registra las notas y conclusiones de la reunión
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Información de la reunión -->
+                    <div class="alert alert-custom alert-info" role="alert">
+                        <i class="bi bi-info-circle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">Información de la Reunión</div>
+                            <div class="info-row">
+                                <span class="label">
+                                    <i class="bi bi-tag" aria-hidden="true"></i> Título:
+                                </span>
+                                <strong>{{ reunion.titulo }}</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">
+                                    <i class="bi bi-person" aria-hidden="true"></i> Estudiante:
+                                </span>
+                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                <span class="text-muted">({{ reunion.estudiante.carnet }})</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">
+                                    <i class="bi bi-calendar" aria-hidden="true"></i> Fecha:
+                                </span>
+                                {{ reunion.fecha_programada|date:"d/m/Y H:i" }}
+                                <span class="text-muted">• {{ reunion.duracion }} minutos</span>
+                            </div>
+                            {% if reunion.ubicacion %}
+                                <div class="info-row">
+                                    <span class="label">
+                                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Ubicación:
+                                    </span>
+                                    {{ reunion.ubicacion }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="completarForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Notas -->
+                        <div class="form-floating-custom">
+                            <label for="notas" class="form-label">
+                                <i class="bi bi-sticky" aria-hidden="true"></i>
+                                Notas de la Reunión
+                            </label>
+                            <textarea class="form-control" 
+                                      id="notas" 
+                                      name="notas" 
+                                      rows="5" 
+                                      maxlength="2000"
+                                      placeholder="Escribe las notas y conclusiones de la reunión..."
+                                      aria-describedby="notasHelp">{{ notas|default:'' }}</textarea>
+                            <div id="notasHelp" class="form-text">
+                                <i class="bi bi-info-circle icon" aria-hidden="true"></i>
+                                Documenta los puntos tratados, acuerdos y conclusiones (máx. 2000 caracteres)
+                            </div>
+                            <div class="char-counter">
+                                <span class="count" id="charCount">0</span>/2000
+                            </div>
+                            {% if form.notas.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    {{ form.notas.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campos adicionales ocultos -->
+                        <input type="hidden" name="completar" value="1">
+
+                        <!-- Error del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'reunion_detail' reunion.idReunion %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Cancelar y volver al detalle de la reunión">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success btn-action" id="submitBtn">
+                                <i class="bi bi-check-circle" aria-hidden="true"></i> Completar Reunión
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                        Confirmar Completado
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-check-circle" style="font-size: 3rem; color: #198754;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás seguro de completar esta reunión?</h5>
+                        <p class="text-muted" id="confirmInfo">
+                            <strong>Título:</strong> {{ reunion.titulo }}
+                            <br>
+                            <strong>Estudiante:</strong> {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                        </p>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <strong>Nota:</strong> Una vez completada, la reunión no se puede cancelar.
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Revisar
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmComplete">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i> 
+                        Confirmar Completado
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const form = document.getElementById('completarForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const notasInput = document.getElementById('notas');
+            const charCount = document.getElementById('charCount');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmComplete = document.getElementById('confirmComplete');
+
+            // ============================================
+            // 1. CONTADOR DE CARACTERES
+            // ============================================
+            if (notasInput && charCount) {
+                notasInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    charCount.textContent = length;
+                    
+                    if (length > 1800) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning');
+                    }
+                    
+                    if (length > 2000) {
+                        charCount.classList.add('danger');
+                        this.classList.add('is-invalid');
+                    } else {
+                        charCount.classList.remove('danger');
+                        this.classList.remove('is-invalid');
+                    }
+                });
+
+                // Inicializar contador
+                charCount.textContent = notasInput.value.length;
+            }
+
+            // ============================================
+            // 2. CONFIRMACIÓN ANTES DE ENVIAR
+            // ============================================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Validar que las notas no excedan el límite
+                if (notasInput && notasInput.value.length > 2000) {
+                    notasInput.classList.add('is-invalid');
+                    notasInput.focus();
+                    showToast('Las notas exceden el límite de 2000 caracteres.', 'warning');
+                    return false;
+                }
+
+                // Mostrar modal de confirmación
+                confirmModal.show();
+            });
+
+            // ============================================
+            // 3. CONFIRMAR Y ENVIAR
+            // ============================================
+            confirmComplete.addEventListener('click', function() {
+                // Deshabilitar botón para evitar doble envío
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Completando...';
+
+                // Enviar el formulario
+                form.submit();
+                confirmModal.hide();
+            });
+
+            // ============================================
+            // 4. TOAST NOTIFICATIONS
+            // ============================================
+            function showToast(message, type = 'info') {
+                const colors = {
+                    success: '#198754',
+                    warning: '#ffc107',
+                    info: '#0d6efd',
+                    danger: '#dc3545'
+                };
+
+                const icons = {
+                    success: 'bi-check-circle',
+                    warning: 'bi-exclamation-triangle',
+                    info: 'bi-info-circle',
+                    danger: 'bi-exclamation-circle'
+                };
+
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.role = 'alert';
+                toast.ariaLive = 'assertive';
+                toast.ariaAtomic = 'true';
+                toast.style.display = 'block';
+                toast.style.marginBottom = '0.5rem';
+                toast.style.minWidth = '300px';
+                toast.style.background = '#ffffff';
+                toast.style.borderRadius = '0.5rem';
+                toast.style.boxShadow = '0 0.5rem 1rem rgba(0,0,0,0.15)';
+
+                toast.innerHTML = `
+                    <div class="toast-header" style="background: ${colors[type]}; color: white; border-radius: 0.5rem 0.5rem 0 0; padding: 0.5rem 0.75rem;">
+                        <i class="bi ${icons[type]}" style="margin-right: 0.5rem;" aria-hidden="true"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar" style="font-size: 0.8rem;"></button>
+                    </div>
+                    <div class="toast-body" style="padding: 0.75rem; color: #333;">
+                        ${message}
+                    </div>
+                `;
+
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        toastContainer.remove();
+                    }, 300);
+                }, 4000);
+            }
+
+            // ============================================
+            // 5. SOPORTE PARA TECLADO
+            // ============================================
+            document.querySelectorAll('.btn-action').forEach(function(btn) {
+                btn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // ============================================
+            // 6. ENFOQUE AUTOMÁTICO
+            // ============================================
+            setTimeout(function() {
+                if (notasInput) {
+                    notasInput.focus();
+                }
+            }, 300);
+
+            // ============================================
+            // 7. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de completar reunión cargada');
+        });
+    </script>
+{% endblock %}

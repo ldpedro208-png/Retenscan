@@ -1,0 +1,358 @@
+<!-- templates/layout/_main_nav.html -->
+<!-- Este archivo debe estar en: templates/layout/_main_nav.html -->
+
+<ul class="navbar-nav me-auto" role="menubar">
+    <!-- ============================================ -->
+    <!-- DASHBOARD - ÚNICO PARA TODOS LOS ROLES      -->
+    <!-- ============================================ -->
+    <li class="nav-item" role="none">
+        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' or request.path == '/' %}active{% endif %}" 
+           href="{% url 'dashboard' %}" role="menuitem">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard
+        </a>
+    </li>
+
+
+    <!-- ============================================ -->
+    <!-- MENÚ PARA ADMINISTRADORES                    -->
+    <!-- ============================================ -->
+    {% if user_rol == 'admin' or user.is_staff or user.is_superuser %}
+        
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-mortarboard"></i> Académico
+            </a>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'carrera_list' %}">Carreras</a></li>
+                <li><a class="dropdown-item" href="{% url 'materia_list' %}">Materias</a></li>
+                <li><a class="dropdown-item" href="{% url 'aula_list' %}">Aulas</a></li>
+            </ul>
+        </li>
+        
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-people"></i> Usuarios
+            </a>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'estudiante_list' %}">Estudiantes</a></li>
+                <li><a class="dropdown-item" href="{% url 'usuario_list' %}">Usuarios</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'usuario_create' %}">
+                    <i class="bi bi-person-plus"></i> Crear Usuario
+                </a></li>
+            </ul>
+        </li>
+        
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-bar-chart"></i> Reportes
+            </a>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'estadisticas_universidad' %}">Estadísticas</a></li>
+                <li><a class="dropdown-item" href="{% url 'auditoria_list' %}">Auditoría</a></li>
+            </ul>
+        </li>
+
+        <!-- ============================================ -->
+        <!-- BIBLIOTECA - ADMIN                          -->
+        <!-- ============================================ -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if 'biblioteca' in request.path %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-book" aria-hidden="true"></i> Biblioteca
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:lista' %}">
+                        <i class="bi bi-collection"></i> Catálogo de Recursos
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:subir' %}">
+                        <i class="bi bi-cloud-upload"></i> Subir Recurso
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:mis_recursos' %}">
+                        <i class="bi bi-folder"></i> Mis Recursos
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:material_apoyo' %}">
+                        <i class="bi bi-heart-pulse"></i> Material de Apoyo
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:crear_material_apoyo' %}">
+                        <i class="bi bi-plus-circle"></i> Crear Material de Apoyo
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="/admin/biblioteca/categoriarecurso/">
+                        <i class="bi bi-tags"></i> Categorías
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="/admin/biblioteca/recursoubiblioteca/">
+                        <i class="bi bi-gear"></i> Administrar Recursos
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'configuracion_sistema' %}active{% endif %}" 
+               href="{% url 'configuracion_sistema' %}">
+                <i class="bi bi-gear"></i> Configuración
+            </a>
+        </li>
+        
+        <!-- ❌ ELIMINADO: Asignar Tutores para administradores -->
+        <!-- 
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'asignacion_tutores_lista' %}">
+                <i class="bi bi-person-plus"></i> Asignar Tutores
+            </a>
+        </li>
+        -->
+        
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- MENÚ PARA PROFESORES                        -->
+    <!-- ============================================ -->
+    {% if user_rol == 'profesor' %}
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'estudiante_list' %}active{% endif %}" 
+               href="{% url 'estudiante_list' %}">
+                <i class="bi bi-people"></i> Mis Estudiantes
+            </a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if 'asignacion-tutores' in request.path %}active{% endif %}" 
+               href="{% url 'asignacion_tutores_lista' %}">
+                <i class="bi bi-person-plus"></i> Asignar Tutores
+            </a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'encuesta_list' %}active{% endif %}" 
+               href="{% url 'encuesta_list' %}">
+                <i class="bi bi-clipboard-check"></i> Encuestas
+            </a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'tarea_list' %}active{% endif %}" 
+               href="{% url 'tarea_list' %}">
+                <i class="bi bi-list-task"></i> Tareas
+            </a>
+        </li>
+
+        <!-- ============================================ -->
+        <!-- BIBLIOTECA - PROFESOR                       -->
+        <!-- ============================================ -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if 'biblioteca' in request.path %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-book" aria-hidden="true"></i> Biblioteca
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:lista' %}">
+                        <i class="bi bi-collection"></i> Catálogo
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:subir' %}">
+                        <i class="bi bi-cloud-upload"></i> Subir Recurso
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:mis_recursos' %}">
+                        <i class="bi bi-folder"></i> Mis Recursos Subidos
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:material_apoyo' %}">
+                        <i class="bi bi-heart-pulse"></i> Material de Apoyo
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard_riesgo' %}active{% endif %}" 
+               href="{% url 'dashboard_riesgo' %}">
+                <i class="bi bi-robot"></i> IA Predictiva
+            </a>
+        </li>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- MENÚ PARA TUTORES                           -->
+    <!-- ============================================ -->
+    {% if user_rol == 'tutor' %}
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'estudiante_list' %}active{% endif %}" 
+               href="{% url 'estudiante_list' %}">
+                <i class="bi bi-people"></i> Mis Estudiantes
+            </a>
+        </li>
+
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-exclamation-triangle"></i> Riesgos
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'dashboard_riesgo' %}">
+                        <i class="bi bi-robot"></i> IA Predictiva
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'riesgo_gestion' %}">
+                        <i class="bi bi-list-check"></i> Gestionar Riesgos
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link {% if 'reunion' in request.path %}active{% endif %}" 
+               href="{% url 'reunion_list' %}">
+                <i class="bi bi-calendar-event"></i> Reuniones
+            </a>
+        </li>
+
+        <!-- ============================================ -->
+        <!-- BIBLIOTECA - TUTOR                          -->
+        <!-- ============================================ -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if 'biblioteca' in request.path %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-book" aria-hidden="true"></i> Biblioteca
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:lista' %}">
+                        <i class="bi bi-collection"></i> Catálogo
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:material_apoyo' %}">
+                        <i class="bi bi-heart-pulse"></i> Material de Apoyo
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:crear_material_apoyo' %}">
+                        <i class="bi bi-plus-circle"></i> Crear Material de Apoyo
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                {% comment %}
+                TODO: agregar cuando exista la vista de reporte de uso.
+                El bloque está comentado con {% templatetag openblock %} comment {% templatetag closeblock %}
+                para que Django NO intente resolver el {% templatetag openblock %} url {% templatetag closeblock %}
+                mientras la vista no exista. Cuando la crees, borra los
+                {% templatetag openblock %} comment {% templatetag closeblock %} y {% templatetag openblock %} endcomment {% templatetag closeblock %}
+                y deja el <li> activo.
+                {% endcomment %}
+                {% comment %}
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:reporte_uso_tutor' %}">
+                        <i class="bi bi-graph-up"></i> Uso de Biblioteca de mis Tutorados
+                    </a>
+                </li>
+                {% endcomment %}
+            </ul>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'tutor_reporte' %}active{% endif %}" 
+               href="{% url 'tutor_reporte' %}">
+                <i class="bi bi-file-pdf"></i> Reportes
+            </a>
+        </li>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- MENÚ PARA ESTUDIANTES                       -->
+    <!-- ============================================ -->
+    {% if user_rol == 'estudiante' %}
+
+        <!-- ============================================ -->
+        <!-- BIBLIOTECA - ESTUDIANTE                     -->
+        <!-- ============================================ -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if 'biblioteca' in request.path %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="bi bi-book" aria-hidden="true"></i> Biblioteca
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:lista' %}">
+                        <i class="bi bi-collection"></i> Explorar Recursos
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:mis_recomendaciones' %}">
+                        <i class="bi bi-stars"></i> Recomendados para Mí
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'biblioteca:material_apoyo' %}">
+                        <i class="bi bi-heart-pulse"></i> Material de Apoyo
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'encuesta_list' %}active{% endif %}" 
+               href="{% url 'encuesta_list' %}">
+                <i class="bi bi-clipboard-check"></i> Mis Encuestas
+            </a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'tarea_list' %}active{% endif %}" 
+               href="{% url 'tarea_list' %}">
+                <i class="bi bi-list-task"></i> Mis Tareas
+            </a>
+        </li>
+        
+        <li class="nav-item">
+            {% if request.user.estudiante %}
+                <a class="nav-link {% if request.resolver_match.url_name == 'estudiante_detail' %}active{% endif %}" 
+                   href="{% url 'estudiante_detail' request.user.estudiante.idEstudiante %}">
+                    <i class="bi bi-person-badge"></i> Mi Historial
+                </a>
+            {% else %}
+                <span class="nav-link text-muted">
+                    <i class="bi bi-person-badge"></i> Mi Perfil (sin datos)
+                </span>
+            {% endif %}
+        </li>
+    {% endif %}
+
+    <!-- ============================================ -->
+    <!-- MENSAJES - COMÚN PARA TODOS LOS USUARIOS    -->
+    <!-- ============================================ -->
+    <li class="nav-item">
+        <a class="nav-link {% if 'mensaje' in request.path %}active{% endif %}" 
+           href="{% url 'mensaje_list' %}">
+            <i class="bi bi-envelope"></i> Mensajes
+            {% if mensajes_no_leidos > 0 %}
+                <span class="badge bg-danger ms-1" aria-label="{{ mensajes_no_leidos }} mensajes no leídos">
+                    {{ mensajes_no_leidos }}
+                </span>
+            {% endif %}
+        </a>
+    </li>
+</ul>

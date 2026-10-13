@@ -1,0 +1,714 @@
+<!-- templates/layout/reunion/reunion_cancelar.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Cancelar Reunión - RetenScan{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* ============================================
+           VARIABLES CSS
+           ============================================ */
+        :root {
+            --cancel-card-radius: 1rem;
+            --transition-speed: 0.3s;
+            --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        }
+
+        /* ============================================
+           TARJETA PRINCIPAL
+           ============================================ */
+        .cancel-card {
+            border: none;
+            border-radius: var(--cancel-card-radius);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: box-shadow var(--transition-speed) ease;
+            animation: fadeInUp 0.5s ease forwards;
+            border-left: 4px solid #dc3545;
+        }
+
+        .cancel-card:hover {
+            box-shadow: 0 1rem 2.5rem rgba(220, 53, 69, 0.12);
+        }
+
+        .cancel-card .card-header {
+            background: var(--danger-gradient);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+        }
+
+        .cancel-card .card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
+
+        .cancel-card .card-header h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cancel-card .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        .cancel-card .card-body {
+            padding: 2rem;
+        }
+
+        /* ============================================
+           ICONO DE ADVERTENCIA
+           ============================================ */
+        .warning-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            display: inline-block;
+            animation: warningPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        /* ============================================
+           RESUMEN DE LA REUNIÓN
+           ============================================ */
+        .reunion-summary {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border: 1px solid #e2e8f0;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .reunion-summary:hover {
+            background: #f0f4ff;
+        }
+
+        .reunion-summary .summary-title {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .reunion-summary .summary-item {
+            display: flex;
+            padding: 0.3rem 0;
+            font-size: 0.95rem;
+            color: #4a5568;
+        }
+
+        .reunion-summary .summary-item .label {
+            font-weight: 600;
+            min-width: 100px;
+            color: #2d3748;
+        }
+
+        .reunion-summary .summary-item .value {
+            color: #4a5568;
+        }
+
+        .reunion-summary .summary-item .value .badge {
+            font-size: 0.8rem;
+        }
+
+        /* ============================================
+           ALERTA DE ADVERTENCIA
+           ============================================ */
+        .alert-custom {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-custom .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .alert-custom .alert-content {
+            flex: 1;
+        }
+
+        .alert-custom .alert-title {
+            font-weight: 600;
+        }
+
+        .alert-custom.alert-danger {
+            background: #fde8e8;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-custom.alert-warning {
+            background: #fff9e6;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* ============================================
+           BOTONES DE ACCIÓN
+           ============================================ */
+        .btn-action {
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-danger {
+            background: var(--danger-gradient);
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-action.btn-danger:hover {
+            box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-action.btn-danger:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-action.btn-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            background: #ffffff;
+        }
+
+        .btn-action.btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+        }
+
+        /* ============================================
+           ANIMACIONES
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        .cancel-card:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        .btn-action:focus-visible {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .cancel-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .cancel-card .card-header {
+                padding: 1rem 1.25rem;
+            }
+
+            .cancel-card .card-header h4 {
+                font-size: 1.1rem;
+            }
+
+            .warning-icon {
+                font-size: 3rem;
+            }
+
+            .reunion-summary {
+                padding: 1rem;
+            }
+
+            .reunion-summary .summary-item {
+                flex-direction: column;
+                gap: 0.15rem;
+            }
+
+            .reunion-summary .summary-item .label {
+                min-width: auto;
+            }
+
+            .btn-action {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .btn-action.btn-secondary {
+                margin-bottom: 0.5rem;
+            }
+
+            .alert-custom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .cancel-card .card-body {
+                padding: 1rem;
+            }
+
+            .cancel-card .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .cancel-card .card-header h4 {
+                font-size: 1rem;
+            }
+
+            .warning-icon {
+                font-size: 2.5rem;
+            }
+
+            .reunion-summary .summary-title {
+                font-size: 1rem;
+            }
+
+            .reunion-summary .summary-item {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* ============================================
+           TEMA OSCURO
+           ============================================ */
+        @media (prefers-color-scheme: dark) {
+            .cancel-card {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .cancel-card .card-body {
+                background-color: #2d2d2d;
+            }
+
+            .reunion-summary {
+                background: #252540;
+                border-color: #2d2d44;
+            }
+
+            .reunion-summary:hover {
+                background: #2d2d44;
+            }
+
+            .reunion-summary .summary-title {
+                color: #ecf0f1;
+            }
+
+            .reunion-summary .summary-item {
+                color: #c8d6e5;
+            }
+
+            .reunion-summary .summary-item .label {
+                color: #ecf0f1;
+            }
+
+            .reunion-summary .summary-item .value {
+                color: #c8d6e5;
+            }
+
+            .alert-custom.alert-danger {
+                background: #2d1a1a;
+                color: #f8d7da;
+            }
+
+            .alert-custom.alert-warning {
+                background: #2d241a;
+                color: #ffd970;
+            }
+
+            .btn-action.btn-secondary {
+                background: #3d3d4d;
+                border-color: #4d4d5d;
+                color: #c8d6e5;
+            }
+
+            .btn-action.btn-secondary:hover {
+                background: #4d4d5d;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ============================================ -->
+    <!-- BREADCRUMB DE NAVEGACIÓN                    -->
+    <!-- ============================================ -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door" aria-hidden="true"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reunion_list' %}" class="text-decoration-none">
+                    <i class="bi bi-calendar-event" aria-hidden="true"></i> Reuniones
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reunion_detail' reunion.idReunion %}" class="text-decoration-none">
+                    {{ reunion.titulo|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL                          -->
+    <!-- ============================================ -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <article class="card cancel-card">
+                <!-- Header -->
+                <header class="card-header text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle fs-2 me-2" aria-hidden="true"></i>
+                        <div>
+                            <h4 class="mb-0">Cancelar Reunión</h4>
+                            <small>
+                                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                                Esta acción no se puede deshacer
+                            </small>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Icono de advertencia -->
+                    <div class="text-center py-3">
+                        <div class="warning-icon" aria-hidden="true">
+                            <i class="bi bi-calendar-x"></i>
+                        </div>
+                        <h4 class="mt-3 text-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            ¿Cancelar esta reunión?
+                        </h4>
+                        <p class="text-muted">
+                            Esta acción <strong>cancelará</strong> la reunión y no se podrá deshacer.
+                        </p>
+                    </div>
+
+                    <!-- Resumen de la reunión -->
+                    <div class="reunion-summary">
+                        <div class="summary-title">
+                            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                            {{ reunion.titulo }}
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-person" aria-hidden="true"></i> Estudiante:
+                            </span>
+                            <span class="value">
+                                {{ reunion.estudiante.nombre }} {{ reunion.estudiante.apellido_paterno }}
+                                <span class="text-muted">({{ reunion.estudiante.carnet }})</span>
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-calendar" aria-hidden="true"></i> Fecha:
+                            </span>
+                            <span class="value">
+                                {{ reunion.fecha_programada|date:"d/m/Y H:i" }}
+                                <span class="text-muted">• {{ reunion.duracion }} minutos</span>
+                            </span>
+                        </div>
+                        {% if reunion.ubicacion %}
+                            <div class="summary-item">
+                                <span class="label">
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i> Ubicación:
+                                </span>
+                                <span class="value">{{ reunion.ubicacion }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="summary-item">
+                            <span class="label">
+                                <i class="bi bi-flag" aria-hidden="true"></i> Estado actual:
+                            </span>
+                            <span class="value">
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-clock" aria-hidden="true"></i>
+                                    {{ reunion.get_estado_display }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Advertencia -->
+                    <div class="alert-custom alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">⚠️ Advertencia</div>
+                            <p class="mb-0">
+                                Al cancelar esta reunión, <strong>no podrás recuperarla</strong>.
+                                El estado de la reunión cambiará a "Cancelada" y quedará registrada en el historial.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Consejo -->
+                    <div class="alert-custom alert-warning" role="alert">
+                        <i class="bi bi-lightbulb alert-icon" aria-hidden="true"></i>
+                        <div class="alert-content">
+                            <div class="alert-title">💡 Consejo</div>
+                            <p class="mb-0">
+                                Si la reunión ya se realizó, considera <strong>completarla</strong> en lugar de cancelarla.
+                                Esto mantendrá un registro adecuado de las reuniones realizadas.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="cancelForm">
+                        {% csrf_token %}
+
+                        <!-- Campo de confirmación -->
+                        <div class="mb-3">
+                            <label for="confirmText" class="form-label fw-semibold">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                Escribe <span class="text-danger fw-bold">CANCELAR</span> para confirmar:
+                            </label>
+                            <input type="text" 
+                                   id="confirmText" 
+                                   class="form-control" 
+                                   placeholder="Escribe CANCELAR para confirmar"
+                                   aria-describedby="confirmHelp"
+                                   autocomplete="off">
+                            <div id="confirmHelp" class="form-text">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                Esta medida previene cancelaciones accidentales
+                            </div>
+                            <div id="confirmFeedback" class="invalid-feedback" style="display: none;">
+                                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                Debes escribir "CANCELAR" para confirmar la cancelación
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <footer class="d-flex flex-wrap gap-2 justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'reunion_detail' reunion.idReunion %}" 
+                               class="btn btn-secondary btn-action"
+                               aria-label="Volver al detalle de la reunión">
+                                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-action" id="cancelBtn" disabled>
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> 
+                                Confirmar Cancelación
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación adicional -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" 
+         aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <header class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> 
+                        Confirmación Final
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Cerrar"></button>
+                </header>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-calendar-x" style="font-size: 3rem; color: #dc3545;" aria-hidden="true"></i>
+                        <h5 class="mt-3">¿Estás absolutamente seguro?</h5>
+                        <p class="text-muted">
+                            Esta acción cancelará la reunión 
+                            <strong>"{{ reunion.titulo }}"</strong> 
+                            y no se podrá deshacer.
+                        </p>
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>¡No podrás recuperar esta reunión!</strong>
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> Revisar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancel">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> 
+                        Confirmar Cancelación
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // ELEMENTOS DEL DOM
+            // ============================================
+            const confirmInput = document.getElementById('confirmText');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const cancelForm = document.getElementById('cancelForm');
+            const confirmFeedback = document.getElementById('confirmFeedback');
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmCancel = document.getElementById('confirmCancel');
+
+            // ============================================
+            // 1. VALIDACIÓN DE CONFIRMACIÓN
+            // ============================================
+            if (confirmInput && cancelBtn) {
+                const requiredText = 'CANCELAR';
+
+                confirmInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    const isValid = value === requiredText;
+
+                    if (value.length > 0) {
+                        if (isValid) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            confirmFeedback.style.display = 'none';
+                            cancelBtn.disabled = false;
+                        } else {
+                            this.classList.remove('is-valid');
+                            this.classList.add('is-invalid');
+                            confirmFeedback.style.display = 'block';
+                            cancelBtn.disabled = true;
+                        }
+                    } else {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        confirmFeedback.style.display = 'none';
+                        cancelBtn.disabled = true;
+                    }
+                });
+
+                // Soporte para pegar texto
+                confirmInput.addEventListener('paste', function() {
+                    setTimeout(function() {
+                        confirmInput.dispatchEvent(new Event('input'));
+                    }, 10);
+                });
+
+                // ============================================
+                // 2. CONFIRMACIÓN ANTES DE ENVIAR
+                // ============================================
+                cancelForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // Verificar que el texto de confirmación sea correcto
+                    if (confirmInput.value.trim() !== 'CANCELAR') {
+                        confirmInput.classList.add('is-invalid');
+                        confirmFeedback.style.display = 'block';
+                        confirmInput.focus();
+                        return;
+                    }
+
+                    // Mostrar modal de confirmación
+                    confirmModal.show();
+                });
+
+                // ============================================
+                // 3. CONFIRMAR Y CANCELAR
+                // ============================================
+                confirmCancel.addEventListener('click', function() {
+                    // Deshabilitar botón para evitar doble envío
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-spinner bi-spin" aria-hidden="true"></i> Cancelando...';
+
+                    // Enviar el formulario
+                    cancelForm.submit();
+                });
+
+                // ============================================
+                // 4. SOPORTE PARA TECLADO
+                // ============================================
+                confirmInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!cancelBtn.disabled) {
+                            cancelBtn.click();
+                        }
+                    }
+                });
+
+                // ============================================
+                // 5. ENFOQUE AUTOMÁTICO
+                // ============================================
+                setTimeout(function() {
+                    confirmInput.focus();
+                }, 300);
+            }
+
+            // ============================================
+            // 6. LOG DE ACCESIBILIDAD
+            // ============================================
+            console.log('✅ Página de cancelación de reunión cargada');
+        });
+    </script>
+{% endblock %}
